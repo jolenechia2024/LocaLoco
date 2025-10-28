@@ -1,0 +1,262 @@
+import React, { useState } from 'react';
+import { Star, ArrowLeft, Send } from 'lucide-react';
+import { Business } from '../types/business';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Textarea } from './ui/textarea';
+import { Label } from './ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { ImageWithFallback } from './figma/ImageWithFallback';
+import { toast } from 'sonner@2.0.3';
+
+interface WriteReviewPageProps {
+  business: Business;
+  onBack: () => void;
+  onSubmit: (rating: number, comment: string) => void;
+  userAvatar?: string;
+  userName: string;
+  isDarkMode?: boolean;
+}
+
+export function WriteReviewPage({
+  business,
+  onBack,
+  onSubmit,
+  userAvatar,
+  userName,
+  isDarkMode = false,
+}: WriteReviewPageProps) {
+  const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [isBackButtonHovered, setIsBackButtonHovered] = useState(false);
+  const [isCancelButtonHovered, setIsCancelButtonHovered] = useState(false);
+  
+  // Color system for better contrast
+  const cardBg = isDarkMode ? '#2a2a2a' : '#ffffff';
+  const textColor = isDarkMode ? '#ffffff' : '#000000';
+  const userBoxBg = isDarkMode ? '#3a3a3a' : '#f9fafb';
+  const userBoxBorder = isDarkMode ? '#505050' : '#d1d5db';
+  const labelColor = isDarkMode ? '#ffffff' : '#111827';
+  const mutedColor = isDarkMode ? '#a3a3a3' : '#6b7280';
+
+  const handleSubmit = () => {
+    if (rating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+    if (comment.trim().length < 10) {
+      toast.error('Please write a review with at least 10 characters');
+      return;
+    }
+
+    onSubmit(rating, comment);
+    toast.success('Review submitted successfully!');
+    onBack();
+  };
+
+  const renderStars = () => {
+    return Array.from({ length: 5 }, (_, i) => {
+      const starValue = i + 1;
+      const isActive = starValue <= (hoveredRating || rating);
+      
+      return (
+        <button
+          key={i}
+          type="button"
+          className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#FFA1A3] rounded"
+          onClick={() => setRating(starValue)}
+          onMouseEnter={() => setHoveredRating(starValue)}
+          onMouseLeave={() => setHoveredRating(0)}
+        >
+          <Star
+            className={`w-10 h-10 ${
+              isActive
+                ? 'fill-yellow-400 text-yellow-400'
+                : isDarkMode 
+                ? 'text-gray-500' 
+                : 'text-gray-400'
+            }`}
+          />
+        </button>
+      );
+    });
+  };
+
+  const getRatingText = (value: number) => {
+    const labels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+    return labels[value];
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6 p-4">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          onMouseEnter={() => setIsBackButtonHovered(true)}
+          onMouseLeave={() => setIsBackButtonHovered(false)}
+          style={{
+            backgroundColor: isDarkMode 
+              ? (isBackButtonHovered ? 'rgba(255, 255, 255, 0.1)' : 'transparent')
+              : (isBackButtonHovered ? '#f3f4f6' : '#ffffff'),
+            borderColor: isDarkMode 
+              ? (isBackButtonHovered ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.4)')
+              : (isBackButtonHovered ? '#9ca3af' : '#d1d5db'),
+            color: isDarkMode ? '#ffffff' : '#111827',
+          }}
+          className="flex items-center gap-2 transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </Button>
+      </div>
+
+      {/* Business Info Card */}
+      <Card className="overflow-hidden border" style={{ backgroundColor: cardBg, borderColor: userBoxBorder }}>
+        <div className="flex gap-6 items-center p-6">
+          <ImageWithFallback
+            src={business.image}
+            alt={business.name}
+            className="w-48 h-48 object-cover rounded-xl"
+          />
+          <div className="flex-1 min-w-0">
+            <h2 className="text-3xl mb-2" style={{ color: textColor, fontWeight: 600 }}>
+              {business.name}
+            </h2>
+            <p className="text-md mb-1" style={{ color: mutedColor }}>
+              {business.category}
+            </p>
+            <p className="text-lg" style={{ color: mutedColor }}>
+              {business.address}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Review Form */}
+      <Card className="border" style={{ backgroundColor: cardBg, borderColor: userBoxBorder }}>
+        <CardHeader>
+          <CardTitle style={{ color: textColor, fontWeight: 600 }}>
+            Write Your Review
+          </CardTitle>
+          <CardDescription style={{ color: mutedColor }}>
+            Share your experience with others
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* User Info */}
+          <div
+            className="flex items-center gap-3 p-4 rounded-lg border"
+            style={{
+              backgroundColor: userBoxBg,
+              borderColor: userBoxBorder,
+            }}
+          >
+            <Avatar className="w-12 h-12">
+              <AvatarImage src={userAvatar} alt={userName} />
+              <AvatarFallback className="bg-[#FFA1A3] text-white">
+                {userName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm" style={{ color: mutedColor }}>
+                Posting as
+              </p>
+              <p style={{ color: textColor, fontWeight: 500 }}>
+                {userName}
+              </p>
+            </div>
+          </div>
+
+          {/* Rating Selection */}
+          <div className="space-y-3">
+            <Label htmlFor="rating" style={{ color: labelColor, fontWeight: 500 }}>
+              Your Rating *
+            </Label>
+            <div className="flex items-center gap-2">
+              {renderStars()}
+            </div>
+            {rating > 0 && (
+              <p className="text-[#FFA1A3] transition-all" style={{ fontWeight: 500 }}>
+                {getRatingText(rating)}
+              </p>
+            )}
+          </div>
+
+          {/* Review Comment */}
+          <div className="space-y-3">
+            <Label htmlFor="comment" style={{ color: labelColor, fontWeight: 500 }}>
+              Your Review *
+            </Label>
+            <Textarea
+              id="comment"
+              placeholder="Tell us about your experience... (minimum 10 characters)"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className={`min-h-[150px] focus:border-[#FFA1A3] focus:ring-[#FFA1A3] ${
+                isDarkMode
+                  ? 'bg-[#3a3a3a] border-white/30 text-white placeholder:text-gray-500'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'
+              }`}
+            />
+            <p className="text-sm" style={{ color: mutedColor }}>
+              {comment.length} characters
+            </p>
+          </div>
+
+          {/* Guidelines */}
+          <div
+            className="p-4 rounded-lg border"
+            style={{
+              backgroundColor: userBoxBg,
+              borderColor: userBoxBorder,
+            }}
+          >
+            <h4 className="text-sm mb-2" style={{ color: labelColor, fontWeight: 500 }}>
+              Review Guidelines
+            </h4>
+            <ul className="text-xs space-y-1" style={{ color: mutedColor }}>
+              <li>• Be honest and constructive</li>
+              <li>• Focus on your personal experience</li>
+              <li>• Avoid inappropriate language</li>
+              <li>• Respect privacy of others</li>
+            </ul>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex gap-3">
+            <Button
+              onClick={handleSubmit}
+              className="flex-1 bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white"
+              disabled={rating === 0 || comment.trim().length < 10}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Submit Review
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onBack}
+              onMouseEnter={() => setIsCancelButtonHovered(true)}
+              onMouseLeave={() => setIsCancelButtonHovered(false)}
+              style={{
+                backgroundColor: isDarkMode 
+                  ? (isCancelButtonHovered ? 'rgba(255, 255, 255, 0.1)' : 'transparent')
+                  : (isCancelButtonHovered ? '#f3f4f6' : '#ffffff'),
+                borderColor: isDarkMode 
+                  ? (isCancelButtonHovered ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.4)')
+                  : (isCancelButtonHovered ? '#9ca3af' : '#d1d5db'),
+                color: isDarkMode ? '#ffffff' : '#111827',
+              }}
+              className="transition-all"
+            >
+              Cancel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
