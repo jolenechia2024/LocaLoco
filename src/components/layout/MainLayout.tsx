@@ -3,7 +3,10 @@ import { AppSidebar } from '../AppSidebar';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useUser } from '../../hooks/useUser';
+import { Toaster } from 'sonner';
 import { ROUTES } from '../../constants/routes';
+import { User } from '../../types/auth'; // ✅ Add this import
+
 
 export const MainLayout = () => {
   const { logout, userId } = useAuth();
@@ -26,12 +29,13 @@ export const MainLayout = () => {
     return 'list';
   };
 
+// MainLayout.tsx
   const handleNavigate = (view: string) => {
     const routeMap: Record<string, string> = {
       map: ROUTES.MAP,
       list: ROUTES.BUSINESSES,
       bookmarks: ROUTES.BOOKMARKS,
-      profile: ROUTES.PROFILE,
+      profile: user?.role === 'business' ? ROUTES.BUSINESS_PROFILE : ROUTES.PROFILE, // ✅ Add this check
       forum: ROUTES.FORUM,
       notifications: ROUTES.NOTIFICATIONS,
       settings: ROUTES.SETTINGS,
@@ -42,6 +46,7 @@ export const MainLayout = () => {
       navigate(routeMap[view]);
     }
   };
+
 
   if (!user) {
     return (
@@ -67,6 +72,7 @@ export const MainLayout = () => {
       <div className="ml-20">
         <Outlet context={{ user, stats, updateUser }} />
       </div>
+
     </>
   );
 };

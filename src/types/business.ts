@@ -35,6 +35,11 @@ export interface Business {
     };
   };
 
+  // Add direct lat/lng properties
+  lat?: number;
+  lng?: number;
+
+  // Keep coordinates for backward compatibility
   coordinates?: {
     lat: number;
     lng: number;

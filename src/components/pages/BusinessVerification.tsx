@@ -13,13 +13,16 @@ import {
   SelectValue,
 } from '../ui/select';
 
+
 interface BusinessVerificationProps {
   onSubmit: (data: BusinessVerificationData) => void;
   onSkip: () => void;
 }
 
+
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const PAYMENT_OPTIONS = ['Cash', 'Credit Card', 'Debit Card', 'PayNow', 'GrabPay', 'PayLah'];
+
 
 export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationProps) {
   const [formData, setFormData] = useState<BusinessVerificationData>({
@@ -35,6 +38,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
     paymentOptions: [],
   });
 
+
   const handleDayToggle = (day: string) => {
     setFormData(prev => ({
       ...prev,
@@ -44,6 +48,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
     }));
   };
 
+
   const handlePaymentToggle = (payment: string) => {
     setFormData(prev => ({
       ...prev,
@@ -52,6 +57,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
         : [...prev.paymentOptions, payment]
     }));
   };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
@@ -61,6 +67,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
     // Append all fields
     formDataToSend.append('mode', 'signup');
     formDataToSend.append('role', 'business');
+
 
     formDataToSend.append('operatingDays', JSON.stringify(formData.operatingDays));
     formDataToSend.append('businessEmail', formData.businessEmail);
@@ -90,10 +97,12 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
         alert('Submission failed: ' + (result.errors || 'Unknown error'));
       }
     } catch (error) {
-      alert('Error submitting verification: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert('Error submitting verification: ' + errorMessage);
     }
   };
   
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -114,6 +123,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
         </div>
       </header>
 
+
       {/* Verification Form */}
       <div className="max-w-3xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg p-8">
@@ -123,6 +133,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               Complete your business profile to get verified and start reaching customers
             </p>
           </div>
+
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Operating Days */}
@@ -147,6 +158,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               </div>
             </div>
 
+
             {/* Business Email */}
             <div className="space-y-2">
               <Label htmlFor="businessEmail">Business Email</Label>
@@ -160,6 +172,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 className="bg-input-background"
               />
             </div>
+
 
             {/* Phone Number */}
             <div className="space-y-2">
@@ -175,6 +188,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               />
             </div>
 
+
             {/* Website Link */}
             <div className="space-y-2">
               <Label htmlFor="website">Website Link (https://)</Label>
@@ -188,6 +202,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               />
             </div>
 
+
             {/* Social Media Link */}
             <div className="space-y-2">
               <Label htmlFor="socialMedia">Social Media Link</Label>
@@ -200,6 +215,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 className="bg-input-background"
               />
             </div>
+
 
             {/* Business Wallpaper */}
             <div className="space-y-2">
@@ -224,12 +240,13 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               </div>
             </div>
 
+
             {/* Price Tier */}
             <div className="space-y-2">
               <Label htmlFor="priceTier">Price Tier</Label>
               <Select 
                 value={formData.priceTier} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, priceTier: value as any }))}
+                onValueChange={(value: string) => setFormData(prev => ({ ...prev, priceTier: value }))}
               >
                 <SelectTrigger className="bg-input-background">
                   <SelectValue placeholder="Select price tier" />
@@ -243,14 +260,15 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               </Select>
             </div>
 
+
             {/* Delivery & Pickup */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="delivery"
                   checked={formData.offersDelivery}
-                  onCheckedChange={(checked) => 
-                    setFormData(prev => ({ ...prev, offersDelivery: checked as boolean }))
+                  onCheckedChange={(checked: boolean) => 
+                    setFormData(prev => ({ ...prev, offersDelivery: checked }))
                   }
                 />
                 <label htmlFor="delivery" className="cursor-pointer">
@@ -261,8 +279,8 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 <Checkbox
                   id="pickup"
                   checked={formData.offersPickup}
-                  onCheckedChange={(checked) => 
-                    setFormData(prev => ({ ...prev, offersPickup: checked as boolean }))
+                  onCheckedChange={(checked: boolean) => 
+                    setFormData(prev => ({ ...prev, offersPickup: checked }))
                   }
                 />
                 <label htmlFor="pickup" className="cursor-pointer">
@@ -270,6 +288,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 </label>
               </div>
             </div>
+
 
             {/* Payment Options */}
             <div className="space-y-4">
@@ -292,6 +311,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 ))}
               </div>
             </div>
+
 
             {/* Buttons */}
             <div className="flex gap-4 pt-4">

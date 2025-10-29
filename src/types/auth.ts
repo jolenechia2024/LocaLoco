@@ -1,9 +1,27 @@
+// src/types/auth.ts
+
 export type UserRole = 'user' | 'business';
+
+import { BusinessOwner } from '../data/mockBusinessOwnerData';
+
+export type UserProfile = User | BusinessOwner;
 
 export interface AuthState {
   isAuthenticated: boolean;
   role: UserRole | null;
   userId: string | null;
+}
+
+// ✅ Add this User interface
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
+  role: UserRole; // This is the property that was missing!
+  // Add any other user properties you need
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SignupData {

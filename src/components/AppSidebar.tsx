@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuthStore } from '../store/authStore'; // ✅ Add this
 import { 
   Home, 
   Box, 
@@ -51,6 +52,7 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const role = useAuthStore((state) => state.role); // ✅ Get user role
   
   const bgColor = isDarkMode ? '#3a3a3a' : '#ffffff';
   const textColor = isDarkMode ? 'text-white' : 'text-black';
@@ -59,13 +61,22 @@ export function AppSidebar({
   const hoverBgColor = isDarkMode ? 'hover:bg-[#404040]' : 'hover:bg-gray-100';
   const avatarBgColor = isDarkMode ? 'bg-gray-600' : 'bg-gray-300';
 
-  const mainMenuItems = [
+  // ✅ Define all menu items
+  const allMenuItems = [
     { icon: Home, label: 'Home', view: 'map' as const },
     { icon: Box, label: 'Explore', view: 'list' as const },
     { icon: Bookmark, label: 'Bookmarks', view: 'bookmarks' as const },
-    { icon: Ticket, label: 'Vouchers', view: 'vouchers' as const },
+    { icon: Ticket, label: 'Vouchers', view: 'vouchers' as const, userOnly: true }, // ✅ Add userOnly flag
     { icon: Layers, label: 'Forum', view: 'forum' as const },
   ];
+
+  // ✅ Filter menu items based on role
+  const mainMenuItems = allMenuItems.filter(item => {
+    if (item.userOnly && role !== 'user') {
+      return false; // Hide vouchers for business users
+    }
+    return true;
+  });
 
   const bottomMenuItems = [
     { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: true },
@@ -205,7 +216,7 @@ export function AppSidebar({
               <DropdownMenuTrigger asChild>
                 <button 
                   className={`p-1 ${hoverBgColor} rounded transition-colors`}
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     setIsDropdownOpen(!isDropdownOpen);
                   }}
@@ -224,12 +235,12 @@ export function AppSidebar({
                     borderColor: isDarkMode ? '#404040' : '#e5e7eb',
                     zIndex: 9999
                   }}
-                  onCloseAutoFocus={(e) => e.preventDefault()}
+                  onCloseAutoFocus={(e: Event) => e.preventDefault()}
                 >
                   <DropdownMenuLabel className={textColor}>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator style={{ backgroundColor: isDarkMode ? '#404040' : '#e5e7eb' }} />
                   <DropdownMenuItem 
-                    onClick={(e) => {
+                    onClick={(e: Event) => {
                       e.preventDefault();
                       setIsDropdownOpen(false);
                       handleMenuClick('profile');
@@ -240,7 +251,7 @@ export function AppSidebar({
                     <span>View Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={(e) => {
+                    onClick={(e: Event) => {
                       e.preventDefault();
                       setIsDropdownOpen(false);
                       onLogout();
