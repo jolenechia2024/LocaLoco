@@ -6,6 +6,7 @@ import { BusinessOwner, MOCK_BUSINESS_OWNERS } from '../data/mockBusinessOwnerDa
 const MOCK_USERS: Record<string, User> = {
   'user-1': {
     id: 'user-1',
+    role: 'user',
     name: 'John Tan',
     email: 'john.tan@email.com',
     memberSince: '2024-01-15',
@@ -19,7 +20,7 @@ const MOCK_STATS: Record<string, UserStats> = {
   'user-1': {
     vouchersCount: 5,
     reviewsCount: 12,
-    loyaltyPoints: 350,
+    loyaltyPoints: 3500,
   },
   'business-1': {
     vouchersCount: 0,

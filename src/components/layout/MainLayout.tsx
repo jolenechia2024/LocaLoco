@@ -3,10 +3,7 @@ import { AppSidebar } from '../AppSidebar';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useUser } from '../../hooks/useUser';
-import { Toaster } from 'sonner';
 import { ROUTES } from '../../constants/routes';
-import { User } from '../../types/auth'; // ✅ Add this import
-
 
 export const MainLayout = () => {
   const { logout, userId } = useAuth();
@@ -29,13 +26,12 @@ export const MainLayout = () => {
     return 'list';
   };
 
-// MainLayout.tsx
   const handleNavigate = (view: string) => {
     const routeMap: Record<string, string> = {
       map: ROUTES.MAP,
       list: ROUTES.BUSINESSES,
       bookmarks: ROUTES.BOOKMARKS,
-      profile: user?.role === 'business' ? ROUTES.BUSINESS_PROFILE : ROUTES.PROFILE, // ✅ Add this check
+      profile: user && 'businessName' in user ? ROUTES.BUSINESS_PROFILE : ROUTES.PROFILE, // ✅ Check if BusinessOwner
       forum: ROUTES.FORUM,
       notifications: ROUTES.NOTIFICATIONS,
       settings: ROUTES.SETTINGS,
@@ -47,7 +43,6 @@ export const MainLayout = () => {
     }
   };
 
-
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center" 
@@ -57,15 +52,36 @@ export const MainLayout = () => {
     );
   }
 
+  // ✅ Helper function to safely get user info
+  const getUserInfo = () => {
+    if ('businessName' in user) {
+      // It's a BusinessOwner
+      return {
+        name: user.businessName,
+        email: user.businessEmail || user.email,
+        avatarUrl: user.wallpaper,
+      };
+    } else {
+      // It's a regular User
+      return {
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+      };
+    }
+  };
+
+  const userInfo = getUserInfo();
+
   return (
     <>
       <AppSidebar
         onNavigate={handleNavigate}
         onLogout={logout}
         currentView={getCurrentView()}
-        userName={user.name}
-        userEmail={user.email}
-        avatarUrl={user.avatarUrl}
+        userName={userInfo.name} // ✅ Use helper
+        userEmail={userInfo.email} // ✅ Use helper
+        avatarUrl={userInfo.avatarUrl} // ✅ Use helper
         isDarkMode={isDarkMode}
         onThemeToggle={toggleTheme}
       />

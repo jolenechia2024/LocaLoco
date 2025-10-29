@@ -16,7 +16,7 @@ export function ProfilePageDisplay() {
   const navigate = useNavigate();
   const { userId, role } = useAuth(); // ✅ Get role from useAuth
   const { isDarkMode } = useTheme();
-  const setCurrentPoints = useUserPointsStore(state => state.setCurrentPoints);
+  const { setPoints } = useUserPointsStore(); // ✅ Correct
   const [bookmarkedBusinesses] = useState<Business[]>(MOCK_BOOKMARKED_BUSINESSES);
 
   // Call useUser hook unconditionally
@@ -38,9 +38,9 @@ export function ProfilePageDisplay() {
   // Sync loyalty points with user points store
   useEffect(() => {
     if (stats?.loyaltyPoints !== undefined) {
-      setCurrentPoints(stats.loyaltyPoints);
+      setPoints(stats.loyaltyPoints); // ✅ Correct
     }
-  }, [stats?.loyaltyPoints, setCurrentPoints]);
+  }, [stats?.loyaltyPoints, setPoints]);
 
   // Navigation handlers
   const handleBack = () => navigate(ROUTES.BUSINESSES);

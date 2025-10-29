@@ -1,8 +1,9 @@
-import { betterAuth, boolean } from "better-auth";
+// backend/lib/auth.ts (or wherever your auth.ts is)
+import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import db from "../database/db.js";
 import { user, session, account, verification } from "../database/schema.js";
-import dotenv from 'dotenv'
+import dotenv from 'dotenv';
 
 const auth = betterAuth({
     database: drizzleAdapter(db, {
@@ -11,17 +12,30 @@ const auth = betterAuth({
     }),
     user: {
         additionalFields: {
+            role: { // ✅ Add role field
+                type: "string",
+                input: true, // Allow input during signup
+                defaultValue: "user"
+            },
             hasBusiness: {
                 type: "boolean",
                 input: false
+            },
+            firstName: { // ✅ Add firstName
+                type: "string",
+                input: true
+            },
+            lastName: { // ✅ Add lastName
+                type: "string",
+                input: true
             },
             referralCode: {
                 type: 'string',
                 input: false
             },
             referredByUserID: {
-                type:'string',
-                input:false
+                type: 'string',
+                input: false
             }
         }
     },
@@ -30,8 +44,9 @@ const auth = betterAuth({
         autoSignIn: true
     }, 
     trustedOrigins: [
-        "http://localhost:3000", // backend
-        "http://localhost:4000"  // frontend
+        "http://localhost:3000",
+        "http://localhost:4000",
+        "http://localhost:5173" // ✅ Add Vite dev server
     ],
     socialProviders: { 
         google: { 
@@ -42,4 +57,4 @@ const auth = betterAuth({
     }
 });
 
-export default auth
+export default auth;

@@ -58,7 +58,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // resolve and serve compiled frontend directory
-const frontendPath = path.resolve(__dirname, '../../frontend2/dist');
+const frontendPath = path.resolve(__dirname, '../../src/dist');
 app.use(express.static(frontendPath));
 
 // resolve and serve the uploads directory 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Store } from 'lucide-react';
 import { UserRole } from '../../types/auth';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -12,28 +13,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { useThemeStore } from '../../store/themeStore';
+import { toast } from 'sonner';
 
 interface SignupPageProps {
   onSignup: (data: any, role: UserRole) => void;
   onBack: () => void;
-  isDarkMode?: boolean;
 }
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const PAYMENT_OPTIONS = ['Cash', 'Credit/Debit Card', 'PayNow', 'Digital Wallets (Apple/Google/Samsung/GrabPay)'];
 
-export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPageProps) {
+export function SignupPage({ onSignup, onBack }: SignupPageProps) {
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const navigate = useNavigate();
   const [role, setRole] = useState<UserRole>('user');
-  const headerBgColor = isDarkMode ? '#3a3a3a' : '#ffffff';
-  const headerTextColor = isDarkMode ? '#ffffff' : '#000000';
+  const [isLoading, setIsLoading] = useState(false);
+  
   const [formData, setFormData] = useState({
-    // User fields
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    // Business-specific fields
     businessName: '',
     address: '',
     phone: '',
@@ -48,15 +50,88 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
     paymentOptions: [] as string[],
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleBack = () => {
+    console.log('Back button clicked');
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      toast.error('Passwords do not match!');
       return;
     }
 
-    onSignup(formData, role);
+    setIsLoading(true);
+
+    try {
+      let payload;
+      let options;
+  
+      if (role === 'business') {
+        payload = new FormData();
+  
+        payload.append('businessName', formData.businessName);
+        payload.append('address', formData.address);
+        payload.append('phone', formData.phone);
+        payload.append('businessEmail', formData.businessEmail);
+        payload.append('website', formData.website);
+        payload.append('socialMedia', formData.socialMedia);
+        payload.append('priceTier', formData.priceTier);
+        payload.append('password', formData.password);
+        payload.append('offersDelivery', String(formData.offersDelivery));
+        payload.append('offersPickup', String(formData.offersPickup));
+        payload.append('operatingDays', JSON.stringify(formData.operatingDays));
+        payload.append('paymentOptions', JSON.stringify(formData.paymentOptions));
+        
+        if (formData.wallpaper) {
+          payload.append('wallpaper', formData.wallpaper);
+        }
+        
+        payload.append('role', role);
+        payload.append('mode', 'signup');
+  
+        options = { 
+          method: 'POST', 
+          body: payload 
+        };
+      } else {
+        payload = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          role,
+          mode: 'signup'
+        };
+        
+        options = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        };
+      }
+  
+      const response = await fetch('http://localhost:3000/api/auth/signup', options);
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Signup successful!');
+        onSignup(formData, role);
+      } else {
+        toast.error('Signup failed: ' + (result.message || 'Unknown error'));
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error('Error signing up: ' + errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: any) => {
@@ -81,59 +156,8 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
     }));
   };
 
-  const handleSignup = async (data: any, role: UserRole) => {
-    // Prepare FormData if business, else JSON
-    let payload;
-    let options;
-  
-    if (role === 'business') {
-      payload = new FormData();
-  
-      // Append business fields from data
-      for (const [key, value] of Object.entries(data)) {
-        if (key === 'wallpaper' && value) {
-          payload.append(key, value as File);
-        } else if (Array.isArray(value)) {
-          payload.append(key, JSON.stringify(value));
-        } else {
-          payload.append(key, value as string);
-        }
-      }
-      payload.append('role', role);
-      payload.append('mode', 'signup');
-  
-      options = { method: 'POST', body: payload };
-    } else {
-      payload = {
-        ...data,
-        role,
-        mode: 'signup'
-      };
-      options = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      };
-    }
-  
-    try {
-      const response = await fetch('http://localhost/final%20proj/IS216_WAD2_Grp3/backend/utils/processLogin.php', options);
-      const result = await response.json();
-      if (result.success) {
-        alert('Signup successful!');
-        // Redirect or UI update
-      } else {
-        alert('Signup failed: ' + (result.errors || 'Unknown error'));
-      }
-    } catch (error) {
-      alert('Error signing up: ' + error.message);
-    }
-  };
-
-  
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50 relative">
-      {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -145,7 +169,6 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
         </svg>
       </div>
 
-      {/* Header */}
       <header className="text-white shadow-md relative z-10" style={{ backgroundColor: '#3a3a3a' }}>
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
@@ -162,7 +185,6 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
         </div>
       </header>
 
-      {/* Signup Form */}
       <div className="flex items-center justify-center min-h-[calc(100vh-100px)] p-4 relative z-10">
         <div className="w-full max-w-2xl">
           <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8 space-y-6">
@@ -170,7 +192,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
 
             <div className="space-y-2">
               <Label htmlFor="role">Account Type</Label>
-              <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
+              <Select value={role} onValueChange={(value: string) => setRole(value as UserRole)}>
                 <SelectTrigger className="bg-primary/80 text-white border-0">
                   <SelectValue />
                 </SelectTrigger>
@@ -182,7 +204,6 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
             </div>
 
             {role === 'user' ? (
-              // User Signup Form
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -192,7 +213,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                       type="text"
                       placeholder="First Name"
                       value={formData.firstName}
-                      onChange={(e) => handleChange('firstName', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('firstName', e.target.value)}
                       required
                       className="bg-input-background"
                     />
@@ -205,7 +226,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                       type="text"
                       placeholder="Last Name"
                       value={formData.lastName}
-                      onChange={(e) => handleChange('lastName', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('lastName', e.target.value)}
                       required
                       className="bg-input-background"
                     />
@@ -219,7 +240,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="email"
                     placeholder="Enter your email"
                     value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('email', e.target.value)}
                     required
                     className="bg-input-background"
                   />
@@ -232,7 +253,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="password"
                     placeholder="Create password"
                     value={formData.password}
-                    onChange={(e) => handleChange('password', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('password', e.target.value)}
                     required
                     className="bg-input-background"
                   />
@@ -245,14 +266,13 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="password"
                     placeholder="Re-enter password"
                     value={formData.confirmPassword}
-                    onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('confirmPassword', e.target.value)}
                     required
                     className="bg-input-background"
                   />
                 </div>
               </>
             ) : (
-              // Business Signup Form
               <>
                 <div className="space-y-2">
                   <Label htmlFor="businessName">Business Name</Label>
@@ -261,7 +281,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="text"
                     placeholder="Business Name"
                     value={formData.businessName}
-                    onChange={(e) => handleChange('businessName', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('businessName', e.target.value)}
                     required
                     className="bg-input-background"
                   />
@@ -274,13 +294,12 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="text"
                     placeholder="Business Address"
                     value={formData.address}
-                    onChange={(e) => handleChange('address', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('address', e.target.value)}
                     required
                     className="bg-input-background"
                   />
                 </div>
 
-                {/* Operating Days */}
                 <div className="space-y-4">
                   <Label>Which days of the week is your business open?</Label>
                   <div className="grid grid-cols-2 gap-4">
@@ -291,10 +310,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                           checked={formData.operatingDays.includes(day)}
                           onCheckedChange={() => handleDayToggle(day)}
                         />
-                        <label
-                          htmlFor={day}
-                          className="text-sm cursor-pointer"
-                        >
+                        <label htmlFor={day} className="text-sm cursor-pointer">
                           {day}
                         </label>
                       </div>
@@ -309,7 +325,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="email"
                     placeholder="Business Email"
                     value={formData.businessEmail}
-                    onChange={(e) => handleChange('businessEmail', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('businessEmail', e.target.value)}
                     required
                     className="bg-input-background"
                   />
@@ -322,7 +338,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="tel"
                     placeholder="Phone Number"
                     value={formData.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('phone', e.target.value)}
                     required
                     className="bg-input-background"
                   />
@@ -335,7 +351,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="url"
                     placeholder="Website Link (https://)"
                     value={formData.website}
-                    onChange={(e) => handleChange('website', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('website', e.target.value)}
                     className="bg-input-background"
                   />
                 </div>
@@ -347,26 +363,22 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="url"
                     placeholder="Social Media Link"
                     value={formData.socialMedia}
-                    onChange={(e) => handleChange('socialMedia', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('socialMedia', e.target.value)}
                     className="bg-input-background"
                   />
                 </div>
 
-                {/* Business Wallpaper */}
                 <div className="space-y-2">
                   <Label htmlFor="wallpaper">Business Wallpaper</Label>
                   <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="wallpaper"
-                      className="cursor-pointer px-4 py-2 bg-muted rounded-md hover:bg-muted/80 transition-colors"
-                    >
+                    <label htmlFor="wallpaper" className="cursor-pointer px-4 py-2 bg-muted rounded-md hover:bg-muted/80 transition-colors">
                       Choose File
                     </label>
                     <Input
                       id="wallpaper"
                       type="file"
                       accept="image/*"
-                      onChange={(e) => handleChange('wallpaper', e.target.files?.[0] || null)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('wallpaper', e.target.files?.[0] || null)}
                       className="hidden"
                     />
                     <span className="text-sm text-muted-foreground">
@@ -375,13 +387,9 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                   </div>
                 </div>
 
-                {/* Price Tier */}
                 <div className="space-y-2">
                   <Label htmlFor="priceTier">Price Tier</Label>
-                  <Select 
-                    value={formData.priceTier} 
-                    onValueChange={(value) => handleChange('priceTier', value)}
-                  >
+                  <Select value={formData.priceTier} onValueChange={(value: string) => handleChange('priceTier', value)}>
                     <SelectTrigger className="bg-input-background">
                       <SelectValue placeholder="Select price tier" />
                     </SelectTrigger>
@@ -394,13 +402,12 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                   </Select>
                 </div>
 
-                {/* Delivery & Pickup */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="delivery"
                       checked={formData.offersDelivery}
-                      onCheckedChange={(checked) => handleChange('offersDelivery', checked as boolean)}
+                      onCheckedChange={(checked: boolean) => handleChange('offersDelivery', checked)}
                     />
                     <label htmlFor="delivery" className="cursor-pointer">
                       Offers Delivery
@@ -410,7 +417,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     <Checkbox
                       id="pickup"
                       checked={formData.offersPickup}
-                      onCheckedChange={(checked) => handleChange('offersPickup', checked as boolean)}
+                      onCheckedChange={(checked: boolean) => handleChange('offersPickup', checked)}
                     />
                     <label htmlFor="pickup" className="cursor-pointer">
                       Offers Pickup
@@ -418,7 +425,6 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                   </div>
                 </div>
 
-                {/* Payment Options */}
                 <div className="space-y-4">
                   <Label>Payment Options</Label>
                   <div className="bg-input-background rounded-md p-4">
@@ -430,10 +436,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                             checked={formData.paymentOptions.includes(payment)}
                             onCheckedChange={() => handlePaymentToggle(payment)}
                           />
-                          <label
-                            htmlFor={payment}
-                            className="text-sm cursor-pointer"
-                          >
+                          <label htmlFor={payment} className="text-sm cursor-pointer">
                             {payment}
                           </label>
                         </div>
@@ -452,7 +455,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="password"
                     placeholder="Password"
                     value={formData.password}
-                    onChange={(e) => handleChange('password', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('password', e.target.value)}
                     required
                     className="bg-input-background"
                   />
@@ -465,7 +468,7 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
                     type="password"
                     placeholder="Confirm Password"
                     value={formData.confirmPassword}
-                    onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('confirmPassword', e.target.value)}
                     required
                     className="bg-input-background"
                   />
@@ -476,15 +479,16 @@ export function SignupPage({ onSignup, onBack, isDarkMode = true }: SignupPagePr
             <Button 
               type="submit" 
               className="w-full bg-green-600 hover:bg-green-700 text-white"
+              disabled={isLoading}
             >
-              Sign Up
+              {isLoading ? 'Creating Account...' : 'Sign Up'}
             </Button>
 
             <div className="text-center pt-4">
               <button
                 type="button"
-                className="text-sm text-muted-foreground hover:text-foreground"
-                onClick={onBack}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                onClick={handleBack}
               >
                 Back to welcome screen
               </button>
