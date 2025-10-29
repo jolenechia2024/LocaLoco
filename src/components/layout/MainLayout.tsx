@@ -1,19 +1,25 @@
-// components/layout/MainLayout.tsx
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AppSidebar } from '../AppSidebar';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { useUser } from '../../hooks/useUser';
 import { ROUTES } from '../../constants/routes';
-import { mockUser } from '../../data/mockUserData';
-import { mockBusinessOwner } from '../../data/mockBusinessOwnerData';
+import { useMemo } from 'react';
 
 export const MainLayout = () => {
-  const { role, logout } = useAuth();
+  const { logout, userId } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Determine current view from pathname
+  const { user, stats, updateUser } = useUser(userId || null);
+
+  // Create stable key BEFORE any conditional returns
+  const userKey = useMemo(
+    () => user ? `${user.name}-${user.email}-${user.avatarUrl || 'default'}` : 'no-user',
+    [user?.name, user?.email, user?.avatarUrl]
+  );
+
   const getCurrentView = () => {
     const path = location.pathname;
     if (path === ROUTES.MAP) return 'map';
@@ -37,32 +43,40 @@ export const MainLayout = () => {
       notifications: ROUTES.NOTIFICATIONS,
       settings: ROUTES.SETTINGS,
       vouchers: ROUTES.VOUCHERS,
-      filters: ROUTES.BUSINESSES, // Stay on businesses page
+      filters: ROUTES.BUSINESSES,
     };
-    
     if (routeMap[view]) {
       navigate(routeMap[view]);
     }
   };
 
-  // Get user data based on role
-  const userData = role === 'business' 
-    ? { name: mockBusinessOwner.businessName, email: mockBusinessOwner.businessEmail }
-    : { name: mockUser.name, email: mockUser.email };
+  // NOW it's safe to do conditional return
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" 
+           style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f9fafb' }}>
+        <div style={{ color: isDarkMode ? '#fff' : '#000' }}>Loading user data...</div>
+      </div>
+    );
+  }
+
+  console.log('MainLayout rendering with userKey:', userKey);
 
   return (
     <>
       <AppSidebar
+        key={userKey}
         onNavigate={handleNavigate}
         onLogout={logout}
         currentView={getCurrentView()}
-        userName={userData.name}
-        userEmail={userData.email}
+        userName={user.name}
+        userEmail={user.email}
+        avatarUrl={user.avatarUrl}
         isDarkMode={isDarkMode}
         onThemeToggle={toggleTheme}
       />
       <div className="ml-20">
-        <Outlet />
+        <Outlet context={{ user, stats, updateUser }} />
       </div>
     </>
   );

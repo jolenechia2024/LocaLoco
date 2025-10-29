@@ -31,7 +31,7 @@ const auth = betterAuth({
     }, 
     trustedOrigins: [
         "http://localhost:3000", // backend
-        "http://localhost:5173"  // frontend
+        "http://localhost:4000"  // frontend
     ],
     socialProviders: { 
         google: { 

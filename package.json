@@ -68,8 +68,9 @@
     },
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build": "tsc && vite build",
         "start": "concurrently \"cd backend && npm start\" \"tsc && vite build && vite\"",
+        "start:v2": "cd frontend2 && npm run build && cd ../backend && npm start",
         "setup":"npm install && cd backend && npm run db:push && cd ../ && npm start",
         "db:setup": "cd backend && npm run db:push"
     },

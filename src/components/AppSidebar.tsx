@@ -3,12 +3,10 @@ import {
   Home, 
   Box, 
   Layers, 
-  SlidersHorizontal, 
   Bell, 
   Moon,
   Sun,
   Settings,
-  Search,
   MoreVertical,
   Store,
   Bookmark,
@@ -26,7 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import logoImage from 'figma:asset/59f9fbf862ba25c1bf01851020235d3621866be1.png';
 
 interface AppSidebarProps {
   onNavigate: (view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers') => void;
@@ -34,6 +31,7 @@ interface AppSidebarProps {
   currentView?: string;
   userName?: string;
   userEmail?: string;
+  avatarUrl?: string;
   notificationCount?: number;
   isDarkMode?: boolean;
   onThemeToggle?: () => void;
@@ -45,6 +43,7 @@ export function AppSidebar({
   currentView,
   userName = "Brooklyn Simmons",
   userEmail = "brooklyn@simmons.com",
+  avatarUrl,
   notificationCount = 12,
   isDarkMode = true,
   onThemeToggle
@@ -73,7 +72,10 @@ export function AppSidebar({
     { icon: Settings, label: 'Settings', view: 'settings' as const },
   ];
 
-  const handleMenuClick = (view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | null, isThemeToggle?: boolean) => {
+  const handleMenuClick = (
+    view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | null, 
+    isThemeToggle?: boolean
+  ) => {
     if (isThemeToggle && onThemeToggle) {
       onThemeToggle();
     } else if (view) {
@@ -176,9 +178,13 @@ export function AppSidebar({
           >
             <div className="relative flex-shrink-0">
               <Avatar className="w-10 h-10">
-                <AvatarFallback className={`${avatarBgColor} ${textColor}`}>
-                  {getInitials(userName)}
-                </AvatarFallback>
+                {avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt={userName} />
+                ) : (
+                  <AvatarFallback className={`${avatarBgColor} ${textColor}`}>
+                    {getInitials(userName)}
+                  </AvatarFallback>
+                )}
               </Avatar>
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2" style={{ borderColor: bgColor }}></div>
             </div>
@@ -198,7 +204,7 @@ export function AppSidebar({
               <DropdownMenuTrigger asChild>
                 <button 
                   className={`p-1 ${hoverBgColor} rounded transition-colors`}
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                     e.stopPropagation();
                     setIsDropdownOpen(!isDropdownOpen);
                   }}
@@ -215,12 +221,12 @@ export function AppSidebar({
                   backgroundColor: bgColor,
                   borderColor: isDarkMode ? '#404040' : '#e5e7eb'
                 }}
-                onCloseAutoFocus={(e) => e.preventDefault()}
+                onCloseAutoFocus={(e: Event) => e.preventDefault()}
               >
                 <DropdownMenuLabel className={textColor}>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator style={{ backgroundColor: isDarkMode ? '#404040' : '#e5e7eb' }} />
                 <DropdownMenuItem 
-                  onClick={(e) => {
+                  onClick={(e: Event) => {
                     e.preventDefault();
                     setIsDropdownOpen(false);
                     handleMenuClick('profile');
@@ -231,7 +237,7 @@ export function AppSidebar({
                   <span>View Profile</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={(e) => {
+                  onClick={(e: Event) => {
                     e.preventDefault();
                     setIsDropdownOpen(false);
                     onLogout();

@@ -1,4 +1,3 @@
-// src/components/ProfilePageWrap.tsx
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useUser } from '../hooks/useUser';
@@ -6,61 +5,43 @@ import { useTheme } from '../hooks/useTheme';
 import { ProfilePage } from './pages/ProfilePage';
 import { ROUTES } from '../constants/routes';
 import { Business } from '../types/business';
-import { useState } from 'react';
-import { useUserPointsStore } from '../store/userPointsStore';
-import * as React from 'react';
-
-
+import { useState, useEffect } from 'react';
+import { useUserPointsStore } from '../store/userStore';
 
 const MOCK_BOOKMARKED_BUSINESSES: Business[] = [];
 
 export function ProfilePageDisplay() {
-  
   const navigate = useNavigate();
   const { userId } = useAuth();
-  console.log('userId:', userId);
+  const { isDarkMode } = useTheme();
+  const setCurrentPoints = useUserPointsStore(state => state.setCurrentPoints);
+  const [bookmarkedBusinesses] = useState<Business[]>(MOCK_BOOKMARKED_BUSINESSES);
 
+  // Call useUser hook unconditionally (pass null if userId doesn't exist)
   const { user, stats, updateUser } = useUser(userId);
 
-  const currentPoints = useUserPointsStore(state => state.currentPoints);
-  const setCurrentPoints = useUserPointsStore(state => state.setCurrentPoints);
-  
-  React.useEffect(() => {
+  // Sync loyalty points with user points store
+  useEffect(() => {
     if (stats?.loyaltyPoints !== undefined) {
-      console.log('Updating currentPoints in store:', stats.loyaltyPoints);
       setCurrentPoints(stats.loyaltyPoints);
     }
   }, [stats?.loyaltyPoints, setCurrentPoints]);
 
+  // Navigation handlers
+  const handleBack = () => navigate(ROUTES.BUSINESSES);
+  const handleViewBusinessDetails = (business: Business) => navigate(`${ROUTES.BUSINESSES}/${business.id}`);
+  const handleBookmarkToggle = (businessId: string) => console.log('Toggle bookmark for:', businessId);
+  const handleNavigateToVouchers = () => navigate(ROUTES.VOUCHERS);
 
-  const { isDarkMode } = useTheme();
-  const [bookmarkedBusinesses] = useState<Business[]>(MOCK_BOOKMARKED_BUSINESSES);
-
-  const handleBack = () => {
-    navigate(ROUTES.BUSINESSES);
-  };
-
-  const handleViewBusinessDetails = (business: Business) => {
-    navigate(`${ROUTES.BUSINESSES}/${business.id}`);
-  };
-
-  const handleBookmarkToggle = (businessId: string) => {
-    console.log('Toggle bookmark for:', businessId);
-  };
-  const handleNavigateToVouchers = () => {
-    
-    navigate(ROUTES.VOUCHERS);
-    
-  };
-  
-  if (!user) {
+  // Loading state - show if no userId or no user data yet
+  if (!userId || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f9fafb' }}>
         <div style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>Loading profile...</div>
       </div>
     );
   }
-  
+
   return (
     <ProfilePage
       user={user}

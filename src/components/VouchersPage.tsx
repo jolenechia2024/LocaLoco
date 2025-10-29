@@ -25,7 +25,7 @@ import { Voucher, RedeemedVoucher } from '../types/vouchers';
 import { availableVouchers, mockRedeemedVouchers } from '../data/mockVoucherData';
 import { toast, Toaster } from 'sonner';
 import { useThemeStore } from '../store/themeStore';
-import { useUserPointsStore } from '../store/userPointsStore';
+import { useUserPointsStore } from '../store/userStore';
 
 
 
