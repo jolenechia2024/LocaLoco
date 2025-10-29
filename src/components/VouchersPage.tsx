@@ -23,15 +23,15 @@ import { Separator } from './ui/separator';
 import { Alert, AlertDescription } from './ui/alert';
 import { Voucher, RedeemedVoucher } from '../types/vouchers';
 import { availableVouchers, mockRedeemedVouchers } from '../data/mockVoucherData';
-import { toast } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import { useThemeStore } from '../store/themeStore';
 import { useUserPointsStore } from '../store/userPointsStore';
 
 
+
 interface VouchersPageProps {
   onBack: () => void;
-  currentPoints: number;
-  onRedeemVoucher: (voucherId: string, pointsCost: number) => void;
+  onRedeemVoucher: (voucherId: string, pointsCost: number) => void; // Required prop to handle redemption updates
   initialTab?: 'available' | 'my-vouchers';
 }
 
@@ -100,6 +100,7 @@ export function VouchersPage({
     onRedeemVoucher(voucher.id, voucher.pointsCost);
     setActiveTab('my-vouchers');
     
+    console.log('Redeeming voucher and showing toast');
     toast.success('Voucher redeemed!', {
       description: `${voucher.title} has been added to your vouchers.`,
     });
