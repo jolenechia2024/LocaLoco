@@ -7,6 +7,10 @@ import { ProfilePage } from './pages/ProfilePage';
 import { ROUTES } from '../constants/routes';
 import { Business } from '../types/business';
 import { useState } from 'react';
+import { useUserPointsStore } from '../store/userPointsStore';
+import * as React from 'react';
+
+
 
 const MOCK_BOOKMARKED_BUSINESSES: Business[] = [];
 
@@ -17,6 +21,18 @@ export function ProfilePageDisplay() {
   console.log('userId:', userId);
 
   const { user, stats, updateUser } = useUser(userId);
+
+  const currentPoints = useUserPointsStore(state => state.currentPoints);
+  const setCurrentPoints = useUserPointsStore(state => state.setCurrentPoints);
+  
+  React.useEffect(() => {
+    if (stats?.loyaltyPoints !== undefined) {
+      console.log('Updating currentPoints in store:', stats.loyaltyPoints);
+      setCurrentPoints(stats.loyaltyPoints);
+    }
+  }, [stats?.loyaltyPoints, setCurrentPoints]);
+
+
   const { isDarkMode } = useTheme();
   const [bookmarkedBusinesses] = useState<Business[]>(MOCK_BOOKMARKED_BUSINESSES);
 
@@ -31,11 +47,12 @@ export function ProfilePageDisplay() {
   const handleBookmarkToggle = (businessId: string) => {
     console.log('Toggle bookmark for:', businessId);
   };
-
   const handleNavigateToVouchers = () => {
+    
     navigate(ROUTES.VOUCHERS);
+    
   };
-
+  
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f9fafb' }}>

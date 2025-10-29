@@ -23,8 +23,10 @@ import { Separator } from './ui/separator';
 import { Alert, AlertDescription } from './ui/alert';
 import { Voucher, RedeemedVoucher } from '../types/vouchers';
 import { availableVouchers, mockRedeemedVouchers } from '../data/mockVoucherData';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useThemeStore } from '../store/themeStore';
+import { useUserPointsStore } from '../store/userPointsStore';
+
 
 interface VouchersPageProps {
   onBack: () => void;
@@ -36,10 +38,10 @@ interface VouchersPageProps {
 export function VouchersPage({ 
   
   onBack, 
-  currentPoints,
   onRedeemVoucher,
   initialTab = 'available',
 }: VouchersPageProps) {
+  const currentPoints = useUserPointsStore((state) => state.currentPoints);  
   console.log('Current points:', currentPoints);
 
   const [activeTab, setActiveTab] = useState(initialTab);
