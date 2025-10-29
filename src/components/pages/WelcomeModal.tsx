@@ -20,8 +20,7 @@ interface WelcomeModalProps {
 export function WelcomeModal({ open, onClose, onLogin, onSignUp }: WelcomeModalProps) {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
 
-  const bgColor = isDarkMode ? '#3a3a3a' : '#ffffff';
-  const textColor = isDarkMode ? '#ffffff' : '#000000';
+
   const headerBgColor = isDarkMode ? '#3a3a3a' : '#ffffff';
   const headerTextColor = isDarkMode ? '#ffffff' : '#000000';
   

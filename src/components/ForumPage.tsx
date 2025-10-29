@@ -8,13 +8,15 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
+import { useThemeStore } from '../store/themeStore';
+
 
 interface ForumPageProps {
   onBack: () => void;
-  isDarkMode?: boolean;
 }
 
-export function ForumPage({ onBack, isDarkMode = false }: ForumPageProps) {
+export function ForumPage({ onBack}: ForumPageProps) {
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
   const [discussions, setDiscussions] = useState<ForumDiscussion[]>(mockDiscussions);
   
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
