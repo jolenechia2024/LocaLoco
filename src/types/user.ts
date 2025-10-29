@@ -1,9 +1,10 @@
+// types/user.ts
 export interface User {
   id: string;
   name: string;
   email: string;
-  avatar?: string;
-  memberSince: string;
+  avatarUrl?: string;  // optional profile image URL
+  memberSince?: string;
   bio?: string;
   location?: string;
 }

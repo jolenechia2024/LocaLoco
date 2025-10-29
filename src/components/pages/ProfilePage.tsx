@@ -4,7 +4,7 @@ import { User, UserStats } from '../../types/user';
 import { Business } from '../../types/business';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { BusinessCard } from '../BusinessCard';
@@ -52,6 +52,13 @@ export function ProfilePage({
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
+  
+  const handleSaveProfile = (updatedUser: User) => {
+    console.log('ProfilePage handleSaveProfile:', updatedUser.name);
+    onUpdateUser(updatedUser);
+  };
+  
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
       {/* Profile Content */}
@@ -59,10 +66,15 @@ export function ProfilePage({
         {/* Profile Header Card */}
         <Card className="p-8 mb-6" style={{ backgroundColor: cardBg, color: textColor }}>
           <div className="flex flex-col md:flex-row gap-6 items-start">
+            {/* Avatar with image or initials */}
             <Avatar className="w-24 h-24">
-              <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                {getInitials(user.name)}
-              </AvatarFallback>
+              {user.avatarUrl ? (
+                <AvatarImage src={user.avatarUrl} alt={user.name} />
+              ) : (
+                <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                  {getInitials(user.name)}
+                </AvatarFallback>
+              )}
             </Avatar>
 
             <div className="flex-1">
@@ -80,10 +92,12 @@ export function ProfilePage({
                         <span>{user.location}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>Member since {formatDate(user.memberSince)}</span>
-                    </div>
+                    {user.memberSince && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>Member since {formatDate(user.memberSince)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <Button
@@ -196,7 +210,7 @@ export function ProfilePage({
         user={user}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
-        onSave={onUpdateUser}
+        onSave={handleSaveProfile}
       />
     </div>
   );
