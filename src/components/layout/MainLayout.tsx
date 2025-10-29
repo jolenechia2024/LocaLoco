@@ -4,7 +4,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useUser } from '../../hooks/useUser';
 import { ROUTES } from '../../constants/routes';
-import { useMemo } from 'react';
 
 export const MainLayout = () => {
   const { logout, userId } = useAuth();
@@ -13,12 +12,6 @@ export const MainLayout = () => {
   const navigate = useNavigate();
 
   const { user, stats, updateUser } = useUser(userId || null);
-
-  // Create stable key BEFORE any conditional returns
-  const userKey = useMemo(
-    () => user ? `${user.name}-${user.email}-${user.avatarUrl || 'default'}` : 'no-user',
-    [user?.name, user?.email, user?.avatarUrl]
-  );
 
   const getCurrentView = () => {
     const path = location.pathname;
@@ -50,7 +43,6 @@ export const MainLayout = () => {
     }
   };
 
-  // NOW it's safe to do conditional return
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center" 
@@ -60,12 +52,9 @@ export const MainLayout = () => {
     );
   }
 
-  console.log('MainLayout rendering with userKey:', userKey);
-
   return (
     <>
       <AppSidebar
-        key={userKey}
         onNavigate={handleNavigate}
         onLogout={logout}
         currentView={getCurrentView()}

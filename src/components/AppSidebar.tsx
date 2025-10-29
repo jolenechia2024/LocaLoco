@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Home, 
   Box, 
@@ -23,6 +23,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuPortal,
 } from './ui/dropdown-menu';
 
 interface AppSidebarProps {
@@ -204,7 +205,7 @@ export function AppSidebar({
               <DropdownMenuTrigger asChild>
                 <button 
                   className={`p-1 ${hoverBgColor} rounded transition-colors`}
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  onClick={(e) => {
                     e.stopPropagation();
                     setIsDropdownOpen(!isDropdownOpen);
                   }}
@@ -212,42 +213,45 @@ export function AppSidebar({
                   <MoreVertical className={`w-4 h-4 ${secondaryTextColor} flex-shrink-0`} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end"
-                side="right"
-                sideOffset={8}
-                className="w-56 z-[100]"
-                style={{ 
-                  backgroundColor: bgColor,
-                  borderColor: isDarkMode ? '#404040' : '#e5e7eb'
-                }}
-                onCloseAutoFocus={(e: Event) => e.preventDefault()}
-              >
-                <DropdownMenuLabel className={textColor}>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator style={{ backgroundColor: isDarkMode ? '#404040' : '#e5e7eb' }} />
-                <DropdownMenuItem 
-                  onClick={(e: Event) => {
-                    e.preventDefault();
-                    setIsDropdownOpen(false);
-                    handleMenuClick('profile');
+              <DropdownMenuPortal>
+                <DropdownMenuContent 
+                  align="end"
+                  side="right"
+                  sideOffset={8}
+                  className="w-56"
+                  style={{ 
+                    backgroundColor: bgColor,
+                    borderColor: isDarkMode ? '#404040' : '#e5e7eb',
+                    zIndex: 9999
                   }}
-                  className={`${textColor} ${hoverBgColor} cursor-pointer`}
+                  onCloseAutoFocus={(e) => e.preventDefault()}
                 >
-                  <User className="w-4 h-4 mr-2" />
-                  <span>View Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={(e: Event) => {
-                    e.preventDefault();
-                    setIsDropdownOpen(false);
-                    onLogout();
-                  }}
-                  className={`${textColor} ${hoverBgColor} cursor-pointer`}
-                >
-                  <LogOut className="w-4 h-4 mr-2 text-red-500" />
-                  <span className="text-red-500">Log Out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
+                  <DropdownMenuLabel className={textColor}>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator style={{ backgroundColor: isDarkMode ? '#404040' : '#e5e7eb' }} />
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropdownOpen(false);
+                      handleMenuClick('profile');
+                    }}
+                    className={`${textColor} ${hoverBgColor} cursor-pointer`}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    <span>View Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropdownOpen(false);
+                      onLogout();
+                    }}
+                    className={`${textColor} ${hoverBgColor} cursor-pointer`}
+                  >
+                    <LogOut className="w-4 h-4 mr-2 text-red-500" />
+                    <span className="text-red-500">Log Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenuPortal>
             </DropdownMenu>
           )}
         </div>
