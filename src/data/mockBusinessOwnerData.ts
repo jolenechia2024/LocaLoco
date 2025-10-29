@@ -1,6 +1,7 @@
 export interface BusinessOwner {
   id: string;
   businessName: string;
+  role: 'business'; // ✅ Add this
   address: string;
   operatingDays: string[];
   businessEmail: string;
@@ -18,6 +19,7 @@ export interface BusinessOwner {
 
 export const mockBusinessOwner: BusinessOwner = {
   id: 'business-1',
+  role: 'business', // ✅ Add this
   businessName: 'The Local Cafe',
   address: '123 Main Street, Singapore 123456',
   operatingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],

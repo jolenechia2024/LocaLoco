@@ -31,7 +31,7 @@ export const MainLayout = () => {
       map: ROUTES.MAP,
       list: ROUTES.BUSINESSES,
       bookmarks: ROUTES.BOOKMARKS,
-      profile: ROUTES.PROFILE,
+      profile: user && 'businessName' in user ? ROUTES.BUSINESS_PROFILE : ROUTES.PROFILE, // ✅ Check if BusinessOwner
       forum: ROUTES.FORUM,
       notifications: ROUTES.NOTIFICATIONS,
       settings: ROUTES.SETTINGS,
@@ -52,15 +52,36 @@ export const MainLayout = () => {
     );
   }
 
+  // ✅ Helper function to safely get user info
+  const getUserInfo = () => {
+    if ('businessName' in user) {
+      // It's a BusinessOwner
+      return {
+        name: user.businessName,
+        email: user.businessEmail || user.email,
+        avatarUrl: user.wallpaper,
+      };
+    } else {
+      // It's a regular User
+      return {
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+      };
+    }
+  };
+
+  const userInfo = getUserInfo();
+
   return (
     <>
       <AppSidebar
         onNavigate={handleNavigate}
         onLogout={logout}
         currentView={getCurrentView()}
-        userName={user.name}
-        userEmail={user.email}
-        avatarUrl={user.avatarUrl}
+        userName={userInfo.name} // ✅ Use helper
+        userEmail={userInfo.email} // ✅ Use helper
+        avatarUrl={userInfo.avatarUrl} // ✅ Use helper
         isDarkMode={isDarkMode}
         onThemeToggle={toggleTheme}
       />

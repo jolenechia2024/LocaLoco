@@ -1,4 +1,5 @@
-import { betterAuth, boolean } from "better-auth";
+// backend/lib/auth.ts (or wherever your auth.ts is)
+import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import db from "../database/db.js";
 import { user, session, account, verification } from "../database/schema.js";
@@ -13,9 +14,22 @@ const auth = betterAuth({
     secret: String(process.env.BETTER_AUTH_SECRET),
     user: {
         additionalFields: {
+            role: { // ✅ Add role field
+                type: "string",
+                input: true, // Allow input during signup
+                defaultValue: "user"
+            },
             hasBusiness: {
                 type: "boolean",
                 input: false
+            },
+            firstName: { // ✅ Add firstName
+                type: "string",
+                input: true
+            },
+            lastName: { // ✅ Add lastName
+                type: "string",
+                input: true
             },
             referralCode: {
                 type: 'string',

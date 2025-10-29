@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { User, UserStats } from '../types/user';
 
 const MOCK_USERS: Record<string, User> = {
-  'customer-1': {
-    id: 'customer-1',
+  'user-1': {
+    id: 'user-1',
+    role: 'user',
     name: 'John Tan',
     email: 'john.tan@email.com',
     memberSince: '2024-01-15',
@@ -24,7 +25,7 @@ const MOCK_STATS: Record<string, UserStats> = {
   'customer-1': {
     vouchersCount: 5,
     reviewsCount: 12,
-    loyaltyPoints: 350,
+    loyaltyPoints: 3500,
   },
   'business-1': {
     vouchersCount: 0,

@@ -7,7 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface WriteReviewPageProps {
   business: Business;

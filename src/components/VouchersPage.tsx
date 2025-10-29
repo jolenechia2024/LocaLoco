@@ -1,4 +1,9 @@
-import React, { useState } from 'react';
+//localStorage.removeItem('user-points-storage');
+//location.reload(); -> to reload the voucher points coz now its saved
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import { 
   ArrowLeft, 
   DollarSign, 
