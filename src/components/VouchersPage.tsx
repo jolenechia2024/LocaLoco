@@ -28,18 +28,20 @@ import { useThemeStore } from '../store/themeStore';
 
 interface VouchersPageProps {
   onBack: () => void;
-  isDarkMode?: boolean;
   currentPoints: number;
   onRedeemVoucher: (voucherId: string, pointsCost: number) => void;
   initialTab?: 'available' | 'my-vouchers';
 }
 
 export function VouchersPage({ 
+  
   onBack, 
   currentPoints,
   onRedeemVoucher,
   initialTab = 'available',
 }: VouchersPageProps) {
+  console.log('Current points:', currentPoints);
+
   const [activeTab, setActiveTab] = useState(initialTab);
   const [redeemedVouchers, setRedeemedVouchers] = useState<RedeemedVoucher[]>(mockRedeemedVouchers);
   const isDarkMode = useThemeStore(state => state.isDarkMode);

@@ -14,7 +14,7 @@ import { BusinessVerification } from './components/pages/BusinessVerification';
 
 // Main pages (existing)
 import { MapDiscoveryPage } from './components/MapDiscoveryPage';
-import { ProfilePage } from './components/pages/ProfilePage';
+import { ProfilePageDisplay } from './components/ProfilePageDisplay';
 import { BusinessProfilePage } from './components/pages/BusinessProfilePage';
 import { ForumPage } from './components/ForumPage';
 import { SettingsPage } from './components/SettingsPage';
@@ -67,7 +67,7 @@ export const AppRoutes = () => {
             path={ROUTES.PROFILE}
             element={
               <ErrorBoundary>
-                <ProfilePage />
+                <ProfilePageDisplay />
               </ErrorBoundary>}
         />
         <Route path={ROUTES.BUSINESS_PROFILE} element={<BusinessProfilePage />} />

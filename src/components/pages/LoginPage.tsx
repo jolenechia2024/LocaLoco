@@ -46,7 +46,7 @@ export function LoginPage() {
 
     // Mock login - accepts any credentials
     try {
-      const userId = role === 'business' ? 'business-1' : 'user-1';
+      const userId = role === 'business' ? 'business-1' : 'customer-1';
       login(userId, role, 'mock-token-123');
       navigate('/map');
     } catch (err) {
