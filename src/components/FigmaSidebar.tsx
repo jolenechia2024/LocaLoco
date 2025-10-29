@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FigmaSidebarComponent from '../imports/Sidebar-4001-511';
 
 interface FigmaSidebarProps {
@@ -8,6 +8,15 @@ interface FigmaSidebarProps {
   notificationCount?: number;
   userName?: string;
   userEmail?: string;
+  avatarUrl?: string;
+}
+
+function getInitials(name: string = '') {
+  return name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase();
 }
 
 export function FigmaSidebar({ 
@@ -16,9 +25,14 @@ export function FigmaSidebar({
   currentView,
   notificationCount = 0,
   userName = "Brooklyn Simmons",
-  userEmail = "brooklyn@simmons.com"
+  userEmail = "brooklyn@simmons.com",
+  avatarUrl
 }: FigmaSidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    console.log('🎨 FigmaSidebar user updated:', { userName, userEmail, avatarUrl: avatarUrl?.substring(0, 30) });
+  }, [userName, userEmail, avatarUrl]);
 
   return (
     <div
@@ -29,8 +43,7 @@ export function FigmaSidebar({
     >
       <div 
         className="h-full bg-gray-900 shadow-2xl overflow-hidden relative"
-        onClick={(e) => {
-          // Intercept clicks and route them appropriately
+        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
           const target = e.target as HTMLElement;
           const menuItem = target.closest('[data-name="menu-items"]');
           
@@ -51,26 +64,83 @@ export function FigmaSidebar({
               console.log('Show support');
             } else if (text?.includes('settings')) {
               console.log('Show settings');
+            } else if (text?.includes('logout')) {
+              onLogout();
             }
           }
           
-          // Handle profile widget click
           const profileWidget = target.closest('[data-name="profile-widget"]');
           if (profileWidget) {
             onNavigate('profile');
           }
         }}
       >
+        {/* Figma Component Background */}
         <div className="absolute inset-0" style={{ 
           transform: isExpanded ? 'scale(1)' : 'scale(0.9)',
           transformOrigin: 'left center',
-          transition: 'transform 0.3s ease-in-out'
+          transition: 'transform 0.3s ease-in-out',
+          zIndex: 1
         }}>
           <FigmaSidebarComponent />
         </div>
+
+        {/* User Info Overlay - Always on top */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 p-3 bg-gray-900 border-t border-gray-700"
+          style={{ zIndex: 100 }}
+        >
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:bg-gray-800 p-2 rounded-lg transition-colors"
+            onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+              e.stopPropagation();
+              onNavigate('profile');
+            }}
+            title={`${userName}\n${userEmail}`}
+          >
+            {/* Avatar */}
+            {avatarUrl ? (
+              <img
+                key={avatarUrl}
+                src={avatarUrl}
+                alt={userName}
+                className="w-10 h-10 rounded-full object-cover border-2 border-gray-700 flex-shrink-0"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className={`w-10 h-10 rounded-full bg-gradient-to-br from-[#FFA1A3] to-pink-500 text-white flex items-center justify-center font-semibold text-sm flex-shrink-0 ${avatarUrl ? 'hidden' : ''}`}
+            >
+              {getInitials(userName)}
+            </div>
+
+            {/* User Info - show when expanded */}
+            {isExpanded && (
+              <div className="flex flex-col overflow-hidden flex-1">
+                <div className="font-semibold text-white text-sm truncate">
+                  {userName}
+                </div>
+                <div className="text-xs text-gray-400 truncate">
+                  {userEmail}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Notification badge */}
+          {isExpanded && notificationCount > 0 && (
+            <div className="mt-2 px-2 py-1 bg-[#FFA1A3] rounded-full text-white text-xs text-center">
+              {notificationCount} new notification{notificationCount !== 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
       </div>
       
-      {/* Custom styles for hover state */}
+      {/* Custom styles */}
       <style>{`
         [data-name="sidebar"] {
           height: 100%;
@@ -78,7 +148,6 @@ export function FigmaSidebar({
           background: #1f2937;
         }
         
-        /* Header should always show icon, text only when expanded */
         [data-name="header"] {
           overflow: visible !important;
         }
@@ -96,7 +165,6 @@ export function FigmaSidebar({
           ${!isExpanded ? 'width: 0; overflow: hidden;' : ''}
         }
         
-        /* Show/hide text based on expanded state */
         [data-name="sidebar"] p:not([data-name="header"] p) {
           opacity: ${isExpanded ? '1' : '0'};
           transition: opacity 0.3s ease-in-out;
@@ -105,7 +173,6 @@ export function FigmaSidebar({
           ${!isExpanded ? 'width: 0;' : ''}
         }
         
-        /* Menu items hover effect */
         [data-name="menu-items"] {
           cursor: pointer;
           padding: 12px;
@@ -121,20 +188,11 @@ export function FigmaSidebar({
           background-color: rgba(255, 161, 163, 0.15);
         }
         
-        /* Profile widget hover effect */
+        /* Hide original profile widget */
         [data-name="profile-widget"] {
-          cursor: pointer;
-          padding: 12px;
-          border-radius: 8px;
-          transition: background-color 0.2s ease;
-          margin: 8px;
+          display: none !important;
         }
         
-        [data-name="profile-widget"]:hover {
-          background-color: rgba(255, 255, 255, 0.05);
-        }
-        
-        /* Search field styling */
         [data-name="search-field"] {
           cursor: pointer;
           padding: 12px;
@@ -147,18 +205,15 @@ export function FigmaSidebar({
           background-color: rgba(255, 255, 255, 0.05);
         }
 
-        /* Icons should always be visible */
         [data-name="menu-items"] > div:first-child,
         [data-name="search-field"] > div:first-child {
           flex-shrink: 0;
         }
 
-        /* Notification badge */
         [data-name="notification"] {
           flex-shrink: 0;
         }
 
-        /* Avatar and status */
         [data-name="avatar"],
         [data-name="status"] {
           flex-shrink: 0;

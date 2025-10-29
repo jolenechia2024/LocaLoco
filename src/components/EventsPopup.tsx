@@ -1,4 +1,3 @@
-import React from 'react';
 import { Calendar, MapPin, X } from 'lucide-react';
 import { Event } from '../types/business';
 import { Button } from './ui/button';

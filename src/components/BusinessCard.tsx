@@ -1,4 +1,3 @@
-import React from 'react';
 import { Star, MapPin, Phone, Clock, Bookmark, TrendingUp } from 'lucide-react';
 import { Business } from '../types/business';
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
@@ -26,6 +25,7 @@ export function BusinessCard({
   const textColor = isDarkMode ? 'text-white' : 'text-black';
   const mutedTextColor = isDarkMode ? 'text-gray-400' : 'text-muted-foreground';
   const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
+  
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
@@ -83,8 +83,12 @@ export function BusinessCard({
           <div className="flex items-start justify-between">
             <h3 className={`text-lg font-semibold line-clamp-1 ${textColor}`}>{business.name}</h3>
             <div className="flex items-center gap-1 text-sm">
-              <div className="flex">{renderStars(business.rating)}</div>
-              <span className={mutedTextColor}>({business.reviewCount})</span>
+              {business.rating !== undefined && (
+                <>
+                  <div className="flex">{renderStars(business.rating)}</div>
+                  <span className={mutedTextColor}>({business.reviewCount})</span>
+                </>
+              )}
             </div>
           </div>
           

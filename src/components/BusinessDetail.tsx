@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Star, MapPin, Phone, Globe, Clock, ArrowLeft, Bookmark, MessageSquare } from 'lucide-react';
 import { Business, Review } from '../types/business';
 import { Button } from './ui/button';
@@ -84,12 +84,14 @@ export function BusinessDetail({
                   </Badge>
                   <span className="text-sm">{business.priceRange}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex">{renderStars(business.rating)}</div>
-                  <span className="text-sm">
-                    {business.rating} ({business.reviewCount} reviews)
-                  </span>
-                </div>
+                {business.rating !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex">{renderStars(business.rating)}</div>
+                    <span className="text-sm">
+                      {business.rating} ({business.reviewCount} reviews)
+                    </span>
+                  </div>
+                )}
               </div>
               <Button
                 variant={isBookmarked ? "default" : "secondary"}
@@ -170,8 +172,12 @@ export function BusinessDetail({
                 <div className="space-y-2">
                   {Object.entries(business.hours).map(([day, hours]) => (
                     <div key={day} className="flex justify-between text-sm">
-                      <span className="text-foreground">{day}</span>
-                      <span className="text-foreground">{hours}</span>
+                      <span className="text-foreground capitalize">{day}</span>
+                      <span className="text-foreground">
+                        {typeof hours === 'object' && hours && 'open' in hours && 'close' in hours
+                          ? `${hours.open} - ${hours.close}`
+                          : String(hours)}
+                      </span>
                     </div>
                   ))}
                 </div>
