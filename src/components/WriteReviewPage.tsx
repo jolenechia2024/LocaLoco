@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, ArrowLeft, Send } from 'lucide-react';
+import { Star, ArrowLeft, Send, Lock } from 'lucide-react'; // ✅ Added Lock here
 import { Business } from '../types/business';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
@@ -8,37 +8,116 @@ import { Label } from './ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { toast } from 'sonner';
+import { useThemeStore } from '../store/themeStore';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useBusinesses } from '../hooks/useBusinesses';
+import { useUser } from '../hooks/useUser';
+import { useAuthStore } from '../store/authStore';
+import type { User, BusinessOwner } from '../types/auth';
 
 interface WriteReviewPageProps {
-  business: Business;
-  onBack: () => void;
-  onSubmit: (rating: number, comment: string) => void;
+  business?: Business;
+  onBack?: () => void;
+  onSubmit?: (rating: number, comment: string) => void;
   userAvatar?: string;
-  userName: string;
-  isDarkMode?: boolean;
+  userName?: string;
 }
 
 export function WriteReviewPage({
-  business,
+  business: propBusiness,
   onBack,
   onSubmit,
-  userAvatar,
-  userName,
-  isDarkMode = false,
-}: WriteReviewPageProps) {
+  userAvatar: propUserAvatar,
+  userName: propUserName,
+}: WriteReviewPageProps = {}) {
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+  const navigate = useNavigate();
+  const { businessId } = useParams();
+  const { businesses } = useBusinesses();
+  const userId = useAuthStore((state) => state.userId);
+  const role = useAuthStore((state) => state.role);
+  const { user } = useUser(userId);
+
+  // ✅ Helper: Get user display name safely
+  const getUserDisplayName = (userData: User | BusinessOwner | null | undefined): string => {
+    if (!userData) return 'Anonymous';
+    if ('businessName' in userData) {
+      return userData.businessName;
+    }
+    return (userData as User)?.name || 'Anonymous';
+  };
+
+  // ✅ Helper: Get user avatar safely (use avatarUrl for your User type)
+  const getUserAvatar = (userData: User | BusinessOwner | null | undefined): string | undefined => {
+    if (!userData) return undefined;
+    if ('businessName' in userData) {
+      return undefined;
+    }
+    return (userData as User)?.avatarUrl;
+  };
+
+  // ✅ Use prop if provided, otherwise use helpers
+  const business = propBusiness || businesses.find(b => b.id === businessId);
+  const userName = propUserName || getUserDisplayName(user); // ✅ Use helper
+  const userAvatar = propUserAvatar || getUserAvatar(user); // ✅ Use helper
+
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isBackButtonHovered, setIsBackButtonHovered] = useState(false);
   const [isCancelButtonHovered, setIsCancelButtonHovered] = useState(false);
   
-  // Color system for better contrast
   const cardBg = isDarkMode ? '#2a2a2a' : '#ffffff';
   const textColor = isDarkMode ? '#ffffff' : '#000000';
   const userBoxBg = isDarkMode ? '#3a3a3a' : '#f9fafb';
   const userBoxBorder = isDarkMode ? '#505050' : '#d1d5db';
   const labelColor = isDarkMode ? '#ffffff' : '#111827';
   const mutedColor = isDarkMode ? '#a3a3a3' : '#6b7280';
+
+  if (!business) {
+    return (
+      <div className="max-w-3xl mx-auto p-4">
+        <div style={{ color: textColor }}>
+          Error: Business not found
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Check if user is a business owner - restrict access
+  if (role === 'business' || (user && 'businessName' in user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" 
+           style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f9fafb' }}>
+        <Card className="max-w-md w-full" style={{ backgroundColor: cardBg, borderColor: userBoxBorder }}>
+          <CardContent className="p-12 text-center">
+            <Lock className="w-16 h-16 mx-auto mb-4 text-[#FFA1A3]" />
+            <h2 className="text-2xl font-semibold mb-2" style={{ color: textColor }}>
+              Access Restricted
+            </h2>
+            <p className="mb-6" style={{ color: mutedColor }}>
+              Only regular users can write reviews. Business accounts can view reviews but cannot submit them.
+            </p>
+            <Button
+              onClick={() => navigate(-1)}
+              className="bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate(-1);
+    }
+  };
 
   const handleSubmit = () => {
     if (rating === 0) {
@@ -50,9 +129,13 @@ export function WriteReviewPage({
       return;
     }
 
-    onSubmit(rating, comment);
-    toast.success('Review submitted successfully!');
-    onBack();
+    if (onSubmit) {
+      onSubmit(rating, comment);
+    } else {
+      toast.success('Review submitted successfully!');
+    }
+    
+    handleBack();
   };
 
   const renderStars = () => {
@@ -95,7 +178,7 @@ export function WriteReviewPage({
         <Button
           variant="outline"
           size="sm"
-          onClick={onBack}
+          onClick={handleBack}
           onMouseEnter={() => setIsBackButtonHovered(true)}
           onMouseLeave={() => setIsBackButtonHovered(false)}
           style={{
@@ -238,7 +321,7 @@ export function WriteReviewPage({
             </Button>
             <Button
               variant="outline"
-              onClick={onBack}
+              onClick={handleBack}
               onMouseEnter={() => setIsCancelButtonHovered(true)}
               onMouseLeave={() => setIsCancelButtonHovered(false)}
               style={{

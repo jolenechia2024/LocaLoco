@@ -9,7 +9,7 @@ import { useThemeStore } from '../store/themeStore';
 
 
 interface NotificationsPageProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 interface Notification {

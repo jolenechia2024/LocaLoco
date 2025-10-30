@@ -20,6 +20,7 @@ export function PopularBusinessesPopup({
   onViewBusiness,
 }: PopularBusinessesPopupProps) {
   if (!open) return null;
+  
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
@@ -78,9 +79,10 @@ export function PopularBusinessesPopup({
                   <div className="flex items-start justify-between">
                     <h4 className="font-medium text-sm line-clamp-1">{business.name}</h4>
                     <div className="flex items-center gap-1">
-                      <div className="flex">{renderStars(business.rating)}</div>
+                      {/* ✅ Add ?? 0 to handle undefined rating */}
+                      <div className="flex">{renderStars(business.rating ?? 0)}</div>
                       <span className="text-xs text-muted-foreground">
-                        ({business.reviewCount})
+                        ({business.reviewCount ?? 0})
                       </span>
                     </div>
                   </div>
@@ -102,7 +104,6 @@ export function PopularBusinessesPopup({
             ))}
           </div>
         </CardContent>
-
       </Card>
     </div>
   );
