@@ -1,24 +1,37 @@
 import { create } from 'zustand';
 import { ForumDiscussion, ForumReply } from '../types/forum';
-import { mockDiscussions } from '../data/mockForumData';
 
 interface ForumState {
   discussions: ForumDiscussion[];
+  isLoading: boolean;
+  error: string | null;
+  setDiscussions: (discussions: ForumDiscussion[]) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
   addDiscussion: (discussion: ForumDiscussion) => void;
   likeDiscussion: (id: string) => void;
   addReply: (discussionId: string, reply: ForumReply) => void;
 }
 
 export const useForumStore = create<ForumState>((set) => ({
-  discussions: mockDiscussions,
+  discussions: [],
+  isLoading: false,
+  error: null,
+
+  setDiscussions: (discussions) => set({ discussions }),
+  setLoading: (isLoading) => set({ isLoading }),
+  setError: (error) => set({ error }),
+
   addDiscussion: (discussion) =>
     set((state) => ({ discussions: [discussion, ...state.discussions] })),
+
   likeDiscussion: (id) =>
     set((state) => ({
       discussions: state.discussions.map((d) =>
         d.id === id ? { ...d, likes: d.likes + 1 } : d
       ),
     })),
+
   addReply: (discussionId, reply) =>
     set((state) => ({
       discussions: state.discussions.map((d) =>

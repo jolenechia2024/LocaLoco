@@ -7,6 +7,7 @@ const featureRouter = Router()
 // this route fetches all the reviews for a business
 featureRouter.get('/api/reviews', FeatureController.getBusinessReviews.bind(FeatureController))
 
+<<<<<<< HEAD
 // this route handles submissions for user reviews for businesses
 featureRouter.post('/api/submit-review', FeatureController.newReview.bind(FeatureController))
 
@@ -22,7 +23,13 @@ featureRouter.post('/api/like-review', FeatureController.updateReviewLikes.bind(
 
 // ---------------------------------------------------- ROUTES FOR THE FORUM FEATURE ----------------------------------------------------
 // this route fetches all the posts for the forum page
+=======
+// Forum routes
+>>>>>>> d571a44 (Add forum CRUD functionality - connect backend to frontend)
 featureRouter.get('/api/forum-posts', FeatureController.getAllForumPosts.bind(FeatureController))
+featureRouter.post('/api/forum-posts', FeatureController.createForumPost.bind(FeatureController))
+featureRouter.post('/api/forum-replies', FeatureController.createForumReply.bind(FeatureController))
+featureRouter.put('/api/forum-posts/likes', FeatureController.updatePostLikes.bind(FeatureController))
 
 // this route handles submissions for forum posts
 featureRouter.post('/api/submit-post', FeatureController.newForumPost.bind(FeatureController))

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Store, MessageCircle, ThumbsUp, Send } from 'lucide-react';
 import { ForumDiscussion, ForumReply } from '../types/forum';
-import { mockDiscussions } from '../data/mockForumData';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -9,6 +8,7 @@ import { Textarea } from './ui/textarea';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useThemeStore } from '../store/themeStore';
+import { useForumPosts } from '../hooks/useForumPosts';
 
 
 interface ForumPageProps {
@@ -17,7 +17,7 @@ interface ForumPageProps {
 
 export function ForumPage({ onBack}: ForumPageProps) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
-  const [discussions, setDiscussions] = useState<ForumDiscussion[]>(mockDiscussions);
+  const { discussions, isLoading, error, createDiscussion, createReply, likeDiscussion } = useForumPosts();
   
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
   const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
@@ -31,9 +31,9 @@ export function ForumPage({ onBack}: ForumPageProps) {
   });
   const [replyInputs, setReplyInputs] = useState<{ [key: string]: string }>({});
 
-  const handleCreateDiscussion = (e: React.FormEvent) => {
+  const handleCreateDiscussion = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newDiscussion.title || !newDiscussion.content) {
       alert('Please fill in all required fields');
       return;
@@ -50,19 +50,19 @@ export function ForumPage({ onBack}: ForumPageProps) {
       replies: [],
     };
 
-    setDiscussions([discussion, ...discussions]);
-    setNewDiscussion({ title: '', businessTag: '', content: '' });
+    try {
+      await createDiscussion(discussion);
+      setNewDiscussion({ title: '', businessTag: '', content: '' });
+    } catch (error) {
+      console.error('Failed to create discussion:', error);
+    }
   };
 
   const handleLike = (discussionId: string) => {
-    setDiscussions(prev => prev.map(d => 
-      d.id === discussionId 
-        ? { ...d, likes: d.likes + 1 }
-        : d
-    ));
+    likeDiscussion(discussionId);
   };
 
-  const handleReply = (discussionId: string) => {
+  const handleReply = async (discussionId: string) => {
     const replyContent = replyInputs[discussionId];
     if (!replyContent?.trim()) return;
 
@@ -74,13 +74,12 @@ export function ForumPage({ onBack}: ForumPageProps) {
       createdAt: new Date().toISOString(),
     };
 
-    setDiscussions(prev => prev.map(d => 
-      d.id === discussionId 
-        ? { ...d, replies: [...d.replies, reply] }
-        : d
-    ));
-
-    setReplyInputs(prev => ({ ...prev, [discussionId]: '' }));
+    try {
+      await createReply(discussionId, reply);
+      setReplyInputs(prev => ({ ...prev, [discussionId]: '' }));
+    } catch (error) {
+      console.error('Failed to create reply:', error);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -144,8 +143,25 @@ export function ForumPage({ onBack}: ForumPageProps) {
         {/* Community Discussions */}
         <Card className={`p-8 shadow-lg ${borderColor}`} style={{ backgroundColor: cardBgColor }}>
           <h2 className={`mb-6 ${textColor}`}>Community Discussions</h2>
-          <div className="space-y-6">
-            {discussions.map((discussion) => (
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className={`text-center py-8 ${mutedTextColor}`}>
+              Loading discussions...
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-8 text-red-500">
+              Error: {error}
+            </div>
+          )}
+
+          {/* Discussions List */}
+          {!isLoading && !error && (
+            <div className="space-y-6">
+              {discussions.map((discussion) => (
               <div key={discussion.id} className={`space-y-4 pb-6 border-b last:border-b-0 ${borderColor}`}>
                 {/* Discussion Header */}
                 <div className="flex gap-4">
@@ -222,8 +238,9 @@ export function ForumPage({ onBack}: ForumPageProps) {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
     </div>

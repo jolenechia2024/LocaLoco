@@ -96,7 +96,40 @@ class FeatureController {
         try {
             const forumPosts = await ForumModel.getAllForumPosts();
             res.status(200).json(forumPosts)
-        } 
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+
+    static async createForumPost(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const postData = req.body;
+            await ForumModel.newForumPost(postData);
+            res.status(201).json({ message: 'Forum post created successfully' });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+
+    static async createForumReply(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const replyData = req.body;
+            await ForumModel.newForumReply(replyData);
+            res.status(201).json({ message: 'Reply created successfully' });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+
+    static async updatePostLikes(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { postId, clicked } = req.body;
+            const result = await ForumModel.updatePostLikes(postId, clicked);
+            res.status(200).json(result);
+        }
         catch (error) {
             next(error);
         }
