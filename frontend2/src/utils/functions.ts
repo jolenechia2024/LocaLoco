@@ -64,7 +64,7 @@ export function formatAsBootstrapCard(business: Business): HTMLDivElement {
   cardDiv.className = 'card h-100 shadow-sm';
 
   const img = document.createElement('img');
-  img.src = 'http://localhost:3000/uploads/' + business.wallpaper;
+  img.src = '/uploads/' + business.wallpaper;
   img.className = 'card-img-top h-50 object-fit-cover';
 
   const cardBody = document.createElement('div');
@@ -112,8 +112,8 @@ export async function displayAndFilterBusinesses(filters: Record<string, any>, c
 
   try {
     const response = Object.keys(filters).length === 0
-      ? await axios.get<Business[]>('http://localhost:3000/api/businesses')
-      : await axios.post<Business[]>('http://localhost:3000/api/businesses/filter', filters);
+      ? await axios.get<Business[]>('/api/businesses')
+      : await axios.post<Business[]>('/api/businesses/filter', filters);
 
     const businesses = response.data;
     if (businesses.length === 0) {

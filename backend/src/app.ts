@@ -15,7 +15,9 @@ const app: Application = express();
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'], // allow frontend to pass
+    origin: process.env.NODE_ENV === 'production'
+        ? 'https://localoco.azurewebsites.net'
+        : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'], // allow multiple dev ports
     credentials: true,
 }));
 app.use(express.json());

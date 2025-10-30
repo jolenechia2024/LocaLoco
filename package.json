@@ -69,8 +69,7 @@
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",
-        "start": "concurrently \"cd backend && npm start\" \"tsc && vite build && vite\"",
-        "start:v2": "cd frontend2 && npm run build && cd ../backend && npm start",
+        "start": "npm run build && cd backend && npm start",
         "setup": "npm install && cd backend && npm run db:push && cd ../ && npm start",
         "db:setup": "cd backend && npm run db:push"
     },
@@ -85,7 +84,8 @@
         "@types/react-router-dom": "^5.3.3",
         "@vitejs/plugin-react-swc": "^3.10.2",
         "cross-env": "^10.1.0",
-        "drizzle-kit": "^0.18.1",
+        "dotenv-cli": "^11.0.0",
+        "drizzle-kit": "^0.31.5",
         "nodemon": "^3.1.10",
         "ts-node": "^10.9.2",
         "typescript": "~5.9.3",
