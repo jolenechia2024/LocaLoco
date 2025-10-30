@@ -1,7 +1,7 @@
 import { ForumPost, ForumPostReply } from '../types/ForumPost.js';
 import db from '../database/db.js'
 import { forumPosts, forumPostsReplies } from '../database/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { error } from 'console';
 
 class ForumModel {
@@ -19,16 +19,16 @@ class ForumModel {
 
     // get all forum posts
     public static async getAllForumPosts(): Promise<ForumPost[]> {
-        
-        // select the main posts first
-        const posts = await db.select().from(forumPosts)
+
+        // select the main posts first, ordered by newest first
+        const posts = await db.select().from(forumPosts).orderBy(desc(forumPosts.createdAt))
 
         const container: ForumPost[] = [];
 
         // fetch the replies to the posts and map them to their parents
         for (let post of posts) {
-            // fetch replies for this post
-            const replies = await db.select().from(forumPostsReplies).where(eq(forumPostsReplies.postId, post.id));
+            // fetch replies for this post, ordered by oldest first (so oldest replies show at top)
+            const replies = await db.select().from(forumPostsReplies).where(eq(forumPostsReplies.postId, post.id)).orderBy(forumPostsReplies.createdAt);
 
             // map replies to ForumPost interface
             const mappedReplies: ForumPostReply[] = replies.map(r => ({

@@ -32,6 +32,9 @@ export const useForumPosts = () => {
   const setDiscussions = useForumStore((state) => state.setDiscussions);
   const setLoading = useForumStore((state) => state.setLoading);
   const setError = useForumStore((state) => state.setError);
+  const addDiscussion = useForumStore((state) => state.addDiscussion);
+  const addReply = useForumStore((state) => state.addReply);
+  const likeDiscussionInStore = useForumStore((state) => state.likeDiscussion);
 
   // Fetch all forum posts
   const fetchForumPosts = useCallback(async () => {
@@ -52,8 +55,27 @@ export const useForumPosts = () => {
     }
   }, [setDiscussions, setLoading, setError]);
 
+  // Silent refresh (no loading state)
+  const silentRefresh = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/forum-posts`);
+      if (!response.ok) throw new Error('Failed to fetch forum posts');
+
+      const rawData: BackendForumPost[] = await response.json();
+      const transformedDiscussions = rawData.map(transformBackendToForumDiscussion);
+
+      setDiscussions(transformedDiscussions);
+    } catch (error: any) {
+      // Silent fail - don't show error to user
+      console.error('Background refresh failed:', error);
+    }
+  }, [setDiscussions]);
+
   // Create new discussion
   const createDiscussion = useCallback(async (discussion: ForumDiscussion) => {
+    // Optimistically add to UI immediately
+    addDiscussion(discussion);
+
     try {
       const postData = {
         userEmail: 'user1@example.com', // Use a valid user email from database
@@ -76,17 +98,22 @@ export const useForumPosts = () => {
         throw new Error('Failed to create discussion');
       }
 
-      // Refetch all discussions to get the new one with proper ID from database
-      await fetchForumPosts();
+      // Silently refresh in background to get proper IDs from server
+      silentRefresh();
     } catch (error: any) {
       console.error('Create discussion error:', error);
       setError(error.message || 'Failed to create discussion');
+      // Rollback: refetch to get accurate state
+      await fetchForumPosts();
       throw error;
     }
-  }, [fetchForumPosts, setError]);
+  }, [addDiscussion, silentRefresh, fetchForumPosts, setError]);
 
   // Create new reply
   const createReply = useCallback(async (discussionId: string, reply: ForumReply) => {
+    // Optimistically add reply to UI immediately
+    addReply(discussionId, reply);
+
     try {
       const response = await fetch(`${API_BASE_URL}/forum-replies`, {
         method: 'POST',
@@ -100,16 +127,21 @@ export const useForumPosts = () => {
 
       if (!response.ok) throw new Error('Failed to create reply');
 
-      // Refetch all discussions to get the new reply
-      await fetchForumPosts();
+      // Silently refresh in background to get proper IDs from server
+      silentRefresh();
     } catch (error: any) {
       setError(error.message || 'Failed to create reply');
+      // Rollback: refetch to get accurate state
+      await fetchForumPosts();
       throw error;
     }
-  }, [fetchForumPosts, setError]);
+  }, [addReply, silentRefresh, fetchForumPosts, setError]);
 
   // Like a discussion
   const likeDiscussion = useCallback(async (discussionId: string) => {
+    // Optimistically update like count in UI immediately
+    likeDiscussionInStore(discussionId);
+
     try {
       const response = await fetch(`${API_BASE_URL}/forum-posts/likes`, {
         method: 'PUT',
@@ -122,13 +154,15 @@ export const useForumPosts = () => {
 
       if (!response.ok) throw new Error('Failed to update likes');
 
-      // Refetch to get updated like count
-      await fetchForumPosts();
+      // Silently refresh in background to sync with server
+      silentRefresh();
     } catch (error: any) {
       setError(error.message || 'Failed to update likes');
+      // Rollback: refetch to get accurate state
+      await fetchForumPosts();
       throw error;
     }
-  }, [fetchForumPosts, setError]);
+  }, [likeDiscussionInStore, silentRefresh, fetchForumPosts, setError]);
 
   // Initial fetch on mount
   useEffect(() => {
