@@ -121,7 +121,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         };
       }
   
-      const response = await fetch('http://localhost:3000/api/auth/signup', options);
+      const response = await fetch('http://localhost:5173/api/auth/signup', options);
       const result = await response.json();
       
       if (result.success) {

@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Badge } from "./ui/badge";
 import { mockEvents } from "../data/mockData";
 
+
 export const BusinessListPage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
