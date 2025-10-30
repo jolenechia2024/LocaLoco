@@ -1,19 +1,9 @@
 {
-    "name": "rewritten_project",
-    "version": "1.0.0",
-    "type": "module",
-    "main": "index.js",
-    "scripts": {
-        "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend2 && npm run dev\"",
-        "start": "cd frontend2 && npm run build && cd ../backend && npm start",
-        "setup": "npm install && cd backend && npm run db:push && cd ../ && npm start",
-        "db:setup": "cd backend && npm run db:push"
-    },
-    "prettier": {
-        "tabWidth": 4,
-        "useTabs": false
-    },
+    "name": "localloco",
+    "version": "0.1.0",
+    "private": true,
     "dependencies": {
+        "@azure/storage-blob": "^12.29.1",
         "@radix-ui/react-accordion": "^1.2.3",
         "@radix-ui/react-alert-dialog": "^1.1.6",
         "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -37,12 +27,10 @@
         "@radix-ui/react-slot": "^1.1.2",
         "@radix-ui/react-switch": "^1.1.3",
         "@radix-ui/react-tabs": "^1.1.3",
-        "@radix-ui/react-toast": "^1.2.15",
         "@radix-ui/react-toggle": "^1.1.2",
         "@radix-ui/react-toggle-group": "^1.1.2",
         "@radix-ui/react-tooltip": "^1.1.8",
         "@react-google-maps/api": "^2.20.7",
-        "@types/react-dom": "^19.2.2",
         "argon2": "^0.44.0",
         "axios": "^1.13.0",
         "better-auth": "^1.3.31",
@@ -63,13 +51,9 @@
         "i18next": "^25.6.0",
         "i18next-browser-languagedetector": "^8.2.0",
         "inherits": "^2.0.4",
-        "express": "^5.1.0",
-        "helmet": "^8.1.0",
-        "hono": "^4.10.2",
-        "inherits": "^2.0.4",
         "input-otp": "^1.4.2",
         "lucide-react": "^0.487.0",
-        "mysql2": "^3.15.3",
+        "morgan": "^1.10.1",
         "mysql2": "^3.15.3",
         "next-themes": "^0.4.6",
         "path": "^0.12.7",
@@ -89,24 +73,9 @@
         "tinyint": "^1.0.0",
         "url": "^0.11.4",
         "util": "^0.12.5",
+        "uuid": "^13.0.0",
         "vaul": "^1.1.2",
         "zustand": "^5.0.8"
-        "util": "^0.12.5",
-        "vaul": "^1.1.2",
-        "zustand": "^5.0.8"
-    },
-    "scripts": {
-        "dev": "vite",
-        "build": "tsc && vite build",
-        "start": "concurrently \"cd backend && npm start\" \"tsc && vite build && vite\"",
-        "start:v2": "cd src && npm run build && cd ../backend && npm start",
-        "setup": "npm install && cd backend && npm run db:push && cd ../ && npm start",
-        "setup": "npm install && cd backend && npm run db:push && cd ../ && npm start",
-        "db:setup": "cd backend && npm run db:push"
-    },
-    "prettier": {
-        "tabWidth": 4,
-        "useTabs": false
     },
     "devDependencies": {
         "@types/cors": "^2.8.19",
@@ -115,16 +84,22 @@
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.3",
         "@types/node": "^24.9.1",
-        "@types/react-router-dom": "^5.3.3",
+        "@types/uuid": "^10.0.0",
         "@vitejs/plugin-react-swc": "^3.10.2",
-        "concurrently": "^9.2.1",
         "cross-env": "^10.1.0",
         "drizzle-kit": "^0.18.1",
         "nodemon": "^3.1.10",
         "ts-node": "^10.9.2",
         "typescript": "~5.9.3",
         "vite": "^7.1.7"
-        "typescript": "~5.9.3",
-        "vite": "^7.1.7"
+    },
+    "scripts": {
+        "dev": "concurrently \"npm run dev-frontend\" \"npm run dev-backend\"",
+        "dev-frontend": "vite",
+        "dev-backend": "cd backend && npm run dev",
+        "build": "vite build",
+        "start": "npm run build && cd backend && npm start",
+        "setup": "npm install && cd backend && npm run db:push && cd ../ && npm start",
+        "db:setup": "cd backend && npm run db:push"
     }
 }
