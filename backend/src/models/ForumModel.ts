@@ -98,6 +98,16 @@ class ForumModel {
 
         return { ...reply, likeCount: newLikeCount };
     }
+
+    // creates a new reply to a forum post
+    public static async newForumReply(reply: Omit<ForumPostReply, 'id' | 'createdAt' | 'likeCount'>) {
+        const result = await db.insert(forumPostsReplies).values({
+            postId: reply.postId,
+            userEmail: reply.userEmail,
+            body: reply.body,
+        })
+        return result;
+    }
 }
 
 export default ForumModel
