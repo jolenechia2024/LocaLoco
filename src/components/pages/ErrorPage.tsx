@@ -6,7 +6,7 @@ import { useThemeStore } from '../../store/themeStore';
 
 
 interface ErrorPageProps {
-  onGoHome: () => void;
+  onGoHome?: () => void;
 }
 
 export function ErrorPage({ onGoHome}: ErrorPageProps) {

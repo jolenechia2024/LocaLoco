@@ -58,7 +58,7 @@ export const MainLayout = () => {
       // It's a BusinessOwner
       return {
         name: user.businessName,
-        email: user.businessEmail || user.email,
+        email: user.businessEmail,
         avatarUrl: user.wallpaper,
       };
     } else {
@@ -82,7 +82,6 @@ export const MainLayout = () => {
         userName={userInfo.name} // ✅ Use helper
         userEmail={userInfo.email} // ✅ Use helper
         avatarUrl={userInfo.avatarUrl} // ✅ Use helper
-        isDarkMode={isDarkMode}
         onThemeToggle={toggleTheme}
       />
       <div className="ml-20">

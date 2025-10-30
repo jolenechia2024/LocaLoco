@@ -3,7 +3,7 @@
 export interface BusinessOwner {
   id: string;
   businessName: string;
-  role: 'business'; // ✅ Add this
+  role: 'business_owner'; // ✅ Changed from 'business' to 'business_owner'
   address: string;
   operatingDays: string[];
   businessEmail: string;
@@ -11,7 +11,7 @@ export interface BusinessOwner {
   website: string;
   socialMedia: string;
   wallpaper?: string;
-  priceTier: '$' | '$$' | '$$$' | '$$$$';
+  priceTier: '' | '$' | '$$' | '$$$' | '$$$$'; // ✅ Added empty string option
   offersDelivery: boolean;
   offersPickup: boolean;
   paymentOptions: string[];
@@ -22,7 +22,7 @@ export interface BusinessOwner {
 // ✅ Keep your existing mock for backward compatibility
 export const mockBusinessOwner: BusinessOwner = {
   id: 'business-1',
-  role: 'business', // ✅ Add this
+  role: 'business_owner', // ✅ Changed to 'business_owner'
   businessName: 'The Local Cafe',
   address: '123 Main Street, Singapore 123456',
   operatingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -45,6 +45,7 @@ export const MOCK_BUSINESS_OWNERS: Record<string, BusinessOwner> = {
   // Add more business owners as needed
   'business-2': {
     id: 'business-2',
+    role: 'business_owner', // ✅ Added missing role
     businessName: 'Tech Solutions Hub',
     address: '456 Innovation Drive, Singapore 654321',
     operatingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],

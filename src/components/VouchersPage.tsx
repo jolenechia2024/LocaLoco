@@ -377,7 +377,10 @@ export function VouchersPage({
         </Alert>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => setActiveTab(value as 'available' | 'my-vouchers')}
+          >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="available">
               Available Vouchers ({availableVouchers.length})
@@ -424,6 +427,7 @@ export function VouchersPage({
             )}
           </TabsContent>
         </Tabs>
+
       </div>
     </div>
   );

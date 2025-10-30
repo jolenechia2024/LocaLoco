@@ -27,7 +27,7 @@ import { useThemeStore } from '../store/themeStore';
 
 
 interface SettingsPageProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 export function SettingsPage({ onBack}: SettingsPageProps) {

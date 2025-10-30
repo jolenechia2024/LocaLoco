@@ -4,6 +4,8 @@ export type UserRole = 'user' | 'business';
 
 import { BusinessOwner } from '../data/mockBusinessOwnerData';
 
+export type { BusinessOwner } from '../data/mockBusinessOwnerData';
+
 export type UserProfile = User | BusinessOwner;
 
 export interface AuthState {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Store } from 'lucide-react';
 import { BusinessVerificationData } from '../../types/auth';
+import { useNavigate } from 'react-router-dom'; // ✅ Added
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -13,18 +14,44 @@ import {
   SelectValue,
 } from '../ui/select';
 
-
 interface BusinessVerificationProps {
-  onSubmit: (data: BusinessVerificationData) => void;
-  onSkip: () => void;
+  onSubmit?: (data: BusinessVerificationData) => void;
+  onSkip?: () => void;
 }
-
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const PAYMENT_OPTIONS = ['Cash', 'Credit Card', 'Debit Card', 'PayNow', 'GrabPay', 'PayLah'];
 
+// ✅ Helper: Convert from backend format (low/medium/high) to frontend format ($/$$/etc)
+const convertPriceTier = (tier: string): "" | "$" | "$$" | "$$$" | "$$$$" => {
+  const mapping: Record<string, "" | "$" | "$$" | "$$$" | "$$$$"> = {
+    'low': '$',
+    'medium': '$$',
+    'high': '$$$',
+    '$': '$',
+    '$$': '$$',
+    '$$$': '$$$',
+    '$$$$': '$$$$',
+    '': ''
+  };
+  return mapping[tier.toLowerCase()] || '';
+};
 
-export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationProps) {
+// ✅ Helper: Convert from frontend format ($/$$/etc) to backend format (low/medium/high)
+const convertToBackendFormat = (tier: string): string => {
+  const mapping: Record<string, string> = {
+    '$': 'low',
+    '$$': 'medium',
+    '$$$': 'high',
+    '$$$$': 'high'
+  };
+  return mapping[tier] || tier;
+};
+
+// ✅ Added default parameter = {}
+export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationProps = {}) {
+  const navigate = useNavigate(); // ✅ Added
+  
   const [formData, setFormData] = useState<BusinessVerificationData>({
     operatingDays: [],
     businessEmail: '',
@@ -38,7 +65,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
     paymentOptions: [],
   });
 
-
   const handleDayToggle = (day: string) => {
     setFormData(prev => ({
       ...prev,
@@ -47,7 +73,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
         : [...prev.operatingDays, day]
     }));
   };
-
 
   const handlePaymentToggle = (payment: string) => {
     setFormData(prev => ({
@@ -67,14 +92,15 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
     // Append all fields
     formDataToSend.append('mode', 'signup');
     formDataToSend.append('role', 'business');
-
-
     formDataToSend.append('operatingDays', JSON.stringify(formData.operatingDays));
     formDataToSend.append('businessEmail', formData.businessEmail);
     formDataToSend.append('phone', formData.phone);
     formDataToSend.append('website', formData.website);
     formDataToSend.append('socialMedia', formData.socialMedia);
-    formDataToSend.append('priceTier', formData.priceTier);
+    
+    // ✅ Convert price tier to backend format before sending
+    formDataToSend.append('priceTier', convertToBackendFormat(formData.priceTier));
+    
     formDataToSend.append('offersDelivery', formData.offersDelivery ? '1' : '0');
     formDataToSend.append('offersPickup', formData.offersPickup ? '1' : '0');
     formDataToSend.append('paymentOptions', JSON.stringify(formData.paymentOptions));
@@ -92,7 +118,13 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
       const result = await response.json();
       if (result.success) {
         alert('Verification submitted successfully');
-        onSubmit(formData); // or refresh UI accordingly
+        
+        // ✅ Check if onSubmit exists before calling
+        if (onSubmit) {
+          onSubmit(formData);
+        } else {
+          navigate('/map');
+        }
       } else {
         alert('Submission failed: ' + (result.errors || 'Unknown error'));
       }
@@ -101,8 +133,15 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
       alert('Error submitting verification: ' + errorMessage);
     }
   };
-  
 
+  // ✅ Handler for skip button
+  const handleSkip = () => {
+    if (onSkip) {
+      onSkip();
+    } else {
+      navigate('/map');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -123,7 +162,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
         </div>
       </header>
 
-
       {/* Verification Form */}
       <div className="max-w-3xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg p-8">
@@ -133,7 +171,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               Complete your business profile to get verified and start reaching customers
             </p>
           </div>
-
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Operating Days */}
@@ -158,7 +195,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               </div>
             </div>
 
-
             {/* Business Email */}
             <div className="space-y-2">
               <Label htmlFor="businessEmail">Business Email</Label>
@@ -172,7 +208,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 className="bg-input-background"
               />
             </div>
-
 
             {/* Phone Number */}
             <div className="space-y-2">
@@ -188,7 +223,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               />
             </div>
 
-
             {/* Website Link */}
             <div className="space-y-2">
               <Label htmlFor="website">Website Link (https://)</Label>
@@ -202,7 +236,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               />
             </div>
 
-
             {/* Social Media Link */}
             <div className="space-y-2">
               <Label htmlFor="socialMedia">Social Media Link</Label>
@@ -215,7 +248,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 className="bg-input-background"
               />
             </div>
-
 
             {/* Business Wallpaper */}
             <div className="space-y-2">
@@ -240,13 +272,19 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               </div>
             </div>
 
-
             {/* Price Tier */}
             <div className="space-y-2">
               <Label htmlFor="priceTier">Price Tier</Label>
               <Select 
                 value={formData.priceTier} 
-                onValueChange={(value: string) => setFormData(prev => ({ ...prev, priceTier: value }))}
+                onValueChange={(value) => {
+                  // ✅ Convert and store in frontend format
+                  const converted = convertPriceTier(value);
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    priceTier: converted
+                  }));
+                }}
               >
                 <SelectTrigger className="bg-input-background">
                   <SelectValue placeholder="Select price tier" />
@@ -259,7 +297,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 </SelectContent>
               </Select>
             </div>
-
 
             {/* Delivery & Pickup */}
             <div className="space-y-4">
@@ -289,7 +326,6 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               </div>
             </div>
 
-
             {/* Payment Options */}
             <div className="space-y-4">
               <Label>Payment Options</Label>
@@ -312,13 +348,12 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               </div>
             </div>
 
-
             {/* Buttons */}
             <div className="flex gap-4 pt-4">
               <Button
                 type="button"
                 variant="outline"
-                onClick={onSkip}
+                onClick={handleSkip} // ✅ Use handler instead of direct call
                 className="flex-1 text-foreground"
               >
                 Skip for Now

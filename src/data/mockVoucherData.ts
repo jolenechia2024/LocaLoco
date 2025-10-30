@@ -1,4 +1,4 @@
-import { Voucher, RedeemedVoucher } from '../types/voucher';
+import { Voucher, RedeemedVoucher } from '../types/vouchers';
 
 export const availableVouchers: Voucher[] = [
   {

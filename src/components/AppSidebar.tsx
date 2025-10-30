@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuthStore } from '../store/authStore'; // ✅ Add this
+import { useAuthStore } from '../store/authStore';
 import { 
   Home, 
   Box, 
@@ -26,6 +26,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuPortal,
 } from './ui/dropdown-menu';
+import { useThemeStore } from '../store/themeStore';
+
 
 interface AppSidebarProps {
   onNavigate: (view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers') => void;
@@ -38,20 +40,21 @@ interface AppSidebarProps {
   onThemeToggle?: () => void;
 }
 
+
 export function AppSidebar({ 
   onNavigate, 
   onLogout, 
   currentView,
-  userName = "Brooklyn Simmons",
-  userEmail = "brooklyn@simmons.com",
+  userName = "User",
+  userEmail = "user@example.com",
   avatarUrl,
-  notificationCount = 12,
-  isDarkMode = true,
+  notificationCount = 0,
   onThemeToggle
 }: AppSidebarProps) {
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const role = useAuthStore((state) => state.role); // ✅ Get user role
+  const role = useAuthStore((state) => state.role);
   
   const bgColor = isDarkMode ? '#3a3a3a' : '#ffffff';
   const textColor = isDarkMode ? 'text-white' : 'text-black';
@@ -60,28 +63,30 @@ export function AppSidebar({
   const hoverBgColor = isDarkMode ? 'hover:bg-[#404040]' : 'hover:bg-gray-100';
   const avatarBgColor = isDarkMode ? 'bg-gray-600' : 'bg-gray-300';
 
-  // ✅ Define all menu items
+
   const allMenuItems = [
     { icon: Home, label: 'Home', view: 'map' as const },
     { icon: Box, label: 'Explore', view: 'list' as const },
     { icon: Bookmark, label: 'Bookmarks', view: 'bookmarks' as const },
-    { icon: Ticket, label: 'Vouchers', view: 'vouchers' as const, userOnly: true }, // ✅ Add userOnly flag
+    { icon: Ticket, label: 'Vouchers', view: 'vouchers' as const, userOnly: true },
     { icon: Layers, label: 'Forum', view: 'forum' as const },
   ];
 
-  // ✅ Filter menu items based on role
+
   const mainMenuItems = allMenuItems.filter(item => {
     if (item.userOnly && role !== 'user') {
-      return false; // Hide vouchers for business users
+      return false;
     }
     return true;
   });
 
+
   const bottomMenuItems = [
-    { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: true },
+    { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0 },
     { icon: isDarkMode ? Sun : Moon, label: 'Theme', view: null, isThemeToggle: true },
     { icon: Settings, label: 'Settings', view: 'settings' as const },
   ];
+
 
   const handleMenuClick = (
     view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | null, 
@@ -94,6 +99,7 @@ export function AppSidebar({
     }
   };
 
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -101,6 +107,7 @@ export function AppSidebar({
       .join('')
       .toUpperCase();
   };
+
 
   return (
     <div
@@ -113,7 +120,6 @@ export function AppSidebar({
         }
       }}
     >
-      {/* Logo Section */}
       <div className={`p-4 border-b ${borderColor}`}>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 flex-shrink-0 bg-[#FFA1A3] rounded-lg flex items-center justify-center">
@@ -130,7 +136,7 @@ export function AppSidebar({
         </div>
       </div>
 
-      {/* Main Menu Items */}
+
       <nav className="flex-1 px-3 py-2 space-y-1">
         {mainMenuItems.map((item) => {
           const Icon = item.icon;
@@ -155,7 +161,7 @@ export function AppSidebar({
         })}
       </nav>
 
-      {/* Bottom Menu Items */}
+
       <nav className={`px-3 py-4 space-y-1 border-t ${borderColor}`}>
         {bottomMenuItems.map((item) => {
           const Icon = item.icon;
@@ -180,7 +186,7 @@ export function AppSidebar({
         })}
       </nav>
 
-      {/* Profile Section */}
+
       <div className={`p-3 border-t ${borderColor}`}>
         <div className={`w-full rounded-lg p-3 flex items-center gap-3 ${textColor} transition-colors relative`}>
           <button
@@ -239,7 +245,7 @@ export function AppSidebar({
                   <DropdownMenuLabel className={textColor}>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator style={{ backgroundColor: isDarkMode ? '#404040' : '#e5e7eb' }} />
                   <DropdownMenuItem 
-                    onClick={(e: Event) => {
+                    onClick={(e) => {
                       e.preventDefault();
                       setIsDropdownOpen(false);
                       handleMenuClick('profile');
@@ -250,7 +256,7 @@ export function AppSidebar({
                     <span>View Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={(e: Event) => {
+                    onClick={(e) => {
                       e.preventDefault();
                       setIsDropdownOpen(false);
                       onLogout();

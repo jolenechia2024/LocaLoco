@@ -9,14 +9,17 @@ import { Textarea } from './ui/textarea';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useThemeStore } from '../store/themeStore';
+import { useNavigate } from 'react-router-dom'; // ✅ Added
 
-
+// ✅ Made onBack optional with ?
 interface ForumPageProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
-export function ForumPage({ onBack}: ForumPageProps) {
+// ✅ Added default parameter = {}
+export function ForumPage({ onBack }: ForumPageProps = {}) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
+  const navigate = useNavigate(); // ✅ Added
   const [discussions, setDiscussions] = useState<ForumDiscussion[]>(mockDiscussions);
   
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';

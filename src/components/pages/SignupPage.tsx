@@ -14,19 +14,23 @@ import {
   SelectValue,
 } from '../ui/select';
 import { useThemeStore } from '../../store/themeStore';
+import { useAuthStore } from '../../store/authStore'; // ✅ Added
 import { toast } from 'sonner';
 
+// ✅ Made props optional with ?
 interface SignupPageProps {
-  onSignup: (data: any, role: UserRole) => void;
-  onBack: () => void;
+  onSignup?: (data: any, role: UserRole) => void;
+  onBack?: () => void;
 }
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const PAYMENT_OPTIONS = ['Cash', 'Credit/Debit Card', 'PayNow', 'Digital Wallets (Apple/Google/Samsung/GrabPay)'];
 
-export function SignupPage({ onSignup, onBack }: SignupPageProps) {
+// ✅ Added default parameter = {}
+export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login); // ✅ Added auth store
   const [role, setRole] = useState<UserRole>('user');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -122,7 +126,15 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps) {
       
       if (result.success) {
         toast.success('Signup successful!');
-        onSignup(formData, role);
+        
+        // ✅ Check if onSignup exists before calling
+        if (onSignup) {
+          onSignup(formData, role);
+        } else {
+          // Use auth store and navigate for routes.tsx
+          login(result.userId || 'user-1', role);
+          navigate(role === 'business' ? '/verification' : '/map');
+        }
       } else {
         toast.error('Signup failed: ' + (result.message || 'Unknown error'));
       }

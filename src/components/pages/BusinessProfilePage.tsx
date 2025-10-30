@@ -23,20 +23,30 @@ import { EditBusinessProfileDialog } from './EditBusinessProfileDialog';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useThemeStore } from '../../store/themeStore';
+import { useUser } from '../../hooks/useUser'; // ✅ Added
+import { useAuthStore } from '../../store/authStore'; // ✅ Added
 
+// ✅ Made all props optional
 interface BusinessProfilePageProps {
-  businessOwner: BusinessOwner;
-  onBack: () => void;
-  onUpdateBusiness: (updatedBusiness: BusinessOwner) => void;
+  businessOwner?: BusinessOwner;
+  onBack?: () => void;
+  onUpdateBusiness?: (updatedBusiness: BusinessOwner) => void;
 }
 
+// ✅ Added default parameter = {}
 export function BusinessProfilePage({
-  businessOwner,
+  businessOwner: propBusinessOwner,
+  onBack,
   onUpdateBusiness,
-}: BusinessProfilePageProps) {
+}: BusinessProfilePageProps = {}) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const navigate = useNavigate();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const userId = useAuthStore((state) => state.userId); // ✅ Added
+  const { user, updateUser } = useUser(userId); // ✅ Added
+
+  // ✅ Use prop if provided, otherwise use hook
+  const businessOwner = propBusinessOwner || (user as BusinessOwner);
 
   // Safety check
   if (!businessOwner || !businessOwner.businessName) {
@@ -58,8 +68,14 @@ export function BusinessProfilePage({
       .toUpperCase();
   };
 
+  // ✅ Check if callback exists before calling
   const handleSave = (updatedBusiness: BusinessOwner) => {
-    onUpdateBusiness(updatedBusiness);
+    if (onUpdateBusiness) {
+      onUpdateBusiness(updatedBusiness);
+    } else {
+      // Use updateUser from hook
+      updateUser(updatedBusiness);
+    }
     toast.success('Business profile updated successfully!');
   };
 
@@ -117,7 +133,7 @@ export function BusinessProfilePage({
           </div>
         </Card>
 
-        {/* ✅ WRAP ALL CARDS IN A SINGLE CONTAINER WITH gap-6 */}
+        {/* Cards Container */}
         <div className="space-y-6">
           {/* Two-column grid for Business Details and Contact & Links */}
           <div className="grid gap-6 md:grid-cols-2">
@@ -247,7 +263,7 @@ export function BusinessProfilePage({
             </Card>
           </div>
 
-          {/* ✅ Business Wallpaper Preview - Now inside space-y-6 container */}
+          {/* Business Wallpaper Preview */}
           {businessOwner.wallpaper && (
             <Card className="p-6" style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff', color: isDarkMode ? '#ffffff' : '#000000' }}>
               <h2 className="mb-4">Business Wallpaper</h2>
