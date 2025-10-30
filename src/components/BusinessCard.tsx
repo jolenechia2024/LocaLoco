@@ -5,13 +5,14 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { checkBusinessOpenStatus, getCategoryDisplayName } from '../utils/businessUtils';
+import { useThemeStore } from '../store/themeStore';
+
 
 interface BusinessCardProps {
   business: Business;
   isBookmarked: boolean;
   onBookmarkToggle: (businessId: string) => void;
   onViewDetails: (business: Business) => void;
-  isDarkMode?: boolean;
 }
 
 export function BusinessCard({
@@ -19,8 +20,9 @@ export function BusinessCard({
   isBookmarked,
   onBookmarkToggle,
   onViewDetails,
-  isDarkMode = false,
 }: BusinessCardProps) {
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+
   const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
   const textColor = isDarkMode ? 'text-white' : 'text-black';
   const mutedTextColor = isDarkMode ? 'text-gray-400' : 'text-muted-foreground';

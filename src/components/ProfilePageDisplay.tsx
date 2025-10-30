@@ -10,6 +10,7 @@ import { BusinessOwner } from '../data/mockBusinessOwnerData'; // ✅ Import Bus
 import { useState, useEffect } from 'react';
 import { useUserPointsStore } from '../store/userStore';
 
+
 const MOCK_BOOKMARKED_BUSINESSES: Business[] = [];
 
 export function ProfilePageDisplay() {
@@ -68,7 +69,6 @@ export function ProfilePageDisplay() {
         businessOwner={user as BusinessOwner}
         onBack={handleBack}
         onUpdateBusiness={updateUser}
-        isDarkMode={isDarkMode}
       />
     );
   }
@@ -100,7 +100,6 @@ export function ProfilePageDisplay() {
       onViewBusinessDetails={handleViewBusinessDetails}
       onBookmarkToggle={handleBookmarkToggle}
       onNavigateToVouchers={handleNavigateToVouchers}
-      isDarkMode={isDarkMode}
     />
   );
 }

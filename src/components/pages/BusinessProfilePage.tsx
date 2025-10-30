@@ -21,21 +21,22 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { EditBusinessProfileDialog } from './EditBusinessProfileDialog';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { useThemeStore } from '../../store/themeStore';
 
 interface BusinessProfilePageProps {
   businessOwner: BusinessOwner;
   onBack: () => void;
   onUpdateBusiness: (updatedBusiness: BusinessOwner) => void;
-  isDarkMode?: boolean;
 }
 
 export function BusinessProfilePage({
   businessOwner,
-  onBack,
   onUpdateBusiness,
-  isDarkMode = true,
 }: BusinessProfilePageProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const navigate = useNavigate();
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
 
   // Safety check
   if (!businessOwner || !businessOwner.businessName) {

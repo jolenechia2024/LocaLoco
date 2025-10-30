@@ -11,6 +11,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import { useThemeStore } from '../store/themeStore';
+
 
 interface SearchBarProps {
   searchTerm: string;
@@ -21,7 +23,6 @@ interface SearchBarProps {
   onPricesChange: (value: string[]) => void;
   openNowOnly: boolean;
   onOpenNowChange: (value: boolean) => void;
-  isDarkMode?: boolean;
 }
 
 export function SearchBar({
@@ -33,8 +34,11 @@ export function SearchBar({
   onPricesChange,
   openNowOnly,
   onOpenNowChange,
-  isDarkMode = false,
 }: SearchBarProps) {
+
+
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+
   const bgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
   const textColor = isDarkMode ? 'text-white' : 'text-black';
   const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';

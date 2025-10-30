@@ -1,4 +1,4 @@
-// App.tsx - Clean and minimal
+// App.tsx
 import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from './routes';
 import { Toaster } from './components/ui/sonner';
@@ -11,10 +11,8 @@ export default function App() {
     <BrowserRouter>
       <div className={isDarkMode ? 'dark' : ''}>
         <AppRoutes />
-        <Toaster isDarkMode={isDarkMode} />
+        <Toaster />  {/* ✅ Remove isDarkMode prop */}
       </div>
     </BrowserRouter>
   );
 }
-
-// That's it! All logic is now in hooks and stores.

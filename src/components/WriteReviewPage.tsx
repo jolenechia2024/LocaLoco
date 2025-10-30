@@ -8,6 +8,8 @@ import { Label } from './ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { toast } from 'sonner';
+import { useThemeStore } from '../store/themeStore';
+
 
 interface WriteReviewPageProps {
   business: Business;
@@ -15,7 +17,6 @@ interface WriteReviewPageProps {
   onSubmit: (rating: number, comment: string) => void;
   userAvatar?: string;
   userName: string;
-  isDarkMode?: boolean;
 }
 
 export function WriteReviewPage({
@@ -24,8 +25,9 @@ export function WriteReviewPage({
   onSubmit,
   userAvatar,
   userName,
-  isDarkMode = false,
 }: WriteReviewPageProps) {
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');

@@ -35,7 +35,6 @@ interface AppSidebarProps {
   userEmail?: string;
   avatarUrl?: string;
   notificationCount?: number;
-  isDarkMode?: boolean;
   onThemeToggle?: () => void;
 }
 

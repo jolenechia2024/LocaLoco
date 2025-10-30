@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ReviewCard } from './ReviewCard';
 import { MapPlaceholder } from './MapPlaceholder';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useThemeStore } from '../store/themeStore';
+
 
 interface BusinessDetailProps {
   business: Business;
@@ -17,7 +19,6 @@ interface BusinessDetailProps {
   onBookmarkToggle: (businessId: string) => void;
   onBack: () => void;
   onWriteReview?: (business: Business) => void;
-  isDarkMode?: boolean;
 }
 
 export function BusinessDetail({
@@ -27,8 +28,9 @@ export function BusinessDetail({
   onBookmarkToggle,
   onBack,
   onWriteReview,
-  isDarkMode = true,
 }: BusinessDetailProps) {
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+
   const [selectedTab, setSelectedTab] = useState('overview');
   
   const textColor = isDarkMode ? '#ffffff' : '#000000';

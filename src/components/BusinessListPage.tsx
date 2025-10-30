@@ -15,6 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Badge } from "./ui/badge";
 import { mockEvents } from "../data/mockData";
 
+
+
 export const BusinessListPage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
@@ -48,7 +50,6 @@ export const BusinessListPage = () => {
         open={showEventsPopup}
         onClose={() => setShowEventsPopup(false)}
         events={mockEvents}
-        isDarkMode={isDarkMode}
       />
 
       {showFilters && (
@@ -81,7 +82,6 @@ export const BusinessListPage = () => {
             onPricesChange={(prices) => setFilters({ selectedPrices: prices })}
             openNowOnly={filters.openNowOnly}
             onOpenNowChange={(open) => setFilters({ openNowOnly: open })}
-            isDarkMode={isDarkMode}
           />
         </div>
       </header>
@@ -143,7 +143,6 @@ export const BusinessListPage = () => {
                     isBookmarked={isBookmarked(business.id)}
                     onBookmarkToggle={toggleBookmark}
                     onViewDetails={handleViewDetails}
-                    isDarkMode={isDarkMode}
                   />
                 ))}
               </div>
@@ -179,7 +178,6 @@ export const BusinessListPage = () => {
                     isBookmarked={true}
                     onBookmarkToggle={toggleBookmark}
                     onViewDetails={handleViewDetails}
-                    isDarkMode={isDarkMode}
                   />
                 ))}
               </div>

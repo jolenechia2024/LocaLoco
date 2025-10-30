@@ -9,6 +9,8 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { BusinessCard } from '../BusinessCard';
 import { EditProfileDialog } from './EditProfileDialog';
+import { useThemeStore } from '../../store/themeStore';
+
 
 interface ProfilePageProps {
   user: User;  
@@ -19,7 +21,6 @@ interface ProfilePageProps {
   onViewBusinessDetails: (business: Business) => void;
   onBookmarkToggle: (businessId: string) => void;
   onNavigateToVouchers?: () => void;
-  isDarkMode?: boolean;
 }
 
 export function ProfilePage({
@@ -31,8 +32,9 @@ export function ProfilePage({
   onViewBusinessDetails,
   onBookmarkToggle,
   onNavigateToVouchers,
-  isDarkMode = true,
 }: ProfilePageProps) {
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';

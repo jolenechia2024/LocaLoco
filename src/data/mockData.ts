@@ -1,5 +1,5 @@
 import { Business, Review, Event } from '../types/business';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import axios from 'axios';
 
@@ -34,14 +34,15 @@ export const mockBusinesses: Business[] = [
     reviewCount: 342,
     priceRange: '$',
     hours: {
-      'Monday': '8:00 AM - 9:00 PM',
-      'Tuesday': '8:00 AM - 9:00 PM',
-      'Wednesday': '8:00 AM - 9:00 PM',
-      'Thursday': '8:00 AM - 9:00 PM',
-      'Friday': '8:00 AM - 10:00 PM',
-      'Saturday': '8:00 AM - 10:00 PM',
-      'Sunday': '8:00 AM - 8:00 PM'
+      'Monday': { open: '8:00 AM', close: '9:00 PM' },  // ✅ Correct
+      'Tuesday': { open: '8:00 AM', close: '9:00 PM' },
+      'Wednesday': { open: '8:00 AM', close: '9:00 PM' },
+      'Thursday': { open: '8:00 AM', close: '9:00 PM' },
+      'Friday': { open: '8:00 AM', close: '10:00 PM' },
+      'Saturday': { open: '8:00 AM', close: '10:00 PM' },
+      'Sunday': { open: '8:00 AM', close: '8:00 PM' }
     },
+    
     coordinates: { lat: 1.2803, lng: 103.8509 },
     isPopular: true,
     tags: ['hawker', 'chicken rice', 'local food', 'halal']
@@ -60,13 +61,13 @@ export const mockBusinesses: Business[] = [
     reviewCount: 289,
     priceRange: '$$',
     hours: {
-      'Monday': '8:00 AM - 8:00 PM',
-      'Tuesday': '8:00 AM - 8:00 PM',
-      'Wednesday': '8:00 AM - 8:00 PM',
-      'Thursday': '8:00 AM - 8:00 PM',
-      'Friday': '8:00 AM - 9:00 PM',
-      'Saturday': '8:00 AM - 9:00 PM',
-      'Sunday': '8:00 AM - 8:00 PM'
+      'Monday': { open: '8:00 AM', close: '8:00 PM' },
+      'Tuesday': { open: '8:00 AM', close: '8:00 PM' },
+      'Wednesday': { open: '8:00 AM', close: '8:00 PM' },
+      'Thursday': { open: '8:00 AM', close: '8:00 PM' },
+      'Friday': { open: '8:00 AM', close: '9:00 PM' },
+      'Saturday': { open: '8:00 AM', close: '9:00 PM' },
+      'Sunday': { open: '8:00 AM', close: '8:00 PM' }
     },
     coordinates: { lat: 1.2857, lng: 103.8341 },
     isPopular: true,
@@ -86,14 +87,15 @@ export const mockBusinesses: Business[] = [
     reviewCount: 567,
     priceRange: '$$$',
     hours: {
-      'Monday': 'Closed',
-      'Tuesday': '6:00 PM - 10:00 PM',
-      'Wednesday': '12:00 PM - 2:30 PM, 6:00 PM - 10:00 PM',
-      'Thursday': '12:00 PM - 2:30 PM, 6:00 PM - 10:00 PM',
-      'Friday': '12:00 PM - 2:30 PM, 6:00 PM - 10:30 PM',
-      'Saturday': '12:00 PM - 2:30 PM, 6:00 PM - 10:30 PM',
-      'Sunday': '12:00 PM - 2:30 PM, 6:00 PM - 10:00 PM'
+      'Monday': { open: 'Closed', close: 'Closed' },
+      'Tuesday': { open: '6:00 PM', close: '10:00 PM' },
+      'Wednesday': { open: '6:00 PM', close: '10:00 PM' },
+      'Thursday': { open: '6:00 PM', close: '10:00 PM' },
+      'Friday': { open: '6:00 PM', close: '10:30 PM' },
+      'Saturday': { open: '6:00 PM', close: '10:30 PM' },
+      'Sunday': { open: '6:00 PM', close: '10:00 PM' }
     },
+    
     coordinates: { lat: 1.2897, lng: 103.8556 },
     isPopular: true,
     tags: ['fine dining', 'michelin', 'singaporean', 'tasting menu']
@@ -112,13 +114,13 @@ export const mockBusinesses: Business[] = [
     reviewCount: 178,
     priceRange: '$$$',
     hours: {
-      'Monday': '10:00 AM - 9:00 PM',
-      'Tuesday': '10:00 AM - 9:00 PM',
-      'Wednesday': '10:00 AM - 9:00 PM',
-      'Thursday': '10:00 AM - 9:00 PM',
-      'Friday': '10:00 AM - 10:00 PM',
-      'Saturday': '10:00 AM - 10:00 PM',
-      'Sunday': '10:00 AM - 9:00 PM'
+      'Monday': { open: '10:00 AM', close: '9:00 PM' },
+      'Tuesday': { open: '10:00 AM', close: '9:00 PM' },
+      'Wednesday': { open: '10:00 AM', close: '9:00 PM' },
+      'Thursday': { open: '10:00 AM', close: '9:00 PM' },
+      'Friday': { open: '10:00 AM', close: '10:00 PM' },
+      'Saturday': { open: '10:00 AM', close: '10:00 PM' },
+      'Sunday': { open: '10:00 AM', close: '9:00 PM' }
     },
     coordinates: { lat: 1.3012, lng: 103.8392 },
     tags: ['fashion', 'designer', 'boutique', 'styling', 'orchard']
@@ -136,13 +138,13 @@ export const mockBusinesses: Business[] = [
     reviewCount: 234,
     priceRange: '$$',
     hours: {
-      'Monday': '10:00 AM - 8:00 PM',
-      'Tuesday': '10:00 AM - 8:00 PM',
-      'Wednesday': '10:00 AM - 8:00 PM',
-      'Thursday': '10:00 AM - 8:00 PM',
-      'Friday': '10:00 AM - 8:00 PM',
-      'Saturday': '10:00 AM - 8:00 PM',
-      'Sunday': '11:00 AM - 6:00 PM'
+      'Monday': { open: '10:00 AM', close: '8:00 PM' },
+      'Tuesday': { open: '10:00 AM', close: '8:00 PM' },
+      'Wednesday': { open: '10:00 AM', close: '8:00 PM' },
+      'Thursday': { open: '10:00 AM', close: '8:00 PM' },
+      'Friday': { open: '10:00 AM', close: '8:00 PM' },
+      'Saturday': { open: '10:00 AM', close: '8:00 PM' },
+      'Sunday': { open: '11:00 AM', close: '6:00 PM' }
     },
     coordinates: { lat: 1.3030, lng: 103.8530 },
     tags: ['electronics', 'repair', 'smartphone', 'warranty', 'sim lim']
@@ -161,13 +163,13 @@ export const mockBusinesses: Business[] = [
     reviewCount: 412,
     priceRange: '$$',
     hours: {
-      'Monday': '11:00 AM - 10:00 PM',
-      'Tuesday': '11:00 AM - 10:00 PM',
-      'Wednesday': '11:00 AM - 10:00 PM',
-      'Thursday': '11:00 AM - 10:00 PM',
-      'Friday': '11:00 AM - 11:00 PM',
-      'Saturday': '11:00 AM - 11:00 PM',
-      'Sunday': '11:00 AM - 10:00 PM'
+      'Monday': { open: '11:00 AM', close: '10:00 PM' },
+      'Tuesday': { open: '11:00 AM', close: '10:00 PM' },
+      'Wednesday': { open: '11:00 AM', close: '10:00 PM' },
+      'Thursday': { open: '11:00 AM', close: '10:00 PM' },
+      'Friday': { open: '11:00 AM', close: '11:00 PM' },
+      'Saturday': { open: '11:00 AM', close: '11:00 PM' },
+      'Sunday': { open: '11:00 AM', close: '10:00 PM' }
     },
     coordinates: { lat: 1.2996, lng: 103.8573 },
     tags: ['halal', 'middle eastern', 'certified', 'family friendly']
@@ -186,13 +188,13 @@ export const mockBusinesses: Business[] = [
     reviewCount: 523,
     priceRange: '$$$',
     hours: {
-      'Monday': '10:00 AM - 10:00 PM',
-      'Tuesday': '10:00 AM - 10:00 PM',
-      'Wednesday': '10:00 AM - 10:00 PM',
-      'Thursday': '10:00 AM - 10:00 PM',
-      'Friday': '10:00 AM - 11:00 PM',
-      'Saturday': '9:00 AM - 11:00 PM',
-      'Sunday': '9:00 AM - 10:00 PM'
+      'Monday': { open: '10:00 AM', close: '10:00 PM' },
+      'Tuesday': { open: '10:00 AM', close: '10:00 PM' },
+      'Wednesday': { open: '10:00 AM', close: '10:00 PM' },
+      'Thursday': { open: '10:00 AM', close: '10:00 PM' },
+      'Friday': { open: '10:00 AM', close: '11:00 PM' },
+      'Saturday': { open: '9:00 AM', close: '11:00 PM' },
+      'Sunday': { open: '9:00 AM', close: '10:00 PM' }
     },
     coordinates: { lat: 1.2834, lng: 103.8607 },
     isPopular: true,
@@ -212,13 +214,13 @@ export const mockBusinesses: Business[] = [
     reviewCount: 398,
     priceRange: '$$',
     hours: {
-      'Monday': '12:00 PM - 10:00 PM',
-      'Tuesday': '12:00 PM - 10:00 PM',
-      'Wednesday': '12:00 PM - 10:00 PM',
-      'Thursday': '12:00 PM - 10:00 PM',
-      'Friday': '12:00 PM - 11:00 PM',
-      'Saturday': '11:00 AM - 11:00 PM',
-      'Sunday': '11:00 AM - 10:00 PM'
+      'Monday': { open: '12:00 PM', close: '10:00 PM' },
+      'Tuesday': { open: '12:00 PM', close: '10:00 PM' },
+      'Wednesday': { open: '12:00 PM', close: '10:00 PM' },
+      'Thursday': { open: '12:00 PM', close: '10:00 PM' },
+      'Friday': { open: '12:00 PM', close: '11:00 PM' },
+      'Saturday': { open: '11:00 AM', close: '11:00 PM' },
+      'Sunday': { open: '11:00 AM', close: '10:00 PM' }
     },
     coordinates: { lat: 1.3013, lng: 103.8381 },
     tags: ['vr', 'gaming', 'entertainment', 'parties', 'team building']
@@ -237,13 +239,13 @@ export const mockBusinesses: Business[] = [
     reviewCount: 156,
     priceRange: '$$$',
     hours: {
-      'Monday': '9:00 AM - 6:00 PM',
-      'Tuesday': '9:00 AM - 6:00 PM',
-      'Wednesday': '9:00 AM - 6:00 PM',
-      'Thursday': '9:00 AM - 6:00 PM',
-      'Friday': '9:00 AM - 5:00 PM',
-      'Saturday': 'By appointment',
-      'Sunday': 'Closed'
+      'Monday': { open: '9:00 AM', close: '6:00 PM' },
+      'Tuesday': { open: '9:00 AM', close: '6:00 PM' },
+      'Wednesday': { open: '9:00 AM', close: '6:00 PM' },
+      'Thursday': { open: '9:00 AM', close: '6:00 PM' },
+      'Friday': { open: '9:00 AM', close: '5:00 PM' },
+      'Saturday': { open: 'By appointment', close: 'By appointment' },
+      'Sunday': { open: 'Closed', close: 'Closed' }
     },
     coordinates: { lat: 1.2858, lng: 103.8514 },
     tags: ['legal', 'corporate law', 'property', 'consultation']
@@ -262,13 +264,13 @@ export const mockBusinesses: Business[] = [
     reviewCount: 267,
     priceRange: '$$$',
     hours: {
-      'Monday': '10:00 AM - 7:00 PM',
-      'Tuesday': '10:00 AM - 7:00 PM',
-      'Wednesday': '10:00 AM - 7:00 PM',
-      'Thursday': '10:00 AM - 7:00 PM',
-      'Friday': '10:00 AM - 8:00 PM',
-      'Saturday': '10:00 AM - 8:00 PM',
-      'Sunday': '11:00 AM - 6:00 PM'
+      'Monday': { open: '10:00 AM', close: '7:00 PM' },
+      'Tuesday': { open: '10:00 AM', close: '7:00 PM' },
+      'Wednesday': { open: '10:00 AM', close: '7:00 PM' },
+      'Thursday': { open: '10:00 AM', close: '7:00 PM' },
+      'Friday': { open: '10:00 AM', close: '8:00 PM' },
+      'Saturday': { open: '10:00 AM', close: '8:00 PM' },
+      'Sunday': { open: '11:00 AM', close: '6:00 PM' }
     },
     coordinates: { lat: 1.3780, lng: 103.8647 },
     tags: ['furniture', 'scandinavian', 'modern', 'home decor', 'minimalist']

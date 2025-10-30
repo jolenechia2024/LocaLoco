@@ -4,13 +4,14 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useThemeStore } from '../store/themeStore';
+
 
 interface EventsPopupProps {
   open: boolean;
   events: Event[];
   onClose: () => void;
   onEventClick?: (event: Event) => void;
-  isDarkMode?: boolean;
 }
 
 export function EventsPopup({
@@ -18,8 +19,9 @@ export function EventsPopup({
   events,
   onClose,
   onEventClick,
-  isDarkMode = false,
 }: EventsPopupProps) {
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+
   if (!open) return null;
   
   const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
