@@ -56,7 +56,7 @@ export function BusinessCard({
             variant={isBookmarked ? "default" : "secondary"}
             size="sm"
             className="absolute top-2 right-2 p-2"
-            onClick={() => onBookmarkToggle(business.id)}
+            onClick={() => onBookmarkToggle(business.uen)}
           >
             <Bookmark
               className={`w-4 h-4 ${

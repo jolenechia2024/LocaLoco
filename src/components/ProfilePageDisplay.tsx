@@ -29,7 +29,7 @@ export function ProfilePageDisplay() {
 
   // Navigation handlers
   const handleBack = () => navigate(ROUTES.BUSINESSES);
-  const handleViewBusinessDetails = (business: Business) => navigate(`${ROUTES.BUSINESSES}/${business.id}`);
+  const handleViewBusinessDetails = (business: Business) => navigate(`${ROUTES.BUSINESSES}/${business.uen}`);
   const handleBookmarkToggle = (businessId: string) => console.log('Toggle bookmark for:', businessId);
   const handleNavigateToVouchers = () => navigate(ROUTES.VOUCHERS);
 

@@ -49,12 +49,12 @@ export const BusinessDetailPage = () => {
     >
       <BusinessDetail
         business={business}
-        reviews={reviews}
-        isBookmarked={isBookmarked(business.id)}
+        reviews={mockReviews}
+        isBookmarked={isBookmarked(business.uen)}
         onBookmarkToggle={toggleBookmark}
         onBack={() => navigate("/businesses")}
         onWriteReview={(business) => {
-          navigate(`/review/${business.id}`);
+          navigate(`/review/${business.uen}`);
         }}
       />
     </div>

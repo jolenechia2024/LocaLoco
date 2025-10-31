@@ -37,7 +37,7 @@ export const BusinessListPage = () => {
   }, []);
 
   const handleViewDetails = (business: Business) => {
-    navigate(`/business/${business.id}`);
+    navigate(`/business/${business.uen}`);
   };
 
   return (
@@ -139,9 +139,9 @@ export const BusinessListPage = () => {
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredBusinesses.map((business) => (
                   <BusinessCard
-                    key={business.id}
+                    key={business.uen}
                     business={business}
-                    isBookmarked={isBookmarked(business.id)}
+                    isBookmarked={isBookmarked(business.uen)}
                     onBookmarkToggle={toggleBookmark}
                     onViewDetails={handleViewDetails}
                     isDarkMode={isDarkMode}
@@ -175,7 +175,7 @@ export const BusinessListPage = () => {
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {bookmarkedBusinesses.map((business) => (
                   <BusinessCard
-                    key={business.id}
+                    key={business.uen}
                     business={business}
                     isBookmarked={true}
                     onBookmarkToggle={toggleBookmark}
