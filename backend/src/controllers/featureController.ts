@@ -82,6 +82,17 @@ class FeatureController {
         }
     }
 
+    static async updateReplyLikes(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { replyId, clicked } = req.body;
+            const result = await ForumModel.updateReplyLikes(replyId, clicked);
+            res.status(200).json(result);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+
     static async newForumPost(req: Request, res: Response, next: NextFunction): Promise<void> {
 
         const post = { 
