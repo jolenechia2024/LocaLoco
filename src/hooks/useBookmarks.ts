@@ -10,7 +10,7 @@ export const useBookmarks = () => {
   const bookmarkedBusinesses = useMemo(() => {
     const bookmarkedIds = store.bookmarkedBusinesses.map((b) => b.businessId);
     return store.businesses.filter((business) =>
-      bookmarkedIds.includes(business.id)
+      bookmarkedIds.includes(business.uen)
     );
   }, [store.businesses, store.bookmarkedBusinesses]);
 

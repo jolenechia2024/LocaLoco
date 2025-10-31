@@ -115,7 +115,7 @@ export function MapDiscoveryPage() {
   if (userLocation) {
     const distances = businessesWithCoords
       .map((b) => ({
-        uen: (b as any).uen ?? b.id,
+        uen: (b as any).uen ?? b.uen,
         distance:
           b.lat && b.lng
             ? haversineDistance(userLocation.lat, userLocation.lng, b.lat, b.lng)
@@ -131,7 +131,7 @@ export function MapDiscoveryPage() {
   // Navigation handlers
   const handleBusinessClick = (business: Business) => {
     setSelectedBusiness(business);
-    navigate(`/business/${business.id}`);
+    navigate(`/business/${business.uen}`);
   };
 
   const handleLogout = () => {
@@ -178,8 +178,8 @@ export function MapDiscoveryPage() {
           {businessesWithCoords.map((b) => {
             if (b.lat === undefined || b.lng === undefined) return null;
 
-            const isSelected = selectedPin?.id === b.id;
-            const isNearest = nearestUENs.has((b as any).uen ?? b.id);
+            const isSelected = selectedPin?.uen === b.uen;
+            const isNearest = nearestUENs.has((b as any).uen ?? b.uen);
 
             let iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
             if (isNearest) iconUrl = 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
@@ -187,7 +187,7 @@ export function MapDiscoveryPage() {
 
             return (
               <Marker
-                key={String(b.id)}
+                key={String(b.uen)}
                 position={{ lat: b.lat, lng: b.lng }}
                 onClick={() => setSelectedPin(b)}
                 icon={{ url: iconUrl }}
@@ -282,7 +282,7 @@ export function MapDiscoveryPage() {
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {filtered.map((b) => (
-                <Card key={b.id} className={`p-4 hover:shadow ${borderTone}`} style={{ backgroundColor: panelBg }}>
+                <Card key={b.uen} className={`p-4 hover:shadow ${borderTone}`} style={{ backgroundColor: panelBg }}>
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-primary/10 rounded-md">
                       <Store className="w-4 h-4 text-primary" />

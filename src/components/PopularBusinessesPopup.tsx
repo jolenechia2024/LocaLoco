@@ -57,7 +57,7 @@ export function PopularBusinessesPopup({
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {businesses.map((business, index) => (
               <div
-                key={business.id}
+                key={business.uen}
                 className="flex gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
                 onClick={() => onViewBusiness(business)}
               >
