@@ -35,7 +35,7 @@ export const useBusinesses = () => {
     async function fetchData() {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5173/api/businesses');
+        const response = await fetch('http://localhost:3000/api/businesses');
         if (!response.ok) throw new Error('Failed to fetch businesses');
         const rawData: BackendBusiness[] = await response.json();
         const transformedBusinesses: Business[] = rawData.map(transformBackendToBusiness);

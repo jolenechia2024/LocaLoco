@@ -37,24 +37,35 @@ app.use(
         "http://localhost:5000",
         "https://cdn.jsdelivr.net",
         "https://unpkg.com",
-        "https://localoco.blob.core.windows.net"
+        "https://localoco.blob.core.windows.net",
+        "https://*.googleapis.com",      // Wildcard for all googleapis subdomains
+        "https://*.gstatic.com",          // Wildcard for gstatic subdomains
+        "https://maps.googleapis.com",    // Explicit for maps API
+        "https://maps.gstatic.com"        // Explicit for map tiles
       ],
       scriptSrc: [
         "'self'",
         "'unsafe-inline'",
         "https://cdn.jsdelivr.net",
-        "https://unpkg.com"
+        "https://unpkg.com",
+        "https://maps.googleapis.com"// Add this
       ],
       styleSrc: [
         "'self'",
         "'unsafe-inline'",
-        "https://cdn.jsdelivr.net"
+        "https://cdn.jsdelivr.net",
+        "https://fonts.googleapis.com"
       ],
       imgSrc: [
         "'self'", 
         "data:", 
         "https://cdn.jsdelivr.net",
-        "https://localoco.blob.core.windows.net"
+        "https://localoco.blob.core.windows.net",
+        "https://maps.gstatic.com",
+        "https://*.googleapis.com",
+        "*.google.com",
+        "https://*.ggpht.com",
+        "https://images.unsplash.com"
     ],
       fontSrc: [
         "'self'", 
