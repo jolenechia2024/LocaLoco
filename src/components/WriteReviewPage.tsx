@@ -13,6 +13,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useBusinesses } from '../hooks/useBusinesses';
 import { useUser } from '../hooks/useUser';
 import { useAuthStore } from '../store/authStore';
+import { useReviews } from '../hooks/useReviews';
 import type { User, BusinessOwner } from '../types/auth';
 
 interface WriteReviewPageProps {
@@ -37,6 +38,7 @@ export function WriteReviewPage({
   const userId = useAuthStore((state) => state.userId);
   const role = useAuthStore((state) => state.role);
   const { user } = useUser(userId);
+  const { submitReview, isSubmitting } = useReviews(); // Don't pass businessId here for submission
 
   // ✅ Helper: Get user display name safely
   const getUserDisplayName = (userData: User | BusinessOwner | null | undefined): string => {
@@ -119,7 +121,7 @@ export function WriteReviewPage({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (rating === 0) {
       toast.error('Please select a rating');
       return;
@@ -129,13 +131,34 @@ export function WriteReviewPage({
       return;
     }
 
+    // Check if we have user email
+    if (!user || !('email' in user)) {
+      toast.error('Please log in to submit a review');
+      return;
+    }
+
+    // If onSubmit callback is provided, use it (for testing/props)
     if (onSubmit) {
       onSubmit(rating, comment);
-    } else {
-      toast.success('Review submitted successfully!');
+      handleBack();
+      return;
     }
-    
-    handleBack();
+
+    // Submit to backend
+    try {
+      await submitReview({
+        userEmail: user.email,
+        businessUen: business.id, // business.id is the UEN
+        title: 'Customer Review', // Optional title
+        body: comment,
+        rating: rating,
+      });
+
+      toast.success('Review submitted successfully!');
+      handleBack();
+    } catch (error) {
+      toast.error('Failed to submit review. Please try again.');
+    }
   };
 
   const renderStars = () => {
@@ -314,10 +337,10 @@ export function WriteReviewPage({
             <Button
               onClick={handleSubmit}
               className="flex-1 bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white"
-              disabled={rating === 0 || comment.trim().length < 10}
+              disabled={rating === 0 || comment.trim().length < 10 || isSubmitting}
             >
               <Send className="w-4 h-4 mr-2" />
-              Submit Review
+              {isSubmitting ? 'Submitting...' : 'Submit Review'}
             </Button>
             <Button
               variant="outline"
