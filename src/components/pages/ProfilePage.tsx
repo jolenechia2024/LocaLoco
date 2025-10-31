@@ -186,7 +186,7 @@ export function ProfilePage({
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {bookmarkedBusinesses.map((business) => (
                 <BusinessCard
-                  key={business.id}
+                  key={business.uen}
                   business={business}
                   isBookmarked={true}
                   onBookmarkToggle={onBookmarkToggle}

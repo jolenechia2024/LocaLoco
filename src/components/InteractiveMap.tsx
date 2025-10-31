@@ -120,7 +120,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
                     .slice(0, 5)
                     .map((business) => (
                       <button
-                        key={business.id}
+                        key={business.uen}
                         onClick={() => {
                           setSelectedPin(business);
                           setShowSearch(false);
@@ -213,7 +213,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
           {/* Business Pins */}
           {businessPositions.map(({ business, x, y }) => (
             <div
-              key={business.id}
+              key={business.uen}
               className="business-pin absolute transform -translate-x-1/2 -translate-y-full"
               style={{ left: `${x}%`, top: `${y}%` }}
             >
@@ -223,13 +223,13 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
               >
                 <MapPin
                   className={`w-10 h-10 drop-shadow-lg ${
-                    selectedPin?.id === business.id
+                    selectedPin?.id === business.uen
                       ? 'text-primary fill-primary'
                       : 'text-red-500 fill-red-500'
                   }`}
                 />
                 {/* Pulse animation for selected pin */}
-                {selectedPin?.id === business.id && (
+                {selectedPin?.id === business.uen && (
                   <div className="absolute inset-0 animate-ping">
                     <MapPin className="w-10 h-10 text-primary fill-primary opacity-75" />
                   </div>
@@ -238,7 +238,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
 
 
               {/* Business Info Card */}
-              {selectedPin?.id === business.id && (
+              {selectedPin?.id === business.uen && (
                 <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 w-72 z-50">
                   <Card className="p-4 shadow-2xl border-2 border-primary">
                     <div className="space-y-3">

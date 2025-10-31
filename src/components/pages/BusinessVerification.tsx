@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Store } from 'lucide-react';
 import { BusinessVerificationData } from '../../types/auth';
-import { useNavigate } from 'react-router-dom'; // ✅ Added
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -22,7 +22,6 @@ interface BusinessVerificationProps {
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const PAYMENT_OPTIONS = ['Cash', 'Credit Card', 'Debit Card', 'PayNow', 'GrabPay', 'PayLah'];
 
-// ✅ Helper: Convert from backend format (low/medium/high) to frontend format ($/$$/etc)
 const convertPriceTier = (tier: string): "" | "$" | "$$" | "$$$" | "$$$$" => {
   const mapping: Record<string, "" | "$" | "$$" | "$$$" | "$$$$"> = {
     'low': '$',
@@ -37,7 +36,6 @@ const convertPriceTier = (tier: string): "" | "$" | "$$" | "$$$" | "$$$$" => {
   return mapping[tier.toLowerCase()] || '';
 };
 
-// ✅ Helper: Convert from frontend format ($/$$/etc) to backend format (low/medium/high)
 const convertToBackendFormat = (tier: string): string => {
   const mapping: Record<string, string> = {
     '$': 'low',
@@ -48,11 +46,21 @@ const convertToBackendFormat = (tier: string): string => {
   return mapping[tier] || tier;
 };
 
-// ✅ Added default parameter = {}
 export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationProps = {}) {
-  const navigate = useNavigate(); // ✅ Added
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
   
   const [formData, setFormData] = useState<BusinessVerificationData>({
+    // ✅ Add these missing fields
+    uen: '',
+    businessName: '',
+    businessCategory: '',
+    description: '',
+    address: '',
+    open247: false,
+    
+    // Existing fields
     operatingDays: [],
     businessEmail: '',
     phone: '',
@@ -63,6 +71,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
     offersDelivery: false,
     offersPickup: false,
     paymentOptions: [],
+    dateOfCreation: new Date().toISOString(),
   });
 
   const handleDayToggle = (day: string) => {
@@ -82,59 +91,149 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
         : [...prev.paymentOptions, payment]
     }));
   };
+
+  const uploadWallpaper = async (file: File): Promise<string> => {
+    setUploadStatus('Uploading image...');
+    
+    try {
+      // Step 1: Get SAS URL from backend
+      const sasResponse = await fetch(
+        `/api/url-generator?filename=${encodeURIComponent(file.name)}`
+      );
+      
+      if (!sasResponse.ok) {
+        throw new Error('Failed to generate upload URL');
+      }
+
+      const sasData = await sasResponse.json();
+      
+      // Step 2: Upload to cloud storage (Azure Blob Storage)
+      const uploadResponse = await fetch(sasData.uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type,
+          'x-ms-blob-type': 'BlockBlob'
+        },
+        body: file
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed with status ${uploadResponse.status}`);
+      }
+
+      // Step 3: Return the public URL
+      const wallpaperUrl = `https://localoco.blob.core.windows.net/images/${sasData.blobName}`;
+      setUploadStatus('Image uploaded successfully');
+      return wallpaperUrl;
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+      setUploadStatus(`Upload error: ${errorMessage}`);
+      throw error;
+    }
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    // Create FormData to include file
-    const formDataToSend = new FormData();
-  
-    // Append all fields
-    formDataToSend.append('mode', 'signup');
-    formDataToSend.append('role', 'business');
-    formDataToSend.append('operatingDays', JSON.stringify(formData.operatingDays));
-    formDataToSend.append('businessEmail', formData.businessEmail);
-    formDataToSend.append('phone', formData.phone);
-    formDataToSend.append('website', formData.website);
-    formDataToSend.append('socialMedia', formData.socialMedia);
-    
-    // ✅ Convert price tier to backend format before sending
-    formDataToSend.append('priceTier', convertToBackendFormat(formData.priceTier));
-    
-    formDataToSend.append('offersDelivery', formData.offersDelivery ? '1' : '0');
-    formDataToSend.append('offersPickup', formData.offersPickup ? '1' : '0');
-    formDataToSend.append('paymentOptions', JSON.stringify(formData.paymentOptions));
-  
-    if (formData.wallpaper) {
-      formDataToSend.append('wallpaper', formData.wallpaper);
-    }
+    setLoading(true);
+    setUploadStatus('');
   
     try {
-      const response = await fetch('http://localhost/final%20proj/IS216_WAD2_Grp3/backend/utils/processLogin.php', {
+      let wallpaperUrl = '';
+  
+      // ✅ Handle image upload if file selected
+      if (formData.wallpaper) {
+        setUploadStatus('Generating upload URL...');
+        
+        // Get SAS URL
+        const sasResponse = await fetch(
+          `/api/url-generator?filename=${encodeURIComponent(formData.wallpaper.name)}`
+        );
+        
+        if (!sasResponse.ok) {
+          const error = await sasResponse.json();
+          throw new Error(error.error || 'Failed to generate upload URL');
+        }
+  
+        const sasData = await sasResponse.json();
+        
+        // Upload to Azure Blob Storage
+        setUploadStatus('Uploading image to storage...');
+        const uploadResponse = await fetch(sasData.uploadUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': formData.wallpaper.type,
+            'x-ms-blob-type': 'BlockBlob'
+          },
+          body: formData.wallpaper
+        });
+  
+        if (!uploadResponse.ok) {
+          throw new Error(`Upload failed with status ${uploadResponse.status}`);
+        }
+  
+        // Build public URL
+        wallpaperUrl = `https://localoco.blob.core.windows.net/images/${sasData.blobName}`;
+        setUploadStatus('Image uploaded successfully');
+      } else {
+        setUploadStatus('No image selected, continuing...');
+      }
+      setUploadStatus('Finalizing registration...');
+
+
+      const finalPayload = {
+        uen: formData.uen || '',  // ✅ Add this
+        businessName: formData.businessName || '',  // ✅ Add this
+        businessCategory: formData.businessCategory || '',  // ✅ Add this
+        description: formData.description || '',  // ✅ Add this
+        address: formData.address || '',  // ✅ Add this
+        open247: false,  // ✅ Add this
+        openingHours: formData.operatingDays,  // ✅ Renamed
+        email: formData.businessEmail,  // ✅ Renamed
+        phoneNumber: formData.phone,  // ✅ Renamed
+        websiteLink: formData.website,  // ✅ Renamed
+        socialMediaLink: formData.socialMedia,  // ✅ Renamed
+        wallpaper: wallpaperUrl,
+        dateOfCreation: new Date().toISOString(),  // ✅ Add this
+        priceTier: convertToBackendFormat(formData.priceTier),
+        offersDelivery: formData.offersDelivery,
+        offersPickup: formData.offersPickup,
+        paymentOptions: formData.paymentOptions
+      };
+      
+      const response = await fetch('/api/register-business', {
         method: 'POST',
-        body: formDataToSend,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(finalPayload),
       });
   
       const result = await response.json();
-      if (result.success) {
-        alert('Verification submitted successfully');
-        
-        // ✅ Check if onSubmit exists before calling
-        if (onSubmit) {
-          onSubmit(formData);
-        } else {
-          navigate('/map');
-        }
-      } else {
-        alert('Submission failed: ' + (result.errors || 'Unknown error'));
+  
+      if (!response.ok) {
+        throw new Error(result.message || 'Registration failed');
       }
+  
+      setUploadStatus('Success! Redirecting...');
+      alert('Business Registered Successfully!');
+  
+      if (onSubmit) {
+        onSubmit(formData);
+      } else {
+        navigate('/map');
+      }
+  
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert('Error submitting verification: ' + errorMessage);
+      console.error('Registration error:', error);
+      setUploadStatus(`Error: ${errorMessage}`);
+      alert('Error: ' + errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ✅ Handler for skip button
   const handleSkip = () => {
     if (onSkip) {
       onSkip();
@@ -172,6 +271,12 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
             </p>
           </div>
 
+          {uploadStatus && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+              {uploadStatus}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Operating Days */}
             <div className="space-y-4">
@@ -205,6 +310,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 value={formData.businessEmail}
                 onChange={(e) => setFormData(prev => ({ ...prev, businessEmail: e.target.value }))}
                 required
+                disabled={loading}
                 className="bg-input-background"
               />
             </div>
@@ -219,6 +325,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 value={formData.phone}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 required
+                disabled={loading}
                 className="bg-input-background"
               />
             </div>
@@ -232,6 +339,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 placeholder="Website Link (https://)"
                 value={formData.website}
                 onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                disabled={loading}
                 className="bg-input-background"
               />
             </div>
@@ -245,6 +353,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                 placeholder="Social Media Link"
                 value={formData.socialMedia}
                 onChange={(e) => setFormData(prev => ({ ...prev, socialMedia: e.target.value }))}
+                disabled={loading}
                 className="bg-input-background"
               />
             </div>
@@ -255,8 +364,8 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               <div className="flex items-center gap-4">
                 <label
                   htmlFor="wallpaper"
-                  className="cursor-pointer px-4 py-2 bg-muted rounded-md hover:bg-muted/80 transition-colors"
-                >
+                  className="cursor-pointer px-4 py-2 bg-pink-400 hover:bg-pink-500 transition-colors rounded-md text-white"
+                  >
                   Choose File
                 </label>
                 <Input
@@ -264,6 +373,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                   type="file"
                   accept="image/*"
                   onChange={(e) => setFormData(prev => ({ ...prev, wallpaper: e.target.files?.[0] || null }))}
+                  disabled={loading}
                   className="hidden"
                 />
                 <span className="text-sm text-muted-foreground">
@@ -278,13 +388,13 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               <Select 
                 value={formData.priceTier} 
                 onValueChange={(value) => {
-                  // ✅ Convert and store in frontend format
                   const converted = convertPriceTier(value);
                   setFormData(prev => ({ 
                     ...prev, 
                     priceTier: converted
                   }));
                 }}
+                disabled={loading}
               >
                 <SelectTrigger className="bg-input-background">
                   <SelectValue placeholder="Select price tier" />
@@ -307,6 +417,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                   onCheckedChange={(checked: boolean) => 
                     setFormData(prev => ({ ...prev, offersDelivery: checked }))
                   }
+                  disabled={loading}
                 />
                 <label htmlFor="delivery" className="cursor-pointer">
                   Offers Delivery
@@ -319,6 +430,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                   onCheckedChange={(checked: boolean) => 
                     setFormData(prev => ({ ...prev, offersPickup: checked }))
                   }
+                  disabled={loading}
                 />
                 <label htmlFor="pickup" className="cursor-pointer">
                   Offers Pickup
@@ -336,6 +448,7 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
                       id={payment}
                       checked={formData.paymentOptions.includes(payment)}
                       onCheckedChange={() => handlePaymentToggle(payment)}
+                      disabled={loading}
                     />
                     <label
                       htmlFor={payment}
@@ -353,16 +466,18 @@ export function BusinessVerification({ onSubmit, onSkip }: BusinessVerificationP
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleSkip} // ✅ Use handler instead of direct call
+                onClick={handleSkip}
+                disabled={loading}
                 className="flex-1 text-foreground"
               >
                 Skip for Now
               </Button>
               <Button
                 type="submit"
+                disabled={loading}
                 className="flex-1 bg-primary hover:bg-primary/90"
               >
-                Submit Verification
+                {loading ? 'Submitting...' : 'Submit Verification'}
               </Button>
             </div>
           </form>

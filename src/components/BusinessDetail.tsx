@@ -50,7 +50,7 @@ export function BusinessDetail({
     ));
   };
 
-  const businessReviews = reviews.filter(review => review.businessId === business.id);
+  const businessReviews = reviews.filter(review => review.businessId === business.uen);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -98,7 +98,7 @@ export function BusinessDetail({
               <Button
                 variant={isBookmarked ? "default" : "secondary"}
                 size="sm"
-                onClick={() => onBookmarkToggle(business.id)}
+                onClick={() => onBookmarkToggle(business.uen)}
                 className="bg-white/20 border-white/30 text-white hover:bg-white/30"
               >
                 <Bookmark

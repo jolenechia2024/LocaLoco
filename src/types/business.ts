@@ -12,7 +12,7 @@ export type BusinessCategory =
   | 'home-living';
 
 export interface Business {
-  id: string; // from uen
+  uen: string; // from uen
   name: string; // from businessName
   category: BusinessCategory; // from businessCategory (adjust union type keys if needed)
   subcategory?: string;
