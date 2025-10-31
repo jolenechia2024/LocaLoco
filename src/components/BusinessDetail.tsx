@@ -29,7 +29,7 @@ export function BusinessDetail({
   onBack,
   onWriteReview,
 }: BusinessDetailProps) {
-  const isDarkMode = useThemeStore(state => state.isDarkMode);
+    const isDarkMode = useThemeStore(state => state.isDarkMode);
 
   const [selectedTab, setSelectedTab] = useState('overview');
   
@@ -70,10 +70,10 @@ export function BusinessDetail({
       {/* Hero Section */}
       <Card className="overflow-hidden">
         <div className="relative">
-          <ImageWithFallback
-            src={business.image}
+        <ImageWithFallback
+            src={`https://localoco.blob.core.windows.net/images/${business.image}`}
             alt={business.name}
-            className="w-full h-64 sm:h-80 object-cover"
+            className="w-full h-48 object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-4 left-4 right-4">

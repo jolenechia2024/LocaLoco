@@ -268,11 +268,11 @@ export function BusinessProfilePage({
             <Card className="p-6" style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff', color: isDarkMode ? '#ffffff' : '#000000' }}>
               <h2 className="mb-4">Business Wallpaper</h2>
               <div className="rounded-lg overflow-hidden">
-                <img 
-                  src={businessOwner.wallpaper} 
-                  alt={`${businessOwner.businessName} wallpaper`}
-                  className="w-full h-64 object-cover"
-                />
+              <img 
+                src={`https://localoco.blob.core.windows.net/images/${businessOwner.wallpaper}`}
+                alt={`${businessOwner.businessName} wallpaper`}
+                className="w-full h-64 object-cover"
+              />
               </div>
             </Card>
           )}
