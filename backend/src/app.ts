@@ -15,8 +15,9 @@ const app: Application = express();
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'], // allow frontend to pass
-    credentials: true,
+    origin: process.env.NODE_ENV === 'production' 
+        ? 'https://localoco.azurewebsites.net'
+        : 'http://localhost:3000'
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -32,21 +33,42 @@ app.use(
         "http://localhost:3000",
         "http://localhost:5000",
         "https://cdn.jsdelivr.net",
-        "https://unpkg.com"
+        "https://unpkg.com",
+        "https://localoco.blob.core.windows.net",
+        "https://*.googleapis.com",      // Wildcard for all googleapis subdomains
+        "https://*.gstatic.com",          // Wildcard for gstatic subdomains
+        "https://maps.googleapis.com",    // Explicit for maps API
+        "https://maps.gstatic.com"        // Explicit for map tiles
       ],
       scriptSrc: [
         "'self'",
         "'unsafe-inline'",
         "https://cdn.jsdelivr.net",
-        "https://unpkg.com"
+        "https://unpkg.com",
+        "https://maps.googleapis.com"// Add this
       ],
       styleSrc: [
         "'self'",
         "'unsafe-inline'",
-        "https://cdn.jsdelivr.net"
+        "https://cdn.jsdelivr.net",
+        "https://fonts.googleapis.com"
       ],
-      imgSrc: ["'self'", "data:", "https://cdn.jsdelivr.net"],
-      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+      imgSrc: [
+        "'self'", 
+        "data:", 
+        "https://cdn.jsdelivr.net",
+        "https://localoco.blob.core.windows.net",
+        "https://maps.gstatic.com",
+        "https://*.googleapis.com",
+        "*.google.com",
+        "https://*.ggpht.com",
+        "https://images.unsplash.com"
+    ],
+      fontSrc: [
+        "'self'", 
+        "data:", 
+        "https://fonts.gstatic.com"
+    ],
     },
   })
 );
