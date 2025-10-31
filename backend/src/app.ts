@@ -6,7 +6,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import logger from './middleware/logger.js';
 import businessRouter from './routes/businessRoutes.js';
-// import userRouter from './routes/userRoutes.js';
+import imageUploadRouter from './routes/uploadRoutes.js';
+import userRouter from './routes/userRoutes.js';
 import { toNodeHandler } from 'better-auth/node';
 import auth from './lib/auth.js'; // This will now correctly have all process.env variables
 import featureRouter from './routes/featureRoutes.js';
@@ -98,7 +99,7 @@ app.all('/api/auth/{*any}', toNodeHandler(auth)); // handler for better-auth
 
 
 app.use(businessRouter)
-// app.use(userRouter)
+app.use(userRouter)
 app.use(featureRouter)
 
 app.get('/', (req, res) => {

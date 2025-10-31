@@ -30,12 +30,50 @@ export function EditProfileDialog({
   const [formData, setFormData] = useState<User>(user);
   const [previewUrl, setPreviewUrl] = useState<string | null>(user.avatarUrl || null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-    onOpenChange(false);
+    setError(null);
+    setSaving(true);
+
+    try {
+      const response = await fetch('http://localhost:3000/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          name: formData.name,
+          image: formData.avatarUrl || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+
+      const result = await response.json();
+
+      // Update local user object with new data
+      const updatedUser = {
+        ...user,
+        name: result.user.name,
+        avatarUrl: result.user.image,
+      };
+
+      onSave(updatedUser);
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      setError(error.message || 'Failed to update profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChange = (field: keyof User, value: string) => {
@@ -104,6 +142,13 @@ export function EditProfileDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
+
             {/* Avatar Upload Section */}
             <div className="grid gap-2">
               <Label>Profile Picture</Label>
@@ -175,10 +220,12 @@ export function EditProfileDialog({
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="your.email@example.com"
-                required
+                disabled
               />
+              <p className="text-xs text-gray-500">
+                Email cannot be changed
+              </p>
             </div>
 
             <div className="grid gap-2">
@@ -204,15 +251,16 @@ export function EditProfileDialog({
           </div>
 
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={saving}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={uploading}>
-              Save Changes
+            <Button type="submit" disabled={uploading || saving}>
+              {saving ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </form>
@@ -220,6 +268,5 @@ export function EditProfileDialog({
     </Dialog>
   );
 }
-
 
 
