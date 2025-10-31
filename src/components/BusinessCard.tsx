@@ -1,4 +1,3 @@
-import React from 'react';
 import { Star, MapPin, Phone, Clock, Bookmark, TrendingUp } from 'lucide-react';
 import { Business } from '../types/business';
 import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
@@ -6,13 +5,14 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { checkBusinessOpenStatus, getCategoryDisplayName } from '../utils/businessUtils';
+import { useThemeStore } from '../store/themeStore';
+
 
 interface BusinessCardProps {
   business: Business;
   isBookmarked: boolean;
   onBookmarkToggle: (businessId: string) => void;
   onViewDetails: (business: Business) => void;
-  isDarkMode?: boolean;
 }
 
 export function BusinessCard({
@@ -20,12 +20,14 @@ export function BusinessCard({
   isBookmarked,
   onBookmarkToggle,
   onViewDetails,
-  isDarkMode = false,
 }: BusinessCardProps) {
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+
   const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
   const textColor = isDarkMode ? 'text-white' : 'text-black';
   const mutedTextColor = isDarkMode ? 'text-gray-400' : 'text-muted-foreground';
   const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
+  
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
@@ -83,8 +85,12 @@ export function BusinessCard({
           <div className="flex items-start justify-between">
             <h3 className={`text-lg font-semibold line-clamp-1 ${textColor}`}>{business.name}</h3>
             <div className="flex items-center gap-1 text-sm">
-              <div className="flex">{renderStars(business.rating)}</div>
-              <span className={mutedTextColor}>({business.reviewCount})</span>
+              {business.rating !== undefined && (
+                <>
+                  <div className="flex">{renderStars(business.rating)}</div>
+                  <span className={mutedTextColor}>({business.reviewCount})</span>
+                </>
+              )}
             </div>
           </div>
           

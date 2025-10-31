@@ -16,7 +16,6 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 
-// ✅ NO PROPS - Uses hooks instead
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
@@ -46,7 +45,10 @@ export function LoginPage() {
 
     // Mock login - accepts any credentials
     try {
-      const userId = role === 'business' ? 'business-1' : 'customer-1';
+      // ✅ FIXED: Changed from 'customer-1' to 'user-1'
+      const userId = role === 'business' ? 'business-1' : 'user-1';
+      console.log('🔐 Logging in with:', { userId, role });
+      
       login(userId, role, 'mock-token-123');
       navigate('/map');
     } catch (err) {

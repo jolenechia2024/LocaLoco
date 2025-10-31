@@ -4,7 +4,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useUser } from '../../hooks/useUser';
 import { ROUTES } from '../../constants/routes';
-import { useMemo } from 'react';
 
 export const MainLayout = () => {
   const { logout, userId } = useAuth();
@@ -13,12 +12,6 @@ export const MainLayout = () => {
   const navigate = useNavigate();
 
   const { user, stats, updateUser } = useUser(userId || null);
-
-  // Create stable key BEFORE any conditional returns
-  const userKey = useMemo(
-    () => user ? `${user.name}-${user.email}-${user.avatarUrl || 'default'}` : 'no-user',
-    [user?.name, user?.email, user?.avatarUrl]
-  );
 
   const getCurrentView = () => {
     const path = location.pathname;
@@ -38,7 +31,7 @@ export const MainLayout = () => {
       map: ROUTES.MAP,
       list: ROUTES.BUSINESSES,
       bookmarks: ROUTES.BOOKMARKS,
-      profile: ROUTES.PROFILE,
+      profile: user && 'businessName' in user ? ROUTES.BUSINESS_PROFILE : ROUTES.PROFILE, // ✅ Check if BusinessOwner
       forum: ROUTES.FORUM,
       notifications: ROUTES.NOTIFICATIONS,
       settings: ROUTES.SETTINGS,
@@ -50,7 +43,6 @@ export const MainLayout = () => {
     }
   };
 
-  // NOW it's safe to do conditional return
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center" 
@@ -60,24 +52,42 @@ export const MainLayout = () => {
     );
   }
 
-  console.log('MainLayout rendering with userKey:', userKey);
+  // ✅ Helper function to safely get user info
+  const getUserInfo = () => {
+    if ('businessName' in user) {
+      // It's a BusinessOwner
+      return {
+        name: user.businessName,
+        email: user.businessEmail,
+        avatarUrl: user.wallpaper,
+      };
+    } else {
+      // It's a regular User
+      return {
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+      };
+    }
+  };
+
+  const userInfo = getUserInfo();
 
   return (
     <>
       <AppSidebar
-        key={userKey}
         onNavigate={handleNavigate}
         onLogout={logout}
         currentView={getCurrentView()}
-        userName={user.name}
-        userEmail={user.email}
-        avatarUrl={user.avatarUrl}
-        isDarkMode={isDarkMode}
+        userName={userInfo.name} // ✅ Use helper
+        userEmail={userInfo.email} // ✅ Use helper
+        avatarUrl={userInfo.avatarUrl} // ✅ Use helper
         onThemeToggle={toggleTheme}
       />
       <div className="ml-20">
         <Outlet context={{ user, stats, updateUser }} />
       </div>
+
     </>
   );
 };

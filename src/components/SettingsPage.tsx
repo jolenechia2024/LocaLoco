@@ -4,7 +4,6 @@ import { Card } from './ui/card';
 import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
 import { Label } from './ui/label';
-import { Input } from './ui/input';
 import { Button } from './ui/button';
 import {
   Select,
@@ -23,13 +22,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from './ui/alert-dialog';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useThemeStore } from '../store/themeStore';
 
 
 interface SettingsPageProps {
-  onBack: () => void;
-  isDarkMode?: boolean;
+  onBack?: () => void;
 }
 
 export function SettingsPage({ onBack}: SettingsPageProps) {

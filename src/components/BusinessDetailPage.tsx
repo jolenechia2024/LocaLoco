@@ -53,7 +53,6 @@ export const BusinessDetailPage = () => {
         onWriteReview={(business) => {
           navigate(`/review/${business.id}`);
         }}
-        isDarkMode={isDarkMode}
       />
     </div>
   );

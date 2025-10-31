@@ -66,7 +66,6 @@ export function transformBackendToBusiness(backend: BackendBusiness): Business {
   };
 }
 
-
 export const getCategoryDisplayName = (category: string): string => {
   const categoryMap: { [key: string]: string } = {
     'all': 'All Categories',
@@ -82,7 +81,6 @@ export const getCategoryDisplayName = (category: string): string => {
   return categoryMap[category] || category;
 };
 
-
 /**
  * Checks if a business is currently open based on local time and hours object.
  * Expects business.hours in format:
@@ -94,26 +92,47 @@ export const getCategoryDisplayName = (category: string): string => {
 export const checkBusinessOpenStatus = (business: Business): OpenStatus => {
   const now = new Date();
   const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
-  const currentTime = now.getHours() * 60 + now.getMinutes(); // minutes since midnight
+  const currentTime = now.getHours() * 60 + now.getMinutes();
 
-  const todayHours = business.hours[currentDay];
+  const todayHours = business.hours?.[currentDay];
 
-  if (!todayHours || (typeof todayHours === 'string' && todayHours.toLowerCase() === 'closed')) {
+  // Check if hours data doesn't exist
+  if (!todayHours) {
     return { isOpen: false, nextChange: 'Opens tomorrow' };
   }
 
-  // Here expecting todayHours like { open: "07:00:00", close: "19:00:00" }
+  // Check if it's a string (like "Closed")
+  if (typeof todayHours === 'string') {
+    return { isOpen: false, nextChange: 'Opens tomorrow' };
+  }
+
+  // ✅ Now it's an object - use type assertion and check properties
+  const hoursObj = todayHours as { open: string; close: string };
+  
+  // Check if open or close properties are missing or "Closed"
+  if (!hoursObj.open || !hoursObj.close) {
+    return { isOpen: false, nextChange: 'Opens tomorrow' };
+  }
+
+  // ✅ Safe to use toLowerCase now with explicit checks
+  const openStr = String(hoursObj.open);
+  const closeStr = String(hoursObj.close);
+
+  if (openStr.toLowerCase() === 'closed' || closeStr.toLowerCase() === 'closed') {
+    return { isOpen: false, nextChange: 'Opens tomorrow' };
+  }
+
   // Convert times to minutes
   const toMinutes = (timeStr: string) => {
     const [hourStr, minStr] = timeStr.split(':');
     return parseInt(hourStr, 10) * 60 + parseInt(minStr, 10);
   };
 
-  const openTime = toMinutes(todayHours.open);
-  const closeTime = toMinutes(todayHours.close);
+  const openTime = toMinutes(openStr);
+  const closeTime = toMinutes(closeStr);
 
   const isOpen = currentTime >= openTime && currentTime <= closeTime;
-  const closingSoon = isOpen && (closeTime - currentTime) <= 60; // within 1 hour
+  const closingSoon = isOpen && (closeTime - currentTime) <= 60;
 
   const formatTime = (minutes: number) => {
     let h = Math.floor(minutes / 60);

@@ -13,6 +13,8 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Upload, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
 
 interface EditProfileDialogProps {
   user: User;

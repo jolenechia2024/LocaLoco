@@ -26,7 +26,7 @@ export interface Business {
   rating?: number; // optional if backend provides
   reviewCount?: number; // optional if backend provides
 
-  priceRange: 'low' | 'medium' | 'high'; // mapped from priceTier
+  priceRange: 'low' | 'medium' | 'high' | '$' | '$$' | '$$$' | '$$$$';
 
   hours: {
     [day: string]: {
@@ -35,6 +35,11 @@ export interface Business {
     };
   };
 
+  // Add direct lat/lng properties
+  lat?: number;
+  lng?: number;
+
+  // Keep coordinates for backward compatibility
   coordinates?: {
     lat: number;
     lng: number;
@@ -57,9 +62,9 @@ export interface BookmarkedBusiness {
 export interface Review {
   id: string;
   businessId: string;
-  userId?: string;
+  userId?: string;  // Make optional with ?
   userName: string;
-  userAvatar?: string;
+  userAvatar?: string;  // Make optional with ?
   rating: number;
   comment: string;
   date: string;

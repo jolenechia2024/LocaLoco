@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import {useState } from 'react';
 import { Bell, Star, MessageCircle, Calendar, TrendingUp, Check, Trash2 } from 'lucide-react';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { useThemeStore } from '../store/themeStore';
+
 
 interface NotificationsPageProps {
-  onBack: () => void;
-  isDarkMode?: boolean;
+  onBack?: () => void;
 }
 
 interface Notification {
@@ -21,7 +22,8 @@ interface Notification {
   icon: any;
 }
 
-export function NotificationsPage({ onBack, isDarkMode = true }: NotificationsPageProps) {
+export function NotificationsPage({ onBack}: NotificationsPageProps) {
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',

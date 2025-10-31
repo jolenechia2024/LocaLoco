@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { MapPin, ZoomIn, ZoomOut, Navigation, Search } from 'lucide-react';
 import { Business } from '../types/business';
 import { Button } from './ui/button';
@@ -6,11 +6,13 @@ import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 
+
 interface InteractiveMapProps {
   businesses: Business[];
   onBusinessClick: (business: Business) => void;
   onViewListView?: () => void;
 }
+
 
 export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: InteractiveMapProps) {
   const [zoom, setZoom] = useState(1);
@@ -21,6 +23,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
+
 
   // Business positions on the map (Singapore-style layout)
   const businessPositions = businesses.slice(0, 10).map((business, index) => {
@@ -42,6 +45,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
     };
   });
 
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.business-pin')) return;
     setIsDragging(true);
@@ -51,6 +55,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
     });
   };
 
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
     setPosition({
@@ -59,26 +64,32 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
     });
   };
 
+
   const handleMouseUp = () => {
     setIsDragging(false);
   };
+
 
   const handleZoomIn = () => {
     setZoom((prev) => Math.min(prev + 0.2, 3));
   };
 
+
   const handleZoomOut = () => {
     setZoom((prev) => Math.max(prev - 0.2, 0.5));
   };
+
 
   const handleRecenter = () => {
     setPosition({ x: 0, y: 0 });
     setZoom(1);
   };
 
+
   const handlePinClick = (business: Business) => {
     setSelectedPin(business);
   };
+
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-gradient-to-br from-blue-100 via-blue-50 to-green-50">
@@ -95,6 +106,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
             className="pl-12 pr-4 h-12 bg-white rounded-full shadow-lg border-primary/20 text-foreground"
           />
         </div>
+
 
         {showSearch && (
           <Card className="mt-2 p-4 shadow-xl max-h-80 overflow-auto">
@@ -136,6 +148,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
           </Card>
         )}
       </div>
+
 
       {/* Interactive Map Container */}
       <div
@@ -196,6 +209,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
             <ellipse cx="55%" cy="70%" rx="12%" ry="8%" fill="#93C5FD" opacity="0.4" />
           </svg>
 
+
           {/* Business Pins */}
           {businessPositions.map(({ business, x, y }) => (
             <div
@@ -222,6 +236,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
                 )}
               </button>
 
+
               {/* Business Info Card */}
               {selectedPin?.id === business.id && (
                 <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 w-72 z-50">
@@ -243,7 +258,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent) => {
                             e.stopPropagation();
                             onBusinessClick(business);
                           }}
@@ -254,7 +269,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent) => {
                             e.stopPropagation();
                             setSelectedPin(null);
                           }}
@@ -271,6 +286,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
           ))}
         </div>
       </div>
+
 
       {/* Zoom Controls */}
       <div className="absolute bottom-24 right-6 z-30 flex flex-col gap-2">
@@ -290,6 +306,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
         </Button>
       </div>
 
+
       {/* Current Location / Recenter Button */}
       <div className="absolute bottom-6 right-6 z-30">
         <Button
@@ -300,6 +317,7 @@ export function InteractiveMap({ businesses, onBusinessClick, onViewListView }: 
           <Navigation className="w-5 h-5" />
         </Button>
       </div>
+
 
       {/* Map Legend */}
       <div className="absolute bottom-6 left-24 z-30">

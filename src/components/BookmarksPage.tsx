@@ -35,7 +35,6 @@ export const BookmarksPage = () => {
                 isBookmarked={true}
                 onBookmarkToggle={toggleBookmark}
                 onViewDetails={(id) => navigate(`/business/${id}`)}
-                isDarkMode={isDarkMode}
               />
             ))}
           </div>

@@ -22,6 +22,7 @@ import {
 } from '../ui/select';
 import { Separator } from '../ui/separator';
 
+
 interface EditBusinessProfileDialogProps {
   businessOwner: BusinessOwner;
   open: boolean;
@@ -29,8 +30,10 @@ interface EditBusinessProfileDialogProps {
   onSave: (updatedBusiness: BusinessOwner) => void;
 }
 
+
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const PAYMENT_OPTIONS = ['Cash', 'Credit/Debit Card', 'PayNow', 'Digital Wallets (Apple/Google/Samsung/GrabPay)'];
+
 
 export function EditBusinessProfileDialog({
   businessOwner,
@@ -40,15 +43,18 @@ export function EditBusinessProfileDialog({
 }: EditBusinessProfileDialogProps) {
   const [formData, setFormData] = useState<BusinessOwner>(businessOwner);
 
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
     onOpenChange(false);
   };
 
+
   const handleChange = (field: keyof BusinessOwner, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
 
   const handleDayToggle = (day: string) => {
     setFormData(prev => ({
@@ -59,6 +65,7 @@ export function EditBusinessProfileDialog({
     }));
   };
 
+
   const handlePaymentToggle = (payment: string) => {
     setFormData(prev => ({
       ...prev,
@@ -67,6 +74,7 @@ export function EditBusinessProfileDialog({
         : [...prev.paymentOptions, payment]
     }));
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -96,6 +104,7 @@ export function EditBusinessProfileDialog({
                   />
                 </div>
 
+
                 <div className="space-y-2">
                   <Label htmlFor="address">Business Address</Label>
                   <Input
@@ -107,6 +116,7 @@ export function EditBusinessProfileDialog({
                   />
                 </div>
 
+
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
@@ -117,6 +127,7 @@ export function EditBusinessProfileDialog({
                     className="bg-input-background"
                   />
                 </div>
+
 
                 <div className="space-y-2">
                   <Label>Operating Days</Label>
@@ -137,10 +148,12 @@ export function EditBusinessProfileDialog({
                 </div>
               </div>
 
+
               {/* Contact Information */}
               <div className="space-y-3">
                 <h3>Contact Information</h3>
                 <Separator />
+
 
                 <div className="space-y-2">
                   <Label htmlFor="businessEmail">Business Email</Label>
@@ -154,6 +167,7 @@ export function EditBusinessProfileDialog({
                   />
                 </div>
 
+
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input
@@ -166,6 +180,7 @@ export function EditBusinessProfileDialog({
                   />
                 </div>
 
+
                 <div className="space-y-2">
                   <Label htmlFor="website">Website</Label>
                   <Input
@@ -176,6 +191,7 @@ export function EditBusinessProfileDialog({
                     className="bg-input-background"
                   />
                 </div>
+
 
                 <div className="space-y-2">
                   <Label htmlFor="socialMedia">Social Media</Label>
@@ -189,28 +205,31 @@ export function EditBusinessProfileDialog({
                 </div>
               </div>
 
+
               {/* Business Settings */}
               <div className="space-y-3">
                 <h3>Business Settings</h3>
                 <Separator />
 
+
                 <div className="space-y-2">
                   <Label htmlFor="priceTier">Price Tier</Label>
                   <Select
                     value={formData.priceTier}
-                    onValueChange={(value) => handleChange('priceTier', value)}
+                    onValueChange={(value: string) => handleChange('priceTier', value)}
                   >
                     <SelectTrigger className="bg-input-background">
                       <SelectValue placeholder="Select price tier" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="$">$ - Budget Friendly</SelectItem>
-                      <SelectItem value="$">$ - Moderate</SelectItem>
-                      <SelectItem value="$$">$$ - Upscale</SelectItem>
-                      <SelectItem value="$$">$$ - Fine Dining</SelectItem>
+                      <SelectItem value="$$">$$ - Moderate</SelectItem>
+                      <SelectItem value="$$$">$$$ - Upscale</SelectItem>
+                      <SelectItem value="$$$$">$$$$ - Fine Dining</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
 
                 <div className="space-y-3">
                   <Label>Service Options</Label>
@@ -219,7 +238,7 @@ export function EditBusinessProfileDialog({
                       <Checkbox
                         id="edit-delivery"
                         checked={formData.offersDelivery}
-                        onCheckedChange={(checked) => handleChange('offersDelivery', checked as boolean)}
+                        onCheckedChange={(checked: boolean) => handleChange('offersDelivery', checked)}
                       />
                       <label htmlFor="edit-delivery" className="cursor-pointer">
                         Offers Delivery
@@ -229,7 +248,7 @@ export function EditBusinessProfileDialog({
                       <Checkbox
                         id="edit-pickup"
                         checked={formData.offersPickup}
-                        onCheckedChange={(checked) => handleChange('offersPickup', checked as boolean)}
+                        onCheckedChange={(checked: boolean) => handleChange('offersPickup', checked)}
                       />
                       <label htmlFor="edit-pickup" className="cursor-pointer">
                         Offers Pickup
@@ -237,6 +256,7 @@ export function EditBusinessProfileDialog({
                     </div>
                   </div>
                 </div>
+
 
                 <div className="space-y-3">
                   <Label>Payment Options</Label>

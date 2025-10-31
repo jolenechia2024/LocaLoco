@@ -1,15 +1,16 @@
-import React from 'react';
 import { Home, Search, MapPin, Store, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
+import { useThemeStore } from '../../store/themeStore';
+
 
 interface ErrorPageProps {
-  onGoHome: () => void;
-  isDarkMode?: boolean;
+  onGoHome?: () => void;
 }
 
-export function ErrorPage({ onGoHome, isDarkMode = false }: ErrorPageProps) {
+export function ErrorPage({ onGoHome}: ErrorPageProps) {
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
   // Color variables matching VouchersPage
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
   const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';

@@ -1,8 +1,9 @@
 {
-    "name": "rewritten_project",
+    "name": "localloco",
     "version": "0.1.0",
     "private": true,
     "dependencies": {
+        "@azure/storage-blob": "^12.29.1",
         "@radix-ui/react-accordion": "^1.2.3",
         "@radix-ui/react-alert-dialog": "^1.1.6",
         "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -44,9 +45,12 @@
         "express": "^5.1.0",
         "helmet": "^8.1.0",
         "hono": "^4.10.2",
+        "i18next": "^25.6.0",
+        "i18next-browser-languagedetector": "^8.2.0",
         "inherits": "^2.0.4",
         "input-otp": "^1.4.2",
         "lucide-react": "^0.487.0",
+        "morgan": "^1.10.1",
         "mysql2": "^3.15.3",
         "next-themes": "^0.4.6",
         "path": "^0.12.7",
@@ -55,23 +59,18 @@
         "react-day-picker": "^8.10.1",
         "react-dom": "^18.3.1",
         "react-hook-form": "^7.55.0",
+        "react-i18next": "^16.2.1",
         "react-resizable-panels": "^2.1.7",
         "react-router-dom": "^6.30.1",
         "recharts": "^2.15.2",
-        "sonner": "^2.0.7",
+        "sonner": "^2.0.3",
         "tailwind-merge": "*",
         "tinyint": "^1.0.0",
         "url": "^0.11.4",
         "util": "^0.12.5",
+        "uuid": "^13.0.0",
         "vaul": "^1.1.2",
         "zustand": "^5.0.8"
-    },
-    "scripts": {
-        "dev": "vite",
-        "build": "tsc && vite build",
-        "start": "npm run build && cd backend && npm start",
-        "setup": "npm install && cd backend && npm run db:push && cd ../ && npm start",
-        "db:setup": "cd backend && npm run db:push"
     },
     "prettier": {
         "tabWidth": 4,
@@ -80,8 +79,10 @@
     "devDependencies": {
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.3",
+        "@types/morgan": "^1.9.10",
         "@types/node": "^24.9.1",
         "@types/react-router-dom": "^5.3.3",
+        "@types/uuid": "^10.0.0",
         "@vitejs/plugin-react-swc": "^3.10.2",
         "cross-env": "^10.1.0",
         "dotenv-cli": "^11.0.0",
@@ -90,5 +91,14 @@
         "ts-node": "^10.9.2",
         "typescript": "~5.9.3",
         "vite": "^7.1.7"
+    },
+    "scripts": {
+        "dev": "concurrently \"npm run dev-frontend\" \"npm run dev-backend\"",
+        "dev-frontend": "vite",
+        "dev-backend": "cd backend && npm run dev",
+        "build": "vite build",
+        "start": "npm run build && cd backend && npm start",
+        "setup": "npm install && cd backend && npm run db:push && cd ../ && npm start",
+        "db:setup": "cd backend && npm run db:push"
     }
 }

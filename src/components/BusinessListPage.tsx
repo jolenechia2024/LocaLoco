@@ -1,12 +1,11 @@
-// components/BusinessListPage.tsx
-// This is extracted from your App.tsx main return statement
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Bookmark as BookmarkIcon, Store } from "lucide-react";
 import { useBusinesses } from "../hooks/useBusinesses";
 import { useBookmarks } from "../hooks/useBookmarks";
 import { useTheme } from "../hooks/useTheme";
 import { useBusinessStore } from "../store/businessStore";
+import { Business } from "../types/business";
 import { SearchBar } from "./SearchBar";
 import { BusinessCard } from "./BusinessCard";
 import { EventsPopup } from "./EventsPopup";
@@ -15,6 +14,7 @@ import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Badge } from "./ui/badge";
 import { mockEvents } from "../data/mockData";
+
 
 export const BusinessListPage = () => {
   const navigate = useNavigate();
@@ -36,11 +36,8 @@ export const BusinessListPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const displayedBusinesses =
-    activeTab === "bookmarked" ? bookmarkedBusinesses : filteredBusinesses;
-
-  const handleViewDetails = (businessId: string) => {
-    navigate(`/business/${businessId}`);
+  const handleViewDetails = (business: Business) => {
+    navigate(`/business/${business.id}`);
   };
 
   return (
@@ -52,7 +49,6 @@ export const BusinessListPage = () => {
         open={showEventsPopup}
         onClose={() => setShowEventsPopup(false)}
         events={mockEvents}
-        isDarkMode={isDarkMode}
       />
 
       {showFilters && (
@@ -85,7 +81,6 @@ export const BusinessListPage = () => {
             onPricesChange={(prices) => setFilters({ selectedPrices: prices })}
             openNowOnly={filters.openNowOnly}
             onOpenNowChange={(open) => setFilters({ openNowOnly: open })}
-            isDarkMode={isDarkMode}
           />
         </div>
       </header>
@@ -147,7 +142,6 @@ export const BusinessListPage = () => {
                     isBookmarked={isBookmarked(business.id)}
                     onBookmarkToggle={toggleBookmark}
                     onViewDetails={handleViewDetails}
-                    isDarkMode={isDarkMode}
                   />
                 ))}
               </div>
@@ -183,7 +177,6 @@ export const BusinessListPage = () => {
                     isBookmarked={true}
                     onBookmarkToggle={toggleBookmark}
                     onViewDetails={handleViewDetails}
-                    isDarkMode={isDarkMode}
                   />
                 ))}
               </div>

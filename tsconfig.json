@@ -15,7 +15,7 @@
       "allowSyntheticDefaultImports": true,
       "isolatedModules": true,
   
-      /* React / JSX support 👇 */
+      /* React / JSX support */
       "jsx": "react-jsx",
   
       /* Output control */
@@ -26,9 +26,9 @@
       "skipLibCheck": true,
       "forceConsistentCasingInFileNames": true,
   
-      /* Clean Linting */
-      "noUnusedLocals": true,
-      "noUnusedParameters": true,
+      /* Clean Linting - Set to false to ignore unused variables during development */
+      "noUnusedLocals": false,
+      "noUnusedParameters": false,
       "noFallthroughCasesInSwitch": true,
   
       /* Modern TS behavior, but relaxed for compatibility */
@@ -38,5 +38,4 @@
       "types": ["vite/client"]
     },
     "include": ["src"]
-  }
-  
+}

@@ -1,4 +1,9 @@
-import React, { useState } from 'react';
+//localStorage.removeItem('user-points-storage');
+//location.reload(); -> to reload the voucher points coz now its saved
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import { 
   ArrowLeft, 
   DollarSign, 
@@ -23,30 +28,27 @@ import { Separator } from './ui/separator';
 import { Alert, AlertDescription } from './ui/alert';
 import { Voucher, RedeemedVoucher } from '../types/vouchers';
 import { availableVouchers, mockRedeemedVouchers } from '../data/mockVoucherData';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { useThemeStore } from '../store/themeStore';
 import { useUserPointsStore } from '../store/userStore';
 
-
-
 interface VouchersPageProps {
-  onBack: () => void;
-  onRedeemVoucher: (voucherId: string, pointsCost: number) => void; // Required prop to handle redemption updates
   initialTab?: 'available' | 'my-vouchers';
 }
 
 export function VouchersPage({ 
-  
-  onBack, 
-  onRedeemVoucher,
   initialTab = 'available',
 }: VouchersPageProps) {
-  const currentPoints = useUserPointsStore((state) => state.currentPoints);  
+  const navigate = useNavigate();
+  const role = useAuthStore((state) => state.role); // ✅ Get user role
+  const currentPoints = useUserPointsStore((state) => state.currentPoints);
+  const deductPoints = useUserPointsStore((state) => state.deductPoints);
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+  
   console.log('Current points:', currentPoints);
 
   const [activeTab, setActiveTab] = useState(initialTab);
   const [redeemedVouchers, setRedeemedVouchers] = useState<RedeemedVoucher[]>(mockRedeemedVouchers);
-  const isDarkMode = useThemeStore(state => state.isDarkMode);
 
   // Color variables for dark/light mode
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
@@ -55,6 +57,33 @@ export function VouchersPage({
   const secondaryTextColor = isDarkMode ? '#a3a3a3' : '#6b7280';
   const borderColor = isDarkMode ? '#404040' : '#e5e7eb';
   const accentBgColor = isDarkMode ? '#4a4a4a' : '#f3f4f6';
+
+  // ✅ Restrict access to users only
+  if (role !== 'user') {
+    return (
+      <div className="min-h-screen p-4 md:p-6 flex items-center justify-center" 
+           style={{ backgroundColor: bgColor }}>
+        <Card className="max-w-md w-full" style={{ backgroundColor: cardBgColor, borderColor: borderColor }}>
+          <CardContent className="p-12 text-center">
+            <Gift className="w-16 h-16 mx-auto mb-4 text-[#FFA1A3]" />
+            <h2 className="text-2xl font-semibold mb-2" style={{ color: textColor }}>
+              Access Restricted
+            </h2>
+            <p className="mb-6" style={{ color: secondaryTextColor }}>
+              Vouchers are only available for regular users, not business accounts.
+            </p>
+            <Button
+              onClick={() => navigate(-1)}
+              className="bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const getIcon = (iconName: string) => {
     const icons: { [key: string]: any } = {
@@ -71,6 +100,13 @@ export function VouchersPage({
   };
 
   const handleRedeemVoucher = (voucher: Voucher) => {
+    console.log('handleRedeemVoucher called:', {
+      voucher: voucher.title,
+      currentPoints,
+      pointsCost: voucher.pointsCost,
+      canAfford: currentPoints >= voucher.pointsCost
+    });
+
     if (currentPoints < voucher.pointsCost) {
       toast.error('Not enough points', {
         description: `You need ${voucher.pointsCost - currentPoints} more points to redeem this voucher.`,
@@ -97,7 +133,7 @@ export function VouchersPage({
     };
 
     setRedeemedVouchers([newRedeemedVoucher, ...redeemedVouchers]);
-    onRedeemVoucher(voucher.id, voucher.pointsCost);
+    deductPoints(voucher.pointsCost);
     setActiveTab('my-vouchers');
     
     console.log('Redeeming voucher and showing toast');
@@ -108,6 +144,8 @@ export function VouchersPage({
 
   const copyVoucherCode = async (code: string) => {
     try {
+      console.log('🔍 Copy button clicked!', code);
+
       // Try modern clipboard API first
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(code);
@@ -303,7 +341,7 @@ export function VouchersPage({
             <Button
               variant="outline"
               size="sm"
-              onClick={onBack}
+              onClick={() => navigate(-1)}
               className={`flex items-center gap-2 ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
               style={{ 
                 color: isDarkMode ? '#ffffff' : '#000000',
@@ -339,7 +377,10 @@ export function VouchersPage({
         </Alert>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => setActiveTab(value as 'available' | 'my-vouchers')}
+          >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="available">
               Available Vouchers ({availableVouchers.length})
@@ -386,6 +427,7 @@ export function VouchersPage({
             )}
           </TabsContent>
         </Tabs>
+
       </div>
     </div>
   );

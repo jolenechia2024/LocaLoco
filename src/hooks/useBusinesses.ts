@@ -1,13 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { useBusinessStore } from '../store/businessStore';
-import { checkBusinessOpenStatus } from '../utils/businessUtils';
+import { checkBusinessOpenStatus, transformBackendToBusiness } from '../utils/businessUtils';
 import { Business } from '../types/business';
 
-// Assuming you have transform function imported here
-import { transformBackendToBusiness } from '../utils/businessUtils';
-
 interface BackendBusiness {
-  // You can define this or import it if defined elsewhere
   uen: string;
   businessName: string;
   businessCategory: string;
@@ -17,12 +13,7 @@ interface BackendBusiness {
   websiteLink?: string;
   wallpaper: string;
   priceTier: string;
-  openingHours: {
-    [day: string]: {
-      open: string;
-      close: string;
-    };
-  };
+  openingHours: { [day: string]: { open: string; close: string } };
   offersDelivery?: boolean;
   offersPickup?: boolean;
   paymentOptions?: string[];
@@ -44,7 +35,7 @@ export const useBusinesses = () => {
     async function fetchData() {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:4000/api/businesses');
+        const response = await fetch('http://localhost:5173/api/businesses');
         if (!response.ok) throw new Error('Failed to fetch businesses');
         const rawData: BackendBusiness[] = await response.json();
         const transformedBusinesses: Business[] = rawData.map(transformBackendToBusiness);
@@ -63,25 +54,29 @@ export const useBusinesses = () => {
   }, [businesses.length, setBusinesses, setLoading, setError]);
 
   const filteredBusinesses = useMemo(() => {
-    const { searchTerm, selectedCategories, selectedPrices, openNowOnly } = filters;
+    const {
+      searchTerm = '',
+      selectedCategories = [],
+      selectedPrices = [],
+      openNowOnly = false,
+    } = filters || {};
 
     return businesses.filter((business) => {
+      // ✅ Use correct Business type property names with null safety
       const matchesSearch =
-        business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.address.toLowerCase().includes(searchTerm.toLowerCase());
+        (business.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (business.description?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (business.address?.toLowerCase() || '').includes(searchTerm.toLowerCase());
 
       const matchesCategory =
         selectedCategories.length === 0 ||
-        selectedCategories.includes(business.category);
+        (business.category && selectedCategories.includes(business.category));
 
       const matchesPrice =
         selectedPrices.length === 0 ||
-        selectedPrices.includes(business.priceRange);
+        (business.priceRange && selectedPrices.includes(business.priceRange));
 
-      const matchesOpen = openNowOnly
-        ? checkBusinessOpenStatus(business).isOpen
-        : true;
+      const matchesOpen = openNowOnly ? checkBusinessOpenStatus(business).isOpen : true;
 
       return matchesSearch && matchesCategory && matchesPrice && matchesOpen;
     });
