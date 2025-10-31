@@ -18,8 +18,7 @@ interface ForumPageProps {
 // ✅ Added default parameter = {}
 export function ForumPage({ onBack }: ForumPageProps = {}) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
-  const navigate = useNavigate(); // ✅ Added
-  const [discussions, setDiscussions] = useState<ForumDiscussion[]>(mockDiscussions);
+  const { discussions, isLoading, error, createDiscussion, createReply, likeDiscussion, likeReply } = useForumPosts();
   
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
   const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
@@ -64,6 +63,10 @@ export function ForumPage({ onBack }: ForumPageProps = {}) {
     likeDiscussion(discussionId);
   };
 
+  const handleReplyLike = (discussionId: string, replyId: string) => {
+    likeReply(discussionId, replyId);
+  };
+
   const handleReply = async (discussionId: string) => {
     const replyContent = replyInputs[discussionId];
     if (!replyContent?.trim()) return;
@@ -74,6 +77,7 @@ export function ForumPage({ onBack }: ForumPageProps = {}) {
       userName: 'You',
       content: replyContent,
       createdAt: new Date().toISOString(),
+      likes: 0,
     };
 
     try {
@@ -212,6 +216,13 @@ export function ForumPage({ onBack }: ForumPageProps = {}) {
                         <div className="flex-1">
                           <p className={`text-sm ${textColor}`}>{reply.userName}</p>
                           <p className={`${mutedTextColor} text-sm`}>{reply.content}</p>
+                          <button
+                            onClick={() => handleReplyLike(discussion.id, reply.id)}
+                            className={`flex items-center gap-1 text-xs ${mutedTextColor} hover:text-primary transition-colors mt-1`}
+                          >
+                            <ThumbsUp className="w-3 h-3" />
+                            {reply.likes} Likes
+                          </button>
                         </div>
                       </div>
                     ))}

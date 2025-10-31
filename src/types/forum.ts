@@ -5,6 +5,7 @@ export interface ForumReply {
   userAvatar?: string;
   content: string;
   createdAt: string;
+  likes: number;
 }
 
 export interface ForumDiscussion {

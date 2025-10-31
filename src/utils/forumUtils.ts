@@ -32,6 +32,7 @@ export const transformBackendToForumReply = (
     userAvatar: undefined,
     content: backendReply.body,
     createdAt: backendReply.createdAt || new Date().toISOString(),
+    likes: backendReply.likeCount || 0,
   };
 };
 

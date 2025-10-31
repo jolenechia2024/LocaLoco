@@ -30,6 +30,7 @@ featureRouter.get('/api/forum-posts', FeatureController.getAllForumPosts.bind(Fe
 featureRouter.post('/api/forum-posts', FeatureController.createForumPost.bind(FeatureController))
 featureRouter.post('/api/forum-replies', FeatureController.createForumReply.bind(FeatureController))
 featureRouter.put('/api/forum-posts/likes', FeatureController.updatePostLikes.bind(FeatureController))
+featureRouter.put('/api/forum-replies/likes', FeatureController.updateReplyLikes.bind(FeatureController))
 
 // this route handles submissions for forum posts
 featureRouter.post('/api/submit-post', FeatureController.newForumPost.bind(FeatureController))

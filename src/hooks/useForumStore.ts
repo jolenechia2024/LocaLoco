@@ -10,6 +10,7 @@ interface ForumState {
   setError: (error: string | null) => void;
   addDiscussion: (discussion: ForumDiscussion) => void;
   likeDiscussion: (id: string) => void;
+  likeReply: (discussionId: string, replyId: string) => void;
   addReply: (discussionId: string, reply: ForumReply) => void;
 }
 
@@ -29,6 +30,20 @@ export const useForumStore = create<ForumState>((set) => ({
     set((state) => ({
       discussions: state.discussions.map((d) =>
         d.id === id ? { ...d, likes: d.likes + 1 } : d
+      ),
+    })),
+
+  likeReply: (discussionId, replyId) =>
+    set((state) => ({
+      discussions: state.discussions.map((d) =>
+        d.id === discussionId
+          ? {
+              ...d,
+              replies: d.replies.map((r) =>
+                r.id === replyId ? { ...r, likes: r.likes + 1 } : r
+              ),
+            }
+          : d
       ),
     })),
 

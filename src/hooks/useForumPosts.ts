@@ -35,6 +35,7 @@ export const useForumPosts = () => {
   const addDiscussion = useForumStore((state) => state.addDiscussion);
   const addReply = useForumStore((state) => state.addReply);
   const likeDiscussionInStore = useForumStore((state) => state.likeDiscussion);
+  const likeReplyInStore = useForumStore((state) => state.likeReply);
 
   // Fetch all forum posts
   const fetchForumPosts = useCallback(async () => {
@@ -164,6 +165,33 @@ export const useForumPosts = () => {
     }
   }, [likeDiscussionInStore, silentRefresh, fetchForumPosts, setError]);
 
+  // Like a reply
+  const likeReply = useCallback(async (discussionId: string, replyId: string) => {
+    // Optimistically update like count in UI immediately
+    likeReplyInStore(discussionId, replyId);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/forum-replies/likes`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          replyId: parseInt(replyId),
+          clicked: true,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update reply likes');
+
+      // Silently refresh in background to sync with server
+      silentRefresh();
+    } catch (error: any) {
+      setError(error.message || 'Failed to update reply likes');
+      // Rollback: refetch to get accurate state
+      await fetchForumPosts();
+      throw error;
+    }
+  }, [likeReplyInStore, silentRefresh, fetchForumPosts, setError]);
+
   // Initial fetch on mount
   useEffect(() => {
     if (discussions.length === 0) {
@@ -178,6 +206,7 @@ export const useForumPosts = () => {
     createDiscussion,
     createReply,
     likeDiscussion,
+    likeReply,
     refreshDiscussions: fetchForumPosts,
   };
 };
