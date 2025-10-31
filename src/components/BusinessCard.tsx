@@ -47,8 +47,8 @@ export function BusinessCard({
     <Card className={`overflow-hidden hover:shadow-lg transition-shadow duration-200 ${borderColor}`} style={{ backgroundColor: cardBgColor }}>
       <CardHeader className="p-0">
         <div className="relative">
-          <ImageWithFallback
-            src={business.image}
+        <ImageWithFallback
+            src={`https://localoco.blob.core.windows.net/images/${business.image}`}
             alt={business.name}
             className="w-full h-48 object-cover"
           />
