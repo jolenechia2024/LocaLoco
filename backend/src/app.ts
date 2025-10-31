@@ -69,8 +69,8 @@ app.use(
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// resolve and serve compiled frontend directory
-const frontendPath = path.resolve(__dirname, '../../src/dist');
+// resolve and serve compiled frontend directory (Vite builds to root/dist)
+const frontendPath = path.resolve(__dirname, '../../dist');
 app.use(express.static(frontendPath));
 
 // frontend will call and wait for this first before running
