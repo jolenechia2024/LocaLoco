@@ -2,19 +2,17 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 
-
-
 // Layout components
 import { MainLayout } from './components/layout/MainLayout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 
-// Auth pages (existing)
+// Auth pages
 import { WelcomeModal } from './components/pages/WelcomeModal';
 import { LoginPage } from './components/pages/LoginPage';
 import { SignupPage } from './components/pages/SignupPage';
-import { BusinessVerification } from './components/pages/BusinessVerification';
+// import { BusinessVerification } from './components/pages/BusinessVerification'; // Legacy - not used
 
-// Main pages (existing)
+// Main pages
 import { MapDiscoveryPage } from './components/MapDiscoveryPage';
 import { ProfilePageDisplay } from './components/ProfilePageDisplay';
 import { BusinessProfilePage } from './components/pages/BusinessProfilePage';
@@ -25,12 +23,6 @@ import { VouchersPage } from './components/VouchersPage';
 import { WriteReviewPage } from './components/WriteReviewPage';
 import { ErrorPage } from './components/pages/ErrorPage';
 import ErrorBoundary from './components/pages/ErrorBoundary';
-
-// You'll need to create these two pages from your current App.tsx:
-// - BusinessListPage (the list view with tabs)
-// - BusinessDetailPage (when viewing a single business)
-// - BookmarksPage (bookmarks view)
-// For now, I'll show placeholders
 
 import { useNavigate } from "react-router-dom";
 
@@ -57,7 +49,7 @@ export const AppRoutes = () => {
       <Route path={ROUTES.HOME} element={<WelcomePage />} />
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
       <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
-      <Route path={ROUTES.VERIFICATION} element={<BusinessVerification />} />
+      {/* ROUTES.VERIFICATION removed - SignupPage handles all registration */}
 
       {/* Protected Routes with Layout */}
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>

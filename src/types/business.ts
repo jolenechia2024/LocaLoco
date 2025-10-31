@@ -3,46 +3,55 @@
 export type BusinessCategory =
   | 'all'
   | 'fnb'
-  | 'dietary-options'
   | 'retail'
   | 'services'
   | 'entertainment'
-  | 'health-wellness'
-  | 'professional-services'
-  | 'home-living';
+  | 'health_wellness'
+  | 'professional_services'
+  | 'home_living';
 
 export interface Business {
   uen: string; // from uen
   name: string; // from businessName
-  category: BusinessCategory; // from businessCategory (adjust union type keys if needed)
+  category: BusinessCategory; // from businessCategory
   subcategory?: string;
 
   address: string;
   phone: string; // from phoneNumber
+  email: string; // from businessEmail
   website?: string; // from websiteLink
+  socialMedia?: string; // from socialMediaLink
   description: string;
   image: string; // from wallpaper
+
+  dateOfCreation?: string; // from dateOfCreation
 
   rating?: number; // optional if backend provides
   reviewCount?: number; // optional if backend provides
 
-  priceRange: 'low' | 'medium' | 'high'; // mapped from priceTier
+  priceRange: 'low' | 'medium' | 'high' | '$' | '$$' | '$$$' | '$$$$'; // from priceTier
 
+  open247: boolean; // from open247
   hours: {
     [day: string]: {
       open: string;
       close: string;
     };
-  };
+  }; // from openingHours
 
+  // Add direct lat/lng properties
+  lat?: number;
+  lng?: number;
+
+  // Keep coordinates for backward compatibility
   coordinates?: {
     lat: number;
     lng: number;
   };
 
-  offersDelivery?: boolean;
-  offersPickup?: boolean;
-  paymentOptions?: string[];
+  offersDelivery: boolean; // from offersDelivery
+  offersPickup: boolean; // from offersPickup
+  paymentOptions: string[]; // from paymentOptions
 
   isPopular?: boolean;
   tags?: string[];
