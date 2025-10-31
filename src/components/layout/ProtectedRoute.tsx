@@ -19,16 +19,16 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
 
 
     // Auto-login in development
-    // useEffect(() => {
-    //   const shouldAutoLogin = 
-    //     import.meta.env.DEV && 
-    //     import.meta.env.VITE_DEV_AUTO_LOGIN !== 'false' &&
-    //     !isAuthenticated;
+    useEffect(() => {
+      const shouldAutoLogin = 
+        import.meta.env.DEV && 
+        import.meta.env.VITE_DEV_AUTO_LOGIN !== 'false' &&
+        !isAuthenticated;
   
-    //   if (shouldAutoLogin) {
-    //     store.login('dev-user-1', 'user', 'dev-token-123');
-    //   }
-    // }, [isAuthenticated, store]);
+      if (shouldAutoLogin) {
+        store.login('dev-user-1', 'user', 'dev-token-123');
+      }
+    }, [isAuthenticated, store]);
   
   
     
