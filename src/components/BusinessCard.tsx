@@ -49,8 +49,8 @@ export function BusinessCard({
     <Card className={`overflow-hidden hover:shadow-lg transition-shadow duration-200 ${borderColor}`} style={{ backgroundColor: cardBgColor }}>
       <CardHeader className="p-0">
         <div className="relative">
-          <ImageWithFallback
-            src={business.image}
+        <ImageWithFallback
+            src={`https://localoco.blob.core.windows.net/images/${business.image}`}
             alt={business.name}
             className="w-full h-48 object-cover"
           />
@@ -58,7 +58,7 @@ export function BusinessCard({
             variant={isBookmarked ? "default" : "secondary"}
             size="sm"
             className="absolute top-2 right-2 p-2"
-            onClick={() => onBookmarkToggle(business.id)}
+            onClick={() => onBookmarkToggle(business.uen)}
           >
             <Bookmark
               className={`w-4 h-4 ${

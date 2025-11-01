@@ -59,7 +59,7 @@ export function WriteReviewPage({
   };
 
   // ✅ Use prop if provided, otherwise use helpers
-  const business = propBusiness || businesses.find(b => b.id === businessId);
+  const business = propBusiness || businesses.find(b => b.uen === businessId);
   const userName = propUserName || getUserDisplayName(user); // ✅ Use helper
   const userAvatar = propUserAvatar || getUserAvatar(user); // ✅ Use helper
 

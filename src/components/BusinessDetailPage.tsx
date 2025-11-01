@@ -54,7 +54,7 @@ export const BusinessDetailPage = () => {
         onBookmarkToggle={toggleBookmark}
         onBack={() => navigate("/businesses")}
         onWriteReview={(business) => {
-          navigate(`/review/${business.id}`);
+          navigate(`/review/${business.uen}`);
         }}
       />
     </div>

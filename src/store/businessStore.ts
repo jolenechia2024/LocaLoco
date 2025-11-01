@@ -57,7 +57,7 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
 
   setSelectedBusiness: (business) => {
     updateCount++;
-    console.log(`🏪 [${updateCount}] BusinessStore.setSelectedBusiness:`, business?.id);
+    console.log(`🏪 [${updateCount}] BusinessStore.setSelectedBusiness:`, business?.uen);
     set({ selectedBusiness: business });
   },
 
@@ -147,6 +147,6 @@ export const selectFilteredBusinesses = (state: BusinessStore) => {
 export const selectBookmarkedBusinesses = (state: BusinessStore) => {
   const bookmarkedIds = state.bookmarkedBusinesses.map((b) => b.businessId);
   return state.businesses.filter((business) =>
-    bookmarkedIds.includes(business.id)
+    bookmarkedIds.includes(business.uen)
   );
 };
