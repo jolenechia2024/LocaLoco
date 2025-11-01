@@ -300,7 +300,7 @@ export function VouchersPage({
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-screen p-4 md:p-6 md:pl-6" style={{ backgroundColor: bgColor }}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

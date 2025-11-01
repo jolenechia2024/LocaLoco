@@ -42,7 +42,7 @@ export const BusinessListPage = () => {
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-screen md:pl-6"
       style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
     >
       <EventsPopup

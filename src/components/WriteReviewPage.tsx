@@ -89,7 +89,7 @@ export function WriteReviewPage({
   // ✅ Check if user is a business owner - restrict access
   if (role === 'business' || (user && 'businessName' in user)) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" 
+      <div className="min-h-screen flex items-center justify-center p-4 md:pl-6"
            style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f9fafb' }}>
         <Card className="max-w-md w-full" style={{ backgroundColor: cardBg, borderColor: userBoxBorder }}>
           <CardContent className="p-12 text-center">

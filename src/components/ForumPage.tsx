@@ -103,7 +103,7 @@ export function ForumPage({ onBack }: ForumPageProps = {}) {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-screen md:pl-6" style={{ backgroundColor: bgColor }}>
       {/* Main Content */}
       <div className="max-w-5xl mx-auto p-6 space-y-8">
         {/* Create Discussion */}

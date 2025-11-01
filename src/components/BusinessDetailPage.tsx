@@ -21,7 +21,7 @@ export const BusinessDetailPage = () => {
   if (!business) {
     return (
       <div
-        className="min-h-screen p-4"
+        className="min-h-screen p-4 md:pl-6"
         style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
       >
         <div className="max-w-7xl mx-auto text-center py-12">
@@ -44,7 +44,7 @@ export const BusinessDetailPage = () => {
 
   return (
     <div
-      className="min-h-screen p-4"
+      className="min-h-screen p-4 md:pl-6"
       style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
     >
       <BusinessDetail
