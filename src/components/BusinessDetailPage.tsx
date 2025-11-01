@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useBusinesses } from "../hooks/useBusinesses";
 import { useBookmarks } from "../hooks/useBookmarks";
 import { useTheme } from "../hooks/useTheme";
-import { useReviews } from "../hooks/useReviews";
 import { BusinessDetail } from "./BusinessDetail";
+import { mockReviews } from "../data/mockData";
 
 export const BusinessDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,9 +14,6 @@ export const BusinessDetailPage = () => {
   const { isBookmarked, toggleBookmark } = useBookmarks();
 
   const business = businesses.find((b) => b.id === id);
-
-  // Fetch reviews for this business
-  const { reviews, isLoading: reviewsLoading } = useReviews(id);
 
   if (!business) {
     return (
@@ -50,7 +47,7 @@ export const BusinessDetailPage = () => {
       <BusinessDetail
         business={business}
         reviews={reviews}
-        isBookmarked={isBookmarked(business.id)}
+        isBookmarked={isBookmarked(business.uen)}
         onBookmarkToggle={toggleBookmark}
         onBack={() => navigate("/businesses")}
         onWriteReview={(business) => {
