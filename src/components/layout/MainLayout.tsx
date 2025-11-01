@@ -84,10 +84,9 @@ export const MainLayout = () => {
         avatarUrl={userInfo.avatarUrl} // ✅ Use helper
         onThemeToggle={toggleTheme}
       />
-      <div className="main-content">
+      <div className="main-content md:ml-20 h-screen overflow-y-auto pb-20 md:pb-0">
         <Outlet context={{ user, stats, updateUser }} />
       </div>
-
     </>
   );
 };
