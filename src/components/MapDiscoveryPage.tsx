@@ -1,7 +1,6 @@
-// src/components/MapDiscoveryPage.tsx
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Store, Navigation, X } from 'lucide-react';
+import { Search, Store, X } from 'lucide-react';
 import { Business } from '../types/business';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -21,14 +20,14 @@ const defaultCenter = { lat: 1.3521, lng: 103.8198 }; // Singapore fallback
 
 export function MapDiscoveryPage() {
   const navigate = useNavigate();
+  const mapRef = useRef<google.maps.Map | null>(null);
   const businesses = useBusinessStore((state) => state.businesses);
   const setSelectedBusiness = useBusinessStore((state) => state.setSelectedBusiness);
   const logout = useAuthStore((state) => state.logout);
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
-  
+
   const safeBusinesses: Business[] = Array.isArray(businesses) ? businesses : [];
 
-  // Styling tokens
   const pageBg = isDarkMode ? '#3a3a3a' : '#f9fafb';
   const panelBg = isDarkMode ? '#2a2a2a' : '#ffffff';
   const railBg = isDarkMode ? '#3a3a3a' : '#f9fafb';
@@ -37,21 +36,16 @@ export function MapDiscoveryPage() {
   const textMuted = isDarkMode ? 'text-gray-400' : 'text-gray-600';
   const inputText = isDarkMode ? 'text-white placeholder:text-gray-400' : 'text-black placeholder:text-gray-500';
 
-  // Local states
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPin, setSelectedPin] = useState<Business | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [businessesWithCoords, setBusinessesWithCoords] = useState<
-    (Business & { lat?: number; lng?: number })[]
-  >([]);
+  const [businessesWithCoords, setBusinessesWithCoords] = useState<(Business & { lat?: number; lng?: number })[]>([]);
   const [showUserInfo, setShowUserInfo] = useState(false);
 
-  // Load Google Maps API
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: 'AIzaSyCn-aVVBxUbCBYihIeKHePKcTq7O4KfMlY',
   });
 
-  // Get user's location
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -61,7 +55,6 @@ export function MapDiscoveryPage() {
     }
   }, []);
 
-  // Geocode businesses' addresses
   useEffect(() => {
     if (!isLoaded || !safeBusinesses.length) return;
     const geocoder = new (window as any).google.maps.Geocoder();
@@ -96,7 +89,6 @@ export function MapDiscoveryPage() {
     geocodeAll();
   }, [isLoaded, safeBusinesses]);
 
-  // Filtered businesses by search term
   const filtered = (searchTerm
     ? businessesWithCoords.filter((b) => {
         const q = searchTerm.toLowerCase();
@@ -110,7 +102,7 @@ export function MapDiscoveryPage() {
     : businessesWithCoords
   ).slice(0, 50);
 
-  // Compute nearest businesses to user
+  // ✅ Compute nearest 5 businesses
   const nearestUENs = new Set<string>();
   if (userLocation) {
     const distances = businessesWithCoords
@@ -128,7 +120,6 @@ export function MapDiscoveryPage() {
     distances.forEach((uen) => nearestUENs.add(uen));
   }
 
-  // Navigation handlers
   const handleBusinessClick = (business: Business) => {
     setSelectedBusiness(business);
     navigate(`/business/${business.uen}`);
@@ -138,6 +129,13 @@ export function MapDiscoveryPage() {
     if (confirm('Are you sure you want to log out?')) {
       logout();
       navigate('/');
+    }
+  };
+  const handleShowOnMap = (b: Business & { lat?: number; lng?: number }) => {
+    setSelectedPin(b);
+    if (b.lat && b.lng && mapRef.current) {
+      mapRef.current.panTo({ lat: b.lat, lng: b.lng });
+      mapRef.current.setZoom(17);
     }
   };
 
@@ -152,35 +150,32 @@ export function MapDiscoveryPage() {
           mapContainerStyle={mapContainerStyle}
           zoom={userLocation ? 16 : 14}
           center={userLocation ?? defaultCenter}
+          onLoad={(map) => (mapRef.current = map)}
         >
-          {/* User marker with green pin and popup */}
+          {/* User marker (green) */}
           {userLocation && (
             <>
               <Marker
                 position={userLocation}
-                icon={{
-                  url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
-                }}
+                icon={{ url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' }}
                 onClick={() => setShowUserInfo(true)}
               />
               {showUserInfo && (
-                <InfoWindow
-                  position={userLocation}
-                  onCloseClick={() => setShowUserInfo(false)}
-                >
+                <InfoWindow position={userLocation} onCloseClick={() => setShowUserInfo(false)}>
                   <div className="text-sm font-medium text-gray-800">You are here</div>
                 </InfoWindow>
               )}
             </>
           )}
 
-          {/* Business pins */}
+          {/* ✅ Business pins — red/blue, pink when selected */}
           {businessesWithCoords.map((b) => {
             if (b.lat === undefined || b.lng === undefined) return null;
 
             const isSelected = selectedPin?.uen === b.uen;
             const isNearest = nearestUENs.has((b as any).uen ?? b.uen);
 
+            // ✅ Determine pin color
             let iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
             if (isNearest) iconUrl = 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
             if (isSelected) iconUrl = 'http://maps.google.com/mapfiles/ms/icons/pink-dot.png';
@@ -196,7 +191,7 @@ export function MapDiscoveryPage() {
           })}
         </GoogleMap>
 
-        {/* Selected-pin mini card with distance */}
+        {/* Selected-pin mini card */}
         {selectedPin && (
           <div className="absolute bottom-6 left-6 z-10 max-w-sm">
             <Card className={`p-4 ${borderTone}`} style={{ backgroundColor: panelBg }}>
@@ -226,7 +221,6 @@ export function MapDiscoveryPage() {
                     <div className={`mt-1 text-xs ${textMuted}`}>{selectedPin.address}</div>
                   )}
 
-                  {/* Distance line */}
                   {userLocation && selectedPin.lat && selectedPin.lng && (
                     <div className={`mt-1 text-xs ${textMuted}`}>
                       {haversineDistance(
@@ -234,8 +228,7 @@ export function MapDiscoveryPage() {
                         userLocation.lng,
                         selectedPin.lat,
                         selectedPin.lng
-                      ).toFixed(2)}{' '}
-                      km away
+                      ).toFixed(2)} km away
                     </div>
                   )}
 
@@ -279,6 +272,7 @@ export function MapDiscoveryPage() {
             </div>
           </div>
 
+          {/* Cards */}
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {filtered.map((b) => (
@@ -302,9 +296,10 @@ export function MapDiscoveryPage() {
                         >
                           View details
                         </Button>
+                        {/* ✅ Pink Show on map button */}
                         <Button
-                          onClick={() => setSelectedPin(b)}
-                          className="bg-primary hover:bg-primary/90 text-white"
+                          onClick={() => handleShowOnMap(b)}
+                           className="bg-primary hover:bg-primary/90 text-white"
                         >
                           Show on map
                         </Button>
@@ -324,6 +319,7 @@ export function MapDiscoveryPage() {
   );
 }
 
+// Helper: compute distance
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const toRad = (v: number) => (v * Math.PI) / 180;
   const R = 6371;
