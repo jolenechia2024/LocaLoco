@@ -102,22 +102,16 @@ export function MapDiscoveryPage() {
     : businessesWithCoords
   ).slice(0, 50);
 
-  // ✅ Compute nearest 5 businesses
+  // ✅ Compute nearest 5 businesses robustly
   const nearestUENs = new Set<string>();
-  if (userLocation) {
-    const distances = businessesWithCoords
-      .map((b) => ({
-        uen: (b as any).uen ?? b.uen,
-        distance:
-          b.lat && b.lng
-            ? haversineDistance(userLocation.lat, userLocation.lng, b.lat, b.lng)
-            : Infinity,
-      }))
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 5)
-      .map((x) => x.uen);
-    nearestUENs.clear();
-    distances.forEach((uen) => nearestUENs.add(uen));
+  if (userLocation && businessesWithCoords.length > 0) {
+    const withCoords = businessesWithCoords.filter((b) => b.lat !== undefined && b.lng !== undefined);
+    const distances = withCoords.map((b) => ({
+      uen: (b as any).uen ?? b.uen ?? b.name,
+      distance: haversineDistance(userLocation.lat, userLocation.lng, b.lat!, b.lng!),
+    }));
+    distances.sort((a, b) => a.distance - b.distance);
+    distances.slice(0, 5).forEach((b) => nearestUENs.add(b.uen));
   }
 
   const handleBusinessClick = (business: Business) => {
@@ -168,21 +162,22 @@ export function MapDiscoveryPage() {
             </>
           )}
 
-          {/* ✅ Business pins — red/blue, pink when selected */}
+          {/* Business pins */}
           {businessesWithCoords.map((b) => {
             if (b.lat === undefined || b.lng === undefined) return null;
 
-            const isSelected = selectedPin?.uen === b.uen;
-            const isNearest = nearestUENs.has((b as any).uen ?? b.uen);
+            const uen = (b as any).uen ?? b.uen ?? b.name;
+            const isSelected = selectedPin && ((selectedPin.uen ?? selectedPin.name) === uen);
+            const isNearest = nearestUENs.has(uen);
 
-            // ✅ Determine pin color
-            let iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
-            if (isNearest) iconUrl = 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
-            if (isSelected) iconUrl = 'http://maps.google.com/mapfiles/ms/icons/pink-dot.png';
+            const baseColor = isNearest
+              ? 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+              : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
+            const iconUrl = isSelected ? 'http://maps.google.com/mapfiles/ms/icons/pink-dot.png' : baseColor;
 
             return (
               <Marker
-                key={String(b.uen)}
+                key={String(uen)}
                 position={{ lat: b.lat, lng: b.lng }}
                 onClick={() => setSelectedPin(b)}
                 icon={{ url: iconUrl }}
@@ -296,10 +291,9 @@ export function MapDiscoveryPage() {
                         >
                           View details
                         </Button>
-                        {/* ✅ Pink Show on map button */}
                         <Button
                           onClick={() => handleShowOnMap(b)}
-                           className="bg-primary hover:bg-primary/90 text-white"
+                          className="bg-primary hover:bg-primary/90 text-white"
                         >
                           Show on map
                         </Button>
