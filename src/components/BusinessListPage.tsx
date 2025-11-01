@@ -137,9 +137,9 @@ export const BusinessListPage = () => {
           <TabsContent value="all">
             {filteredBusinesses.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredBusinesses.map((business) => (
+                {filteredBusinesses.map((business, index) => (
                   <BusinessCard
-                    key={business.uen}
+                    key={business.uen || `business-${index}`}
                     business={business}
                     isBookmarked={isBookmarked(business.uen)}
                     onBookmarkToggle={toggleBookmark}
@@ -173,9 +173,9 @@ export const BusinessListPage = () => {
           <TabsContent value="bookmarked">
             {bookmarkedBusinesses.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {bookmarkedBusinesses.map((business) => (
+                {bookmarkedBusinesses.map((business, index) => (
                   <BusinessCard
-                    key={business.uen}
+                    key={business.uen || `bookmarked-${index}`}
                     business={business}
                     isBookmarked={true}
                     onBookmarkToggle={toggleBookmark}

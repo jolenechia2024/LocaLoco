@@ -292,8 +292,8 @@ export function MapDiscoveryPage() {
 
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((b) => (
-                <Card key={b.uen} className={`p-4 hover:shadow ${borderTone}`} style={{ backgroundColor: panelBg }}>
+              {filtered.map((b, index) => (
+                <Card key={b.uen || `business-${index}`} className={`p-4 hover:shadow ${borderTone}`} style={{ backgroundColor: panelBg }}>
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-primary/10 rounded-md">
                       <Store className="w-4 h-4 text-primary" />

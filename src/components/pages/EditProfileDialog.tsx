@@ -13,6 +13,9 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Upload, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useThemeStore } from '../../store/themeStore';
+
 
 interface EditProfileDialogProps {
   user: User;
@@ -27,6 +30,7 @@ export function EditProfileDialog({
   onOpenChange,
   onSave,
 }: EditProfileDialogProps) {
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const [formData, setFormData] = useState<User>(user);
   const [previewUrl, setPreviewUrl] = useState<string | null>(user.avatarUrl || null);
   const [uploading, setUploading] = useState(false);
@@ -144,7 +148,13 @@ export function EditProfileDialog({
           <div className="grid gap-4 py-4">
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              <div
+                className={`border px-4 py-3 rounded ${
+                  isDarkMode
+                    ? 'bg-red-900/20 border-red-800 text-red-300'
+                    : 'bg-red-50 border-red-200 text-red-700'
+                }`}
+              >
                 {error}
               </div>
             )}
@@ -154,15 +164,19 @@ export function EditProfileDialog({
               <Label>Profile Picture</Label>
               <div className="flex items-center gap-4">
                 {/* Avatar Preview */}
-                <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                <div
+                  className={`w-20 h-20 rounded-full flex items-center justify-center overflow-hidden ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}
+                >
                   {previewUrl ? (
-                    <img 
-                      src={previewUrl} 
-                      alt="Avatar preview" 
+                    <img
+                      src={previewUrl}
+                      alt="Avatar preview"
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <Upload className="w-8 h-8 text-gray-400" />
+                    <Upload className={`w-8 h-8 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                   )}
                 </div>
 
@@ -198,7 +212,7 @@ export function EditProfileDialog({
                   className="hidden"
                 />
               </div>
-              <p className="text-xs text-gray-500">
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Recommended: Square image, max 5MB
               </p>
             </div>
@@ -223,7 +237,7 @@ export function EditProfileDialog({
                 placeholder="your.email@example.com"
                 disabled
               />
-              <p className="text-xs text-gray-500">
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Email cannot be changed
               </p>
             </div>
