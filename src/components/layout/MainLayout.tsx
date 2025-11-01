@@ -84,7 +84,7 @@ export const MainLayout = () => {
         avatarUrl={userInfo.avatarUrl} // ✅ Use helper
         onThemeToggle={toggleTheme}
       />
-      <div className="ml-20">
+      <div className="main-content">
         <Outlet context={{ user, stats, updateUser }} />
       </div>
 

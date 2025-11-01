@@ -246,3 +246,65 @@ html {
 [data-name="search-field"]:hover {
   background-color: rgba(255, 255, 255, 0.05);
 }
+
+/* Hide scrollbar for mobile navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+.desktop-sidebar {
+  display: none;
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+/* Mobile: show bottom nav only (up to 767px) */
+@media (max-width: 767px) {
+  .desktop-sidebar {
+    display: none !important;
+  }
+  
+  .mobile-bottom-nav {
+    display: block !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding-bottom: 5rem !important; /* Space for bottom nav */
+  }
+}
+
+/* Tablet and Desktop: show sidebar only (768px and above) */
+@media (min-width: 768px) {
+  .desktop-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 5rem !important; /* 80px for collapsed sidebar */
+    padding-bottom: 0 !important;
+  }
+}
+
+/* Additional fix: Ensure the sidebar container respects flex layout */
+@media (min-width: 768px) {
+  .desktop-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 40;
+  }
+}
