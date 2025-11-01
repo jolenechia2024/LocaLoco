@@ -45,6 +45,7 @@ export function MapDiscoveryPage() {
     (Business & { lat?: number; lng?: number })[]
   >([]);
   const [showUserInfo, setShowUserInfo] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
 
   // Load Google Maps API
   const { isLoaded, loadError } = useLoadScript({
@@ -59,6 +60,16 @@ export function MapDiscoveryPage() {
         (err) => console.warn('Geolocation failed:', err)
       );
     }
+  }, []);
+
+  // Detect screen size for responsive padding
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Geocode businesses' addresses
@@ -257,7 +268,7 @@ export function MapDiscoveryPage() {
       {/* LOWER PANEL */}
       <div
         className={`shrink-0 border-t ${borderTone}`}
-        style={{ backgroundColor: railBg, height: '52vh', paddingLeft: 'var(--rail-w, 64px)' }}
+        style={{ backgroundColor: railBg, height: '52vh', paddingLeft: isDesktop ? 'var(--rail-w, 64px)' : '0' }} 
       >
         <div className="max-w-none mx-auto h-full flex flex-col gap-3 px-4 pt-4 pb-4">
           <div>
