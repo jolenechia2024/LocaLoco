@@ -13,7 +13,7 @@ export const BookmarksPage = () => {
 
   return (
     <div
-      className="min-h-screen"
+      className="min-h-screen md:pl-6"
       style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
     >
       <div className="max-w-7xl mx-auto px-6 py-8">

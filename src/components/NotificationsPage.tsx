@@ -160,38 +160,38 @@ export function NotificationsPage({ onBack}: NotificationsPageProps) {
 
   return (
     <div
-      className="min-h-screen" // 💥 MODIFIED LINE: Removed pb-20 md:pb-0
+      className="min-h-screen md:pl-6"
       style={{
         backgroundColor: bgColor,
-        // 💥 MODIFIED LINES: Removed position: 'static', transform: 'none'
       }}
     >
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-8">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 mb-2">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-primary rounded-lg">
                 <Bell className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-3xl" style={{ color: textColor }}>Notifications</h1>
+              <h1 className="text-2xl sm:text-3xl" style={{ color: textColor }}>Notifications</h1>
               {unreadCount > 0 && (
-                <Badge className="bg-primary text-white hover:bg-primary">
+                <Badge className="bg-primary text-white hover:bg-primary whitespace-nowrap">
                   {unreadCount} new
                 </Badge>
               )}
             </div>
             {unreadCount > 0 && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleMarkAllAsRead}
-                className={isDarkMode ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20' : 'text-foreground'}
+                className={`w-full sm:w-auto sm:self-start ${isDarkMode ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/20' : 'text-foreground'}`}
               >
+                <Check className="w-4 h-4 mr-2" />
                 Mark all as read
               </Button>
             )}
           </div>
-          <p className="text-muted-foreground">Stay updated with your activity</p>
+          <p className="text-sm sm:text-base text-muted-foreground">Stay updated with your activity</p>
         </div>
 
         {/* Notifications List */}

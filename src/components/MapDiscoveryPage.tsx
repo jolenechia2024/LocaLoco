@@ -268,7 +268,7 @@ export function MapDiscoveryPage() {
       {/* LOWER PANEL */}
       <div
         className={`shrink-0 border-t ${borderTone}`}
-        style={{ backgroundColor: railBg, height: '52vh', paddingLeft: isDesktop ? 'var(--rail-w, 64px)' : '0' }} 
+        style={{ backgroundColor: railBg, height: '52vh' }}
       >
         <div className="max-w-none mx-auto h-full flex flex-col gap-3 px-4 pt-4 pb-4">
           <div>
