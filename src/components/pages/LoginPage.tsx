@@ -29,6 +29,9 @@ export function LoginPage() {
 
   const headerBgColor = isDarkMode ? '#3a3a3a' : '#ffffff';
   const headerTextColor = isDarkMode ? '#ffffff' : '#000000';
+  const bgColor = isDarkMode ? '#3a3a3a' : 'bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50';
+  const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
+  const textColor = isDarkMode ? '#ffffff' : '#000000';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,18 +96,23 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50 relative">
+    <div
+      className={`min-h-screen relative ${!isDarkMode ? 'bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50' : ''}`}
+      style={isDarkMode ? { backgroundColor: bgColor } : {}}
+    >
       {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#FFA1A3" strokeWidth="1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
+      {!isDarkMode && (
+        <div className="absolute inset-0 opacity-10">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#FFA1A3" strokeWidth="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
+      )}
 
       {/* Header */}
       <header className="shadow-md relative z-10" style={{ backgroundColor: headerBgColor, color: headerTextColor }}>
@@ -126,7 +134,7 @@ export function LoginPage() {
       {/* Login Form */}
       <div className="flex items-center justify-center min-h-[calc(100vh-100px)] p-4 relative z-10">
         <div className="w-full max-w-md">
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8 space-y-6">
+          <form onSubmit={handleSubmit} className="rounded-lg shadow-lg p-8 space-y-6" style={{ backgroundColor: cardBgColor, color: textColor }}>
             {/* Account Type */}
             <div className="space-y-2">
               <Label htmlFor="role">Account Type</Label>
