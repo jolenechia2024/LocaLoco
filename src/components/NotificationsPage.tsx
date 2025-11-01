@@ -159,7 +159,13 @@ export function NotificationsPage({ onBack}: NotificationsPageProps) {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
+    <div
+      className="min-h-screen" // 💥 MODIFIED LINE: Removed pb-20 md:pb-0
+      style={{
+        backgroundColor: bgColor,
+        // 💥 MODIFIED LINES: Removed position: 'static', transform: 'none'
+      }}
+    >
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6">
