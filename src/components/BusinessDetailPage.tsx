@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useBusinesses } from "../hooks/useBusinesses";
 import { useBookmarks } from "../hooks/useBookmarks";
 import { useTheme } from "../hooks/useTheme";
+import { useReviews } from "../hooks/useReviews";
 import { BusinessDetail } from "./BusinessDetail";
-import { mockReviews } from "../data/mockData";
 
 export const BusinessDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,10 +15,13 @@ export const BusinessDetailPage = () => {
 
   const business = businesses.find((b) => b.id === id);
 
+  // Fetch reviews for this business
+  const { reviews, isLoading: reviewsLoading } = useReviews(id);
+
   if (!business) {
     return (
       <div
-        className="min-h-screen p-4"
+        className="min-h-screen p-4 md:pl-6"
         style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
       >
         <div className="max-w-7xl mx-auto text-center py-12">
@@ -41,13 +44,13 @@ export const BusinessDetailPage = () => {
 
   return (
     <div
-      className="min-h-screen p-4"
+      className="min-h-screen p-4 md:pl-6"
       style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
     >
       <BusinessDetail
         business={business}
-        reviews={mockReviews}
-        isBookmarked={isBookmarked(business.uen)}
+        reviews={reviews}
+        isBookmarked={isBookmarked(business.id)}
         onBookmarkToggle={toggleBookmark}
         onBack={() => navigate("/businesses")}
         onWriteReview={(business) => {

@@ -82,7 +82,7 @@ export function BusinessProfilePage({
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-screen md:pl-6" style={{ backgroundColor: bgColor }}>
       {/* Profile Content */}
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Profile Header Card */}

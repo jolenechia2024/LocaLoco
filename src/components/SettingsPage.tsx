@@ -75,7 +75,7 @@ export function SettingsPage({ onBack}: SettingsPageProps) {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-screen md:pl-6" style={{ backgroundColor: bgColor }}>
       <div className="max-w-3xl mx-auto px-4 py-4">
         {/* Header */}
         <div className="mb-3">

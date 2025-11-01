@@ -39,12 +39,19 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
-  
+
+  const headerBgColor = isDarkMode ? '#3a3a3a' : '#3a3a3a'; // Keep header dark always
+  const headerTextColor = '#ffffff'; // Keep header text white always
+  const bgColor = isDarkMode ? '#3a3a3a' : 'bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50';
+  const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
+  const textColor = isDarkMode ? '#ffffff' : '#000000';
+  const mutedTextColor = isDarkMode ? '#a1a1aa' : '#6b7280';
+
   const [role, setRole] = useState<UserRole>('user');
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
-  
+
   const [useSameHours, setUseSameHours] = useState(false);
   const [defaultHours, setDefaultHours] = useState({ open: '09:00', close: '17:00' });
   
@@ -800,21 +807,26 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50 relative">
+    <div
+      className={`min-h-screen relative ${!isDarkMode ? 'bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50' : ''}`}
+      style={isDarkMode ? { backgroundColor: bgColor } : {}}
+    >
       {/* Decorative Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#FFA1A3" strokeWidth="1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
+      {!isDarkMode && (
+        <div className="absolute inset-0 opacity-10">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#FFA1A3" strokeWidth="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
+      )}
 
       {/* Header */}
-      <header className="text-white shadow-md relative z-10" style={{ backgroundColor: '#3a3a3a' }}>
+      <header className="shadow-md relative z-10" style={{ backgroundColor: headerBgColor, color: headerTextColor }}>
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary rounded-lg">
@@ -833,11 +845,11 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
       {/* Main Form Container */}
       <div className="flex items-center justify-center min-h-[calc(100vh-100px)] p-4 relative z-10">
         <div className="w-full max-w-2xl">
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8">
+          <form onSubmit={handleSubmit} className="rounded-lg shadow-lg p-8" style={{ backgroundColor: cardBgColor, color: textColor }}>
             {/* Header */}
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-primary">Create Account</h2>
-              <p className="text-sm text-gray-600 mt-1">Join LocalLoco today</p>
+              <p className="text-sm mt-1" style={{ color: mutedTextColor }}>Join LocalLoco today</p>
             </div>
 
             {/* Upload Status */}
