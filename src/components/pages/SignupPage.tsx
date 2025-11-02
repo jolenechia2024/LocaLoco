@@ -420,6 +420,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         navigate('/map');
       }, 100);
       
+      
 
       // // STEP 3: Login and redirect
       // if (onSignup) {
