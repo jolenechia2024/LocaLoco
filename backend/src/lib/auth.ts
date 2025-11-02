@@ -7,7 +7,7 @@ import sendEmail from "./mailer.js";
 
 const auth = betterAuth({
     database: drizzleAdapter(db, {
-        provider: "mysql", 
+        provider: "mysql",
         schema: { user, session, account, verification }
     }),
     baseURL: 'http://localhost:3000',
@@ -35,7 +35,8 @@ const auth = betterAuth({
             },
             referralCode: {
                 type: 'string',
-                input: false
+                input: false,
+                required: false
             },
             referredByUserID: {
                 type:'string',
@@ -43,7 +44,8 @@ const auth = betterAuth({
             },
             bio: {
                 type: 'string',
-                input: false
+                input: false,
+                required: false
             }
         }
     },

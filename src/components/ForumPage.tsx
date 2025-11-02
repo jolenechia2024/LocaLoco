@@ -8,7 +8,9 @@ import { Textarea } from './ui/textarea';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useThemeStore } from '../store/themeStore';
-import { useNavigate } from 'react-router-dom'; // ✅ Added
+import { useForumPosts } from '../hooks/useForumPosts';
+import { useAuthStore } from '../store/authStore';
+import { useUser } from '../hooks/useUser';
 
 // ✅ Made onBack optional with ?
 interface ForumPageProps {
@@ -18,7 +20,9 @@ interface ForumPageProps {
 // ✅ Added default parameter = {}
 export function ForumPage({ onBack }: ForumPageProps = {}) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
-  const { discussions, isLoading, error, createDiscussion, createReply, likeDiscussion, likeReply } = useForumPosts();
+  const userId = useAuthStore((state) => state.userId);
+  const { user } = useUser(userId);
+  const { discussions, isLoading, error, createDiscussion, createReply, likeDiscussion, likeReply } = useForumPosts(user?.email);
   
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
   const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
@@ -45,7 +49,7 @@ export function ForumPage({ onBack }: ForumPageProps = {}) {
       title: newDiscussion.title,
       businessTag: newDiscussion.businessTag || undefined,
       content: newDiscussion.content,
-      userName: 'You',
+      userName: user?.name || 'Anonymous',
       createdAt: new Date().toISOString(),
       likes: 0,
       replies: [],
@@ -74,7 +78,7 @@ export function ForumPage({ onBack }: ForumPageProps = {}) {
     const reply: ForumReply = {
       id: `${discussionId}-${Date.now()}`,
       discussionId,
-      userName: 'You',
+      userName: user?.name || 'Anonymous',
       content: replyContent,
       createdAt: new Date().toISOString(),
       likes: 0,

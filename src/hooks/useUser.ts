@@ -15,12 +15,18 @@ export const useUser = (userId: string | null) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+<<<<<<< HEAD
+=======
+    console.log('🔍 useUser - userId:', userId);
+
+>>>>>>> bc4734c (1. Fixed the linking up username with creating forum posts/replies)
     if (!userId) {
       setUser(null);
       setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
       return;
     }
 
+<<<<<<< HEAD
     const fetchUserProfile = async () => {
       setLoading(true);
       setError(null);
@@ -81,6 +87,61 @@ export const useUser = (userId: string | null) => {
     };
 
     fetchUserProfile();
+=======
+    // Fetch real user data from backend
+    const fetchUserData = async () => {
+      try {
+        console.log('🌐 Fetching user data for userId:', userId);
+        // Call your backend API to get user data
+        const response = await fetch(`http://localhost:3000/api/users/profile/${userId}`);
+
+        console.log('📡 Response status:', response.status, response.ok);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ API Error:', errorText);
+          throw new Error('Failed to fetch user data');
+        }
+
+        const userData = await response.json();
+        console.log('👤 useUser - Fetched user data from DB:', userData);
+
+        // Transform backend data to match frontend User type
+        const user: User = {
+          id: userData.id,
+          role: 'user',
+          name: userData.name || 'User',
+          email: userData.email,
+          memberSince: userData.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+          bio: userData.bio || '',
+          location: userData.location || 'Singapore',
+        };
+
+        setUser(user);
+
+        // TODO: Fetch real stats from backend
+        setStats(MOCK_STATS[userId] || { vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+
+      } catch (error) {
+        console.error('❌ Error fetching user data:', error);
+
+        // Fallback to creating a basic user object if API fails
+        const fallbackUser: User = {
+          id: userId,
+          role: 'user',
+          name: 'User',
+          email: 'user@example.com',
+          memberSince: new Date().toISOString().split('T')[0],
+          bio: '',
+          location: 'Singapore',
+        };
+        setUser(fallbackUser);
+        setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+      }
+    };
+
+    fetchUserData();
+>>>>>>> bc4734c (1. Fixed the linking up username with creating forum posts/replies)
   }, [userId]);
 
   const updateUser = useCallback(async (updatedUser: User | BusinessOwner) => {

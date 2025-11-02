@@ -1,93 +1,156 @@
 // src/components/pages/LoginPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, AlertCircle } from 'lucide-react';
-import { UserRole } from '../../types/auth';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
+import { authClient, callbackURL } from '../../lib/authClient';
 
 // ✅ NO PROPS - Uses hooks instead
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
-  
-  const [role, setRole] = useState<UserRole>('user');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   const headerBgColor = isDarkMode ? '#3a3a3a' : '#ffffff';
   const headerTextColor = isDarkMode ? '#ffffff' : '#000000';
   const bgColor = isDarkMode ? '#3a3a3a' : 'bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50';
   const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
   const textColor = isDarkMode ? '#ffffff' : '#000000';
+  const mutedTextColor = isDarkMode ? '#a1a1aa' : '#6b7280';
+
+  // Check for existing session on page load (important for Google OAuth callback)
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        // Small delay to allow logout to complete on backend
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const session = await authClient.getSession();
+        console.log('Checking session on page load:', session);
+
+        if (session?.data?.session) {
+          // User has a valid session (e.g., from Google OAuth)
+          const user = session.data.user;
+          const userId = user?.id || 'unknown';
+          const accessToken = session.data.session.token;
+
+          console.log('✅ Session found, logging in:', { userId });
+
+          // Update auth store with session data
+          login(userId, 'user', accessToken);
+
+          // Redirect to map
+          navigate('/map', { replace: true });
+        } else {
+          console.log('No active session found');
+        }
+      } catch (err) {
+        console.error('Error checking session:', err);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    checkSession();
+  }, [login, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('🎯 handleSubmit called!', { email, password: password ? '***' : 'empty' });
     e.preventDefault();
     setError(null);
 
     // Basic validation
     if (!email.trim() || !password.trim()) {
-      setError('Login failed. Please check your login details and try again.');
+      console.log('❌ Validation failed: Empty fields');
+      setError('Please fill in all fields.');
       return;
     }
-    if (role === 'user' && !email.includes('@')) {
-      setError('Login failed. Please check your login details and try again.');
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
 
-    // Mock login - accepts any credentials
+    // Real login using better-auth - everyone is a user
     try {
-      const userId = role === 'business' ? 'business-1' : 'customer-1';
-      login(userId, role, 'mock-token-123');
-      navigate('/map');
-    } catch (err) {
-      setError('Login failed. Please try again.');
-    }
+      console.log('🔐 Logging in with better-auth:', { email });
 
-  
-    // UNCOMMENT THIS WHEN YOU WANT TO USE REAL API:
-    const handleLogin = async (email: string, password: string, role: UserRole) => {
-      const payload = new URLSearchParams();
-      if (role === 'business') payload.append('uen', email);
-      else payload.append('email', email);
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: callbackURL
+      });
 
-      payload.append('password', password);
-      payload.append('role', role);
-      payload.append('mode', 'login');
+      console.log('📨 SignIn response:', { data, error });
 
-      try {
-        const response = await fetch('/api/getUsers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: payload.toString(),
-        });
-
-        if (!response.ok) throw new Error('Network response was not ok');
-        const result = await response.json();
-
-        if (result.success) {
-          setError(null);
-          login(result.userId, role, result.token);
-          navigate('/map');
-        } else {
-          setError('Login failed. Please check your login details and try again.');
-        }
-      } catch (error: any) {
-        setError('Login failed. Please check your login details and try again.');
+      if (error) {
+        console.error('❌ Login error:', error);
+        setError(error.message || 'Invalid email or password. Please try again.');
+        return;
       }
-    };
+
+      // Check if we have a valid session
+      console.log('🔍 Checking session after login...');
+      const session = await authClient.getSession();
+      console.log('📊 Session after login:', session);
+
+      if (session?.data?.session) {
+        // Extract user info from session
+        const user = session.data.user;
+        const userId = user?.id || 'unknown';
+        const accessToken = session.data.session.token;
+
+        console.log('✅ Login successful:', { userId });
+
+        // Update auth store with real data - everyone is 'user' role
+        login(userId, 'user', accessToken);
+
+        console.log('🚀 Navigating to /map');
+        // Navigate to map
+        navigate('/map');
+      } else {
+        console.error('❌ No session after login');
+        setError('Login failed. No session created.');
+      }
+    } catch (err) {
+      console.error('❌ Unexpected login error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      console.log('🔐 Logging in with Google');
+
+      const { data, error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: callbackURL
+      });
+
+      if (error) {
+        console.error('Google login error:', error);
+        setError(error.message || 'Google login failed. Please try again.');
+        return;
+      }
+
+      // Google OAuth will handle the redirect
+      // Session will be established after redirect back from Google
+    } catch (err) {
+      console.error('Unexpected Google login error:', err);
+      setError('An unexpected error occurred with Google login.');
+    }
   };
 
   const handleBack = () => {
@@ -133,28 +196,16 @@ export function LoginPage() {
       {/* Login Form */}
       <div className="flex items-center justify-center min-h-[calc(100vh-100px)] p-4 relative z-10">
         <div className="w-full max-w-md">
-          <form onSubmit={handleSubmit} className="rounded-lg shadow-lg p-8 space-y-6" style={{ backgroundColor: cardBgColor, color: textColor }}>
-            {/* Account Type */}
-            <div className="space-y-2">
-              <Label htmlFor="role">Account Type</Label>
-              <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
-                <SelectTrigger className="bg-primary/80 text-white border-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="business">Business</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="rounded-lg shadow-lg p-8 space-y-6" style={{ backgroundColor: cardBgColor, color: textColor }}>
+            <h2 className="text-2xl font-bold text-center mb-2">Welcome Back</h2>
 
-            {/* Email / UEN */}
+            {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email">{role === 'business' ? 'UEN (Unique Entity Number)' : 'Email'}</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                type={role === 'business' ? 'text' : 'email'}
-                placeholder="Enter"
+                type="email"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -190,8 +241,46 @@ export function LoginPage() {
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              className="w-full bg-primary hover:bg-primary/90"
+            >
               Log in
+            </Button>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" style={{ borderColor: isDarkMode ? '#525252' : '#e5e7eb' }} />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="px-2" style={{ backgroundColor: cardBgColor, color: mutedTextColor }}>
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            {/* Google Login Button */}
+            <Button
+              type="button"
+              onClick={handleGoogleLogin}
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2 relative z-10 cursor-pointer"
+              style={{
+                backgroundColor: isDarkMode ? '#3a3a3a' : '#ffffff',
+                color: textColor,
+                borderColor: isDarkMode ? '#525252' : '#e5e7eb',
+                pointerEvents: 'auto'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+              </svg>
+              <span>Sign in with Google</span>
             </Button>
 
             {/* Links */}
@@ -215,7 +304,7 @@ export function LoginPage() {
                 Back to welcome screen
               </button>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
