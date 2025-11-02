@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Star, MapPin, Phone, Globe, Clock, ArrowLeft, Bookmark, MessageSquare } from 'lucide-react';
 import { Business, Review } from '../types/business';
 import { Button } from './ui/button';
@@ -9,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ReviewCard } from './ReviewCard';
 import { MapPlaceholder } from './MapPlaceholder';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useThemeStore } from '../store/themeStore';
+import { ForumDiscussion } from '../types/forum';
+
 
 interface BusinessDetailProps {
   business: Business;
@@ -32,8 +35,51 @@ export function BusinessDetail({
     const isDarkMode = useThemeStore(state => state.isDarkMode);
 
   const [selectedTab, setSelectedTab] = useState('overview');
-  
+  const [threads, setThreads] = useState<ForumDiscussion[]>([]);
+  const [threadsLoading, setThreadsLoading] = useState(false);
+
   const textColor = isDarkMode ? '#ffffff' : '#000000';
+
+  // Fetch threads when Threads tab is selected
+  useEffect(() => {
+    if (selectedTab === 'threads' && threads.length === 0) {
+      fetchThreads();
+    }
+  }, [selectedTab]);
+
+  const fetchThreads = async () => {
+    setThreadsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:3000/api/forum-posts/business?uen=${business.uen}`);
+      if (!response.ok) throw new Error('Failed to fetch threads');
+
+      const data = await response.json();
+      // Transform backend data to ForumDiscussion format
+      const transformedThreads: ForumDiscussion[] = data.map((post: any) => ({
+        id: post.id.toString(),
+        title: post.title || 'Discussion',
+        businessTag: business.name,
+        content: post.body,
+        userName: post.userEmail.split('@')[0], // Use email username part
+        createdAt: post.createdAt,
+        likes: post.likeCount || 0,
+        replies: post.replies.map((reply: any) => ({
+          id: reply.id.toString(),
+          discussionId: post.id.toString(),
+          userName: reply.userEmail.split('@')[0],
+          content: reply.body,
+          createdAt: reply.createdAt,
+          likes: reply.likeCount || 0,
+        })),
+      }));
+
+      setThreads(transformedThreads);
+    } catch (error) {
+      console.error('Error fetching threads:', error);
+    } finally {
+      setThreadsLoading(false);
+    }
+  };
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -114,10 +160,13 @@ export function BusinessDetail({
 
       {/* Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="w-full inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="reviews">
             Reviews ({businessReviews.length})
+          </TabsTrigger>
+          <TabsTrigger value="threads">
+            Threads ({threads.length})
           </TabsTrigger>
           <TabsTrigger value="location">Location</TabsTrigger>
         </TabsList>
@@ -213,6 +262,62 @@ export function BusinessDetail({
                 <CardContent className="p-8 text-center">
                   <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-foreground">No reviews yet. Be the first to review!</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="threads">
+          <div className="space-y-4">
+            {threadsLoading ? (
+              <Card className="border-border bg-card">
+                <CardContent className="p-8 text-center">
+                  <p className="text-foreground">Loading threads...</p>
+                </CardContent>
+              </Card>
+            ) : threads.length > 0 ? (
+              threads.map((thread) => (
+                <Card key={thread.id} className="border-border bg-card">
+                  <CardContent className="p-6 space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">{thread.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        By {thread.userName} • {new Date(thread.createdAt).toLocaleDateString()}
+                      </p>
+                      <p className="text-foreground">{thread.content}</p>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="w-4 h-4" />
+                        {thread.replies.length} Replies
+                      </span>
+                      <span>{thread.likes} Likes</span>
+                    </div>
+
+                    {/* Replies */}
+                    {thread.replies.length > 0 && (
+                      <div className="ml-6 space-y-3 border-l-2 border-border pl-4">
+                        {thread.replies.map((reply) => (
+                          <div key={reply.id} className="space-y-1">
+                            <p className="text-sm font-medium text-foreground">{reply.userName}</p>
+                            <p className="text-sm text-muted-foreground">{reply.content}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(reply.createdAt).toLocaleDateString()} • {reply.likes} Likes
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <Card className="border-border bg-card">
+                <CardContent className="p-8 text-center">
+                  <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-foreground">No threads yet. Start a discussion about this business!</p>
                 </CardContent>
               </Card>
             )}

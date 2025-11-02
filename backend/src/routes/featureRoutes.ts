@@ -27,6 +27,7 @@ featureRouter.post('/api/like-review', FeatureController.updateReviewLikes.bind(
 // Forum routes
 >>>>>>> d571a44 (Add forum CRUD functionality - connect backend to frontend)
 featureRouter.get('/api/forum-posts', FeatureController.getAllForumPosts.bind(FeatureController))
+featureRouter.get('/api/forum-posts/business', FeatureController.getForumPostsByBusinessUEN.bind(FeatureController))
 featureRouter.post('/api/forum-posts', FeatureController.createForumPost.bind(FeatureController))
 featureRouter.post('/api/forum-replies', FeatureController.createForumReply.bind(FeatureController))
 featureRouter.put('/api/forum-posts/likes', FeatureController.updatePostLikes.bind(FeatureController))

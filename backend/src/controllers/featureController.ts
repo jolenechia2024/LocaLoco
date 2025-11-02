@@ -102,6 +102,23 @@ class FeatureController {
         }
     }
 
+    static async getForumPostsByBusinessUEN(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const businessUen = String(req.query.uen || '').trim();
+
+            if (!businessUen) {
+                res.status(400).json({ error: 'UEN parameter is required' });
+                return;
+            }
+
+            const forumPosts = await ForumModel.getForumPostsByBusinessUEN(businessUen);
+            res.status(200).json(forumPosts);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+
     static async createForumPost(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const postData = req.body;
