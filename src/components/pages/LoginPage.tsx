@@ -70,7 +70,7 @@ export function LoginPage() {
       payload.append('mode', 'login');
 
       try {
-        const response = await fetch('/api/getUsers, {
+        const response = await fetch('/api/getUsers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: payload.toString(),
