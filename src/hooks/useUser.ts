@@ -1,7 +1,7 @@
 // hooks/useUser.ts
 import { useState, useEffect, useCallback } from 'react';
 import { User, UserStats } from '../types/user';
-import { BusinessOwner, MOCK_BUSINESS_OWNERS } from '../data/mockBusinessOwnerData'; // ✅ Import these
+import { BusinessOwner, MOCK_BUSINESS_OWNERS } from '../data/mockBusinessOwnerData';
 
 const MOCK_USERS: Record<string, User> = {
   'user-1': {
@@ -13,7 +13,6 @@ const MOCK_USERS: Record<string, User> = {
     bio: 'Food enthusiast and local business supporter',
     location: 'Singapore',
   },
-  // Remove business-1 from here since it should come from MOCK_BUSINESS_OWNERS
 };
 
 const MOCK_STATS: Record<string, UserStats> = {
@@ -22,15 +21,9 @@ const MOCK_STATS: Record<string, UserStats> = {
     reviewsCount: 12,
     loyaltyPoints: 3500,
   },
-  'business-1': {
-    vouchersCount: 0,
-    reviewsCount: 0,
-    loyaltyPoints: 0,
-  },
 };
 
 export const useUser = (userId: string | null) => {
-  // ✅ Change type to support both User and BusinessOwner
   const [user, setUser] = useState<User | BusinessOwner | null>(null);
   const [stats, setStats] = useState<UserStats>({
     vouchersCount: 0,
@@ -39,7 +32,7 @@ export const useUser = (userId: string | null) => {
   });
 
   useEffect(() => {
-    console.log('🔍 useUser - userId:', userId); // Debug log
+    console.log('🔍 useUser - userId:', userId);
     
     if (!userId) {
       setUser(null);
@@ -50,12 +43,27 @@ export const useUser = (userId: string | null) => {
     // ✅ Check if it's a business user
     if (userId.startsWith('business-')) {
       const businessData = MOCK_BUSINESS_OWNERS[userId];
-      console.log('🏢 useUser - Loading business data:', businessData); // Debug log
       setUser(businessData || null);
     } else {
-      const userData = MOCK_USERS[userId];
-      console.log('👤 useUser - Loading user data:', userData); // Debug log
-      setUser(userData || null);
+      // ✅ Try to find user in MOCK_USERS
+      let userData = MOCK_USERS[userId];
+      
+      // ✅ If not found, create a default user (for new signups)
+      if (!userData) {
+        userData = {
+          id: userId,
+          role: 'user',
+          name: 'New User',
+          email: 'user@email.com',
+          memberSince: new Date().toISOString().split('T')[0],
+          bio: '',
+          location: 'Singapore',
+        };
+        // Store it in mock data
+        MOCK_USERS[userId] = userData;
+      }
+      
+      setUser(userData);
     }
     
     setStats(MOCK_STATS[userId] || { vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
@@ -64,16 +72,12 @@ export const useUser = (userId: string | null) => {
   const updateUser = useCallback((updatedUser: User | BusinessOwner) => {
     console.log('🔄 updateUser called:', updatedUser);
     
-    // ✅ Update the correct mock database based on type
     if ('businessName' in updatedUser) {
-      // It's a BusinessOwner
       MOCK_BUSINESS_OWNERS[updatedUser.id] = updatedUser as BusinessOwner;
     } else {
-      // It's a regular User
       MOCK_USERS[updatedUser.id] = updatedUser as User;
     }
     
-    // Force state update with completely new object
     if (updatedUser.id === userId) {
       setUser(() => {
         const newUser = { ...updatedUser };

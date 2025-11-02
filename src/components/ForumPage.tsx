@@ -12,7 +12,7 @@ import { useForumPosts } from '../hooks/useForumPosts';
 
 
 interface ForumPageProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 export function ForumPage({ onBack}: ForumPageProps) {
