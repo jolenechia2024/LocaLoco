@@ -40,7 +40,7 @@ export const user = mysqlTable("user", {
     .notNull(),
   hasBusiness: boolean("has_business"),
   referralCode: text("referral_code"),
-  referredByUserID: text("referred_by_user_id"),
+  referredByUserID: text("referred_by_user_id")
 });
 
 // followed by the other business tables
@@ -122,7 +122,7 @@ export const referrals = mysqlTable("referrals", {
 
 export const vouchers = mysqlTable("vouchers", {
     id: int("voucher_id").autoincrement().notNull(),
-    userId: varchar("referrer_id", { length: 36 }).notNull().references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    userId: varchar("user_id", { length: 36 }).notNull().references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
     refId: int("ref_id",).references(() => referrals.id, { onDelete: "set null", onUpdate: "cascade" }),
     amount: int("amount").notNull(),
     status: mysqlEnum("status", ["issued", "used", "expired", "revoked"]).notNull().default("issued"),

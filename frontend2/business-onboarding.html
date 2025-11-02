@@ -281,25 +281,12 @@
             }
         });
     });
-    async function getAuthToken() {
-        try {
-            const response = await axios.post('https://www.onemap.gov.sg/api/auth/post/getToken', {
-                email: 'pamika.lim.2024@computing.smu.edu.sg',     
-                password: 'mTW!dR$M!ZVRX5h'            
-            });
-            return response.data.access_token;
-        } catch (error) {
-            console.error('Failed to get OneMap token:', error);
-            return null;
-        }
-    };    
+
     async function getAddress() {
         const postalCode = document.getElementById('postalCode');
         const address = document.getElementById('address');
         const url = 'https://www.onemap.gov.sg/api/common/elastic/search';
-        // const authToken = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5ODY3LCJmb3JldmVyIjpmYWxzZSwiaXNzIjoiT25lTWFwIiwiaWF0IjoxNzYyMDc4NzY4LCJuYmYiOjE3NjIwNzg3NjgsImV4cCI6MTc2MjMzNzk2OCwianRpIjoiYTZlMDZlYTMtNmYxZS00M2E4LWI1MzEtZjQwYjY0NWJlNjUwIn0.yR4jq5XwdTpe2UeUfchgn_Oofq_Ry7Fyez-j_CxXADoVdBfB6ugV4BjHfyNqbubnqA57NufaACp2KM_M-5cvbmdSEvdmIskz1PUKPrG1G8Sl1GfdXI3uMZK7_4Qf0-7dW69ZJPfegm7Vwh9B2VnLEak226rhkRpC4PAsaMgi2fN4-2Xsvm-wh66-Yd5bxOtmXZNYT8QALsRmP5BbE1FqSjq8nmdZbzZgGMKFop0s0lWspgxswZjKspuywK0gQArI7OTcnSt4Mrk9oTvIF6BKJEQgTwBd9bdGSf4f7kHzHsOBVdXiVg8Bg3mGt1OPZQgjkl-s6vn5cjDGfkpv4mGqEg';
-            
-        const authToken = await getAuthToken();
+        const authToken = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5MzgzLCJmb3JldmVyIjpmYWxzZSwiaXNzIjoiT25lTWFwIiwiaWF0IjoxNzYwMDE2ODI5LCJuYmYiOjE3NjAwMTY4MjksImV4cCI6MTc2MDI3NjAyOSwianRpIjoiMmRjMTNhMDctMjhmOC00OTI3LTk2ZmQtMjg5ZDRiMzA2N2IwIn0.MvdcK-sHL2mopoz6rE0hKp4PQ903DnqdhlubocXuWAfDO0yjx8ovoQYlRYpBX_BPk2EQvDi4KCZ_J5rtmXFTf8WyPWwwz9sxfvhLHSagzBYs0lmkK6egzDNSvqoOQbTWWOLbkXp8h6-9xzfdOHLqJvwYJSm3vak1KaPC5Op6DG7ZPYvL1SdXkdI5NrdFaM8ULBUePh_NnPRXZ4quTaixDSLXPEfWfvx9_p6S1_E_TRlgYtEgL9ZV7ejYQQeYyMseXH_9zYh0wQ3wV-nIlQ5Q-B5_IPLzfZHKoh0d3zM8T33bJwcnWd9siY-1b9Kk_mAb5ZQjfGLMdA54sfEO-rxehw';
 
         if (postalCode.value.length == 6 && !isNaN(postalCode.value)) {
             try {
@@ -312,9 +299,6 @@
                     headers: { 'Authorization': `${authToken}` }
                 });
                 address.value = response.data.results[0].ADDRESS;
-                const { lat, lng} = await getLatLng(address.value);
-                console.log('Lat', lat);
-                console.log('Lng', lng);
             } catch (error) {
                 console.log(`something went wrong: ${error}`);
             }
@@ -322,38 +306,18 @@
             address.value = '';
         }
     }
-    // add function to call google api to return back lat/lng
-    async function getLatLng (address){
-        if (!address || address.trim() === '') {
-        console.warn('Address is empty. Skipping geocoding.');
-        return { lat: '', lng: '' };
-    }
-        const apiKey = 'AIzaSyCn-aVVBxUbCBYihIeKHePKcTq7O4KfMlY'; 
-    const encodedAddress = encodeURIComponent(address);
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
-    
-    try {
-        const response = await axios.get(url);
-        if (response.data.status === 'OK' && response.data.results.length > 0) {
-            const location = response.data.results[0].geometry.location;
-            return {
-                lat: location.lat,
-                lng: location.lng,
-            };
-            
-        } else {
-            console.warn('No results found for address:', address);
-            return { lat: '', lng: '' };
 
+    // add function to call google api to return back the lat/lng based on the address returned by getAddress
+    async function getLatLng (address:string) {
+        return {
+            lat: '',
+            lng: ''
         }
-    } catch (error) {
-        console.error('Error fetching lat/lng:', error);
-        return { lat: '', lng: '' };
     }
-    }
-    
-    // const latitude = returnedlatlng.lat;
-    // const longitude = returnedlatlng.lng;
+    const returedlatLng = getLatLng()
+    const latitude = returedlatLng.lat
+    const longitude = returedlatLng.lng
+
     const postalCodeInput = document.getElementById('postalCode');
     postalCodeInput.addEventListener('keyup', getAddress);
 
@@ -365,9 +329,9 @@
         submitButton.disabled = true;
 
         try {
-const fileInput = document.getElementById('wallpaper-upload');
-const file = fileInput.files[0];
-let finalWallpaperUrl = '';
+    const fileInput = document.getElementById('wallpaper-upload');
+    const file = fileInput.files[0];
+    let finalWallpaperUrl = '';
 
 // only execute the block if there is an attached file
 if (file) {
@@ -409,12 +373,11 @@ else {
                     }
                 }
             });
-            const { lat, lng } = await getLatLng(document.getElementById('address').value);
             
             const finalPayload = {
                 ...data,
-                latitude: lat,
-                longitude: lng,
+                latitude: latitude,
+                longitude: longitude,
                 open247: data.open247 === "1",
                 offersDelivery: data.offersDelivery === "1",
                 offersPickup: data.offersPickup ==="1",
