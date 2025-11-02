@@ -2,12 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import UserModel from "../models/UserModel.js";
 
 class UserController {
+
     // Update user profile
     static async updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const { userId, name, image } = req.body;
+            const { userId, name, image, email } = req.body;
 
-            console.log('Update profile request:', { userId, name, imageLength: image?.length });
+            console.log('Update profile request:', { userId, name, email, imageLength: image?.length });
 
             if (!userId) {
                 res.status(400).json({ error: 'User ID is required' });
@@ -18,6 +19,7 @@ class UserController {
             const updates: any = {};
             if (name !== undefined) updates.name = name;
             if (image !== undefined) updates.image = image;
+            if (email !== undefined) updates.email = email;
 
             // Check if there's anything to update
             if (Object.keys(updates).length === 0) {
@@ -83,6 +85,27 @@ class UserController {
         } catch (error) {
             console.error('Error fetching profile:', error);
             res.status(500).json({ error: 'Failed to fetch profile' });
+        }
+    }
+
+    // delete user profile
+    static async deleteProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const userId = req.body.userId
+
+            if (!userId) {
+                res.status(400).json({ error: 'User ID is required' });
+                return;
+            }
+
+            await UserModel.deleteProfile(userId)
+
+            res.status(200).json({
+                message: 'Profile deleted successfully',
+            });
+        }
+        catch (error: any) {
+            console.log(`Error deleting profile: ${error}`)
         }
     }
 }
