@@ -27,11 +27,6 @@ const MOCK_STATS: Record<string, UserStats> = {
     reviewsCount: 12,
     loyaltyPoints: 3500,
   },
-  'business-1': {
-    vouchersCount: 0,
-    reviewsCount: 0,
-    loyaltyPoints: 0,
-  },
 };
 
 export const useUser = (userId: string | null) => {
@@ -58,7 +53,6 @@ export const useUser = (userId: string | null) => {
     // Update mock database
     MOCK_USERS[updatedUser.id] = updatedUser;
     
-    // Force state update with completely new object
     if (updatedUser.id === userId) {
       // Use functional update to ensure latest state
       setUser(() => {
