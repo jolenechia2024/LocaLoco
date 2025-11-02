@@ -39,26 +39,67 @@ export const useUser = (userId: string | null) => {
   });
 
   useEffect(() => {
-    console.log('🔍 useUser - userId:', userId); // Debug log
-    
+    console.log('🔍 useUser - userId:', userId);
+
     if (!userId) {
       setUser(null);
       setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
       return;
     }
-    
-    // ✅ Check if it's a business user
-    if (userId.startsWith('business-')) {
-      const businessData = MOCK_BUSINESS_OWNERS[userId];
-      console.log('🏢 useUser - Loading business data:', businessData); // Debug log
-      setUser(businessData || null);
-    } else {
-      const userData = MOCK_USERS[userId];
-      console.log('👤 useUser - Loading user data:', userData); // Debug log
-      setUser(userData || null);
-    }
-    
-    setStats(MOCK_STATS[userId] || { vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+
+    // Fetch real user data from backend
+    const fetchUserData = async () => {
+      try {
+        console.log('🌐 Fetching user data for userId:', userId);
+        // Call your backend API to get user data
+        const response = await fetch(`http://localhost:3000/api/users/profile/${userId}`);
+
+        console.log('📡 Response status:', response.status, response.ok);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ API Error:', errorText);
+          throw new Error('Failed to fetch user data');
+        }
+
+        const userData = await response.json();
+        console.log('👤 useUser - Fetched user data from DB:', userData);
+
+        // Transform backend data to match frontend User type
+        const user: User = {
+          id: userData.id,
+          role: 'user',
+          name: userData.name || 'User',
+          email: userData.email,
+          memberSince: userData.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+          bio: userData.bio || '',
+          location: userData.location || 'Singapore',
+        };
+
+        setUser(user);
+
+        // TODO: Fetch real stats from backend
+        setStats(MOCK_STATS[userId] || { vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+
+      } catch (error) {
+        console.error('❌ Error fetching user data:', error);
+
+        // Fallback to creating a basic user object if API fails
+        const fallbackUser: User = {
+          id: userId,
+          role: 'user',
+          name: 'User',
+          email: 'user@example.com',
+          memberSince: new Date().toISOString().split('T')[0],
+          bio: '',
+          location: 'Singapore',
+        };
+        setUser(fallbackUser);
+        setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+      }
+    };
+
+    fetchUserData();
   }, [userId]);
 
   const updateUser = useCallback((updatedUser: User | BusinessOwner) => {

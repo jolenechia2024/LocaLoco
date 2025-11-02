@@ -2,51 +2,46 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import db from "../database/db.js";
-import { user, session, account, verification } from "../database/schema.js";
+import { user, session, account, verification } from "../database/auth-schema.js";
 import dotenv from 'dotenv';
 
 const auth = betterAuth({
     database: drizzleAdapter(db, {
-        provider: "mysql", 
+        provider: "mysql",
         schema: { user, session, account, verification }
     }),
     user: {
         additionalFields: {
-            role: { // ✅ Add role field
-                type: "string",
-                input: true, // Allow input during signup
-                defaultValue: "user"
-            },
             hasBusiness: {
                 type: "boolean",
-                input: false
-            },
-            firstName: { // ✅ Add firstName
-                type: "string",
-                input: true
-            },
-            lastName: { // ✅ Add lastName
-                type: "string",
-                input: true
+                input: false,
+                defaultValue: false
             },
             referralCode: {
                 type: 'string',
-                input: false
+                input: false,
+                required: false
             },
             referredByUserID: {
                 type: 'string',
-                input: false
+                input: false,
+                required: false
             }
         }
     },
-    emailAndPassword: { 
-        enabled: true, 
+    advanced: {
+        crossSubDomainCookies: {
+            enabled: true,
+        },
+    },
+    emailAndPassword: {
+        enabled: true,
         autoSignIn: true
-    }, 
+    },
     trustedOrigins: [
         "http://localhost:3000", // for testing
         "http://localhost:5173", // for dev
-        "https://localoco.azurewebsites.net" // for staging and prod 
+        "https://localoco.azurewebsites.net" // for staging and prod
     ],
     socialProviders: {
         google: {

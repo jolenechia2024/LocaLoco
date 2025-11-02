@@ -13,10 +13,12 @@ class UserModel {
      */
     public static async getUserById(userId: string) {
         try {
+            console.log('🔍 getUserById called with userId:', userId);
             const result = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+            console.log('📊 Query result:', result);
             return result[0] || null;
         } catch (error) {
-            console.error('Error fetching user:', error);
+            console.error('❌ Error fetching user:', error);
             throw error;
         }
     }
