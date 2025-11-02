@@ -12,13 +12,31 @@ class ForumModel {
         try {
             await db.insert(forumPosts).values({
                 userEmail: post.userEmail,
-                businessUen: post.businessUen || null,
-                title: post.title || null,
+                uen: post.businessUen,
+                title: post.title,
                 body: post.body,
                 createdAt: post.createdAt,
                 likeCount: 0
 
             } as typeof forumPosts.$inferInsert)
+        }
+        catch (err) {
+            console.error(err)
+        }
+    }
+
+    // creates a new forum post
+    public static async newForumPostReply(post: Omit<ForumPostReply, 'id'>) {
+        
+        try {
+            await db.insert(forumPostsReplies).values({
+                postId: post.postId,
+                userEmail: post.userEmail,
+                body: post.body,
+                createdAt: post.createdAt,
+                likeCount: post.likeCount
+
+            } as typeof forumPostsReplies.$inferInsert)
         }
         catch (err) {
             console.error(err)
@@ -50,10 +68,10 @@ class ForumModel {
 
             // Fetch business name if UEN exists
             let businessName: string | null = null;
-            if (post.businessUen) {
+            if (post.uen) {
                 const businessResult = await db.select({ businessName: businesses.businessName })
                     .from(businesses)
-                    .where(eq(businesses.uen, post.businessUen))
+                    .where(eq(businesses.uen, post.uen))
                     .limit(1);
                 if (businessResult.length > 0 && businessResult[0]) {
                     businessName = businessResult[0].businessName;
@@ -64,7 +82,7 @@ class ForumModel {
             container.push({
                 id: post.id,
                 userEmail: post.userEmail,
-                businessUen: post.businessUen,
+                businessUen: post.uen,
                 businessName: businessName,
                 title: post.title || null,
                 body: post.body,
@@ -82,7 +100,7 @@ class ForumModel {
         // select posts linked to this business, ordered by newest first
         const posts = await db.select()
             .from(forumPosts)
-            .where(eq(forumPosts.businessUen, businessUen))
+            .where(eq(forumPosts.uen, businessUen))
             .orderBy(desc(forumPosts.createdAt));
 
         const container: ForumPost[] = [];
@@ -107,10 +125,10 @@ class ForumModel {
 
             // Fetch business name if UEN exists
             let businessName: string | null = null;
-            if (post.businessUen) {
+            if (post.uen) {
                 const businessResult = await db.select({ businessName: businesses.businessName })
                     .from(businesses)
-                    .where(eq(businesses.uen, post.businessUen))
+                    .where(eq(businesses.uen, post.uen))
                     .limit(1);
                 if (businessResult.length > 0 && businessResult[0]) {
                     businessName = businessResult[0].businessName;
@@ -121,7 +139,7 @@ class ForumModel {
             container.push({
                 id: post.id,
                 userEmail: post.userEmail,
-                businessUen: post.businessUen,
+                businessUen: post.uen,
                 businessName: businessName,
                 title: post.title || null,
                 body: post.body,

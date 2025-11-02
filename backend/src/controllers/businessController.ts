@@ -24,7 +24,7 @@ class businessController {
             next(error);
         }
     }
-
+    
     static async getBusinessByUEN(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const business = await BusinessModel.getBusinessByUEN(String(req.query.uen))
@@ -60,14 +60,29 @@ class businessController {
         }
     }
 
+    static async getOwnedBusinesses(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            console.log(req.body.ownerId)
+            const ownedBusinesses = await BusinessModel.getOwnedBusinesses(String(req.body.ownerId))
+            res.status(200).json(ownedBusinesses);
+        }
+        catch (error) {
+            console.error(`There was a problem fetching the the owned business: ${error}`)
+            next(error);
+        }
+    }
+
     static async registerBusiness(req: Request, res: Response, next: NextFunction): Promise<void> {
 
         const business = {
+            ownerID: req.body.ownerID,
             uen: req.body.uen,
             businessName: req.body.businessName,
             businessCategory: req.body.businessCategory,
             description: req.body.description,
             address: req.body.address,
+            latitude: req.body.latitude,
+            longitude: req.body.longitude,
             open247: req.body.open247 ? 1 : 0,
             openingHours: req.body.openingHours, 
             email: req.body.email,
@@ -83,11 +98,59 @@ class businessController {
         }
 
         try {
-            const result = await BusinessModel.registerBusiness(business)
+            await BusinessModel.registerBusiness(business)
             res.status(200).json({ message: 'business registered' });
         }
         catch (err:any) {
             console.error(`There was a problem registering the selected business: ${err}`)
+            next(err)
+        }
+    }
+
+    static async updateBusiness(req: Request, res: Response, next: NextFunction): Promise<void> {
+
+        const business = {
+            ownerID: req.body.ownerID,
+            uen: req.body.uen,
+            businessName: req.body.businessName,
+            businessCategory: req.body.businessCategory,
+            description: req.body.description,
+            address: req.body.address,
+            latitude: req.body.latitude,
+            longitude: req.body.longitude,
+            open247: req.body.open247 ? 1 : 0,
+            openingHours: req.body.openingHours, 
+            email: req.body.email,
+            phoneNumber: req.body.phoneNumber,
+            websiteLink: req.body.websiteLink ?? '',
+            socialMediaLink: req.body.socialMediaLink ?? '',
+            wallpaper: req.body.wallpaper,
+            priceTier: req.body.priceTier,
+            offersDelivery: req.body.offersDelivery ? 1 : 0,
+            offersPickup: req.body.offersPickup ? 1 : 0,
+            paymentOptions: req.body.paymentOptions
+        }
+
+        try {
+            await BusinessModel.updateBusiness(business)
+            res.status(200).json({ message: 'business updated' });
+        }
+        catch (err:any) {
+            console.error(`There was a problem registering the selected business: ${err}`)
+            next(err)
+        }
+    }
+
+    static async deleteBusiness(req: Request, res: Response, next: NextFunction): Promise<void> {
+
+        const uen = String(req.body.uen)
+
+        try {
+            await BusinessModel.deleteBusiness(uen)
+            res.status(200).json({ message: 'business deleted' });
+        }
+        catch (err:any) {
+            console.error(`There was a problem deleting the selected business: ${err}`)
             next(err)
         }
     }

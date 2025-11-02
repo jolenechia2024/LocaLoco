@@ -38,13 +38,17 @@ class UserModel {
         }
     }
 
-    // Get user by ID
-    public static async (userId: string) {
+    /**
+     * Deletes a user record from the database by its unique ID.
+     *
+     * @param {string} userId - The unique identifier of the user to delete.
+     * @returns {Promise<void>} Resolves when the user record has been successfully removed.
+     */
+    public static async deleteProfile(userId: string) {
         try {
-            const result = await db.select().from(user).where(eq(user.id, userId)).limit(1);
-            return result[0] || null;
+            await db.delete(user).where(eq(user.id, userId))
         } catch (error) {
-            console.error('Error fetching user:', error);
+            console.error('Error deleting user:', error);
             throw error;
         }
     }

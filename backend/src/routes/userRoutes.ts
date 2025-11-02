@@ -8,5 +8,9 @@ userRouter.get('/api/users/profile/:userId', UserController.getProfile.bind(User
 
 // Update user profile
 userRouter.put('/api/users/profile', UserController.updateProfile.bind(UserController));
+userRouter.post('/api/user/update-profile', UserController.updateProfile.bind(UserController));
+
+// delete user
+userRouter.post('/api/user/delete-profile', UserController.deleteProfile.bind(UserController));
 
 export default userRouter;
