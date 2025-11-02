@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, MapPin, Calendar, Edit2, Ticket, Star, Award, Bookmark } from 'lucide-react';
+import { Mail, MapPin, Calendar, Edit2, Ticket, Star, Award, Bookmark } from 'lucide-react';
 import { User, UserStats } from '../../types/user';
 import { Business } from '../../types/business';
 import { Button } from '../ui/button';
@@ -11,9 +11,8 @@ import { BusinessCard } from '../BusinessCard';
 import { EditProfileDialog } from './EditProfileDialog';
 import { useThemeStore } from '../../store/themeStore';
 
-
 interface ProfilePageProps {
-  user: User;  
+  user: User | null;  // ✅ MUST be nullable
   stats: UserStats;
   bookmarkedBusinesses: Business[];
   onBack: () => void;
@@ -21,6 +20,8 @@ interface ProfilePageProps {
   onViewBusinessDetails: (business: Business) => void;
   onBookmarkToggle: (businessId: string) => void;
   onNavigateToVouchers?: () => void;
+  loading?: boolean;  // ✅ Add loading
+  error?: string | null;  // ✅ Add error
 }
 
 export function ProfilePage({
@@ -32,9 +33,10 @@ export function ProfilePage({
   onViewBusinessDetails,
   onBookmarkToggle,
   onNavigateToVouchers,
+  loading = false,
+  error = null,
 }: ProfilePageProps) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
-
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
@@ -46,21 +48,70 @@ export function ProfilePage({
       .split(' ')
       .map(n => n[0])
       .join('')
-      .toUpperCase();
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    } catch {
+      return dateString;
+    }
   };
 
-  
   const handleSaveProfile = (updatedUser: User) => {
     console.log('ProfilePage handleSaveProfile:', updatedUser.name);
     onUpdateUser(updatedUser);
   };
-  
 
+  // ✅ Show loading state
+  if (loading) {
+    return (
+      <div 
+        className="min-h-screen md:pl-6 flex items-center justify-center" 
+        style={{ backgroundColor: bgColor }}
+      >
+        <div style={{ color: textColor }}>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4 mx-auto"></div>
+          <p>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Show error state
+  if (error) {
+    return (
+      <div 
+        className="min-h-screen md:pl-6 flex items-center justify-center" 
+        style={{ backgroundColor: bgColor }}
+      >
+        <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor }}>
+          <p className="mb-4 text-red-500">Error: {error}</p>
+          <Button onClick={onBack}>Go Back</Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // ✅ Show no user state
+  if (!user) {
+    return (
+      <div 
+        className="min-h-screen md:pl-6 flex items-center justify-center" 
+        style={{ backgroundColor: bgColor }}
+      >
+        <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor }}>
+          <p className="mb-4">User not found</p>
+          <Button onClick={onBack}>Go Back</Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // ✅ Render profile only when user data exists
   return (
     <div className="min-h-screen md:pl-6" style={{ backgroundColor: bgColor }}>
       {/* Profile Content */}
@@ -74,7 +125,7 @@ export function ProfilePage({
                 <AvatarImage src={user.avatarUrl} alt={user.name} />
               ) : (
                 <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                  {getInitials(user.name)}
+                  {getInitials(user.name || 'U')}
                 </AvatarFallback>
               )}
             </Avatar>
@@ -82,11 +133,11 @@ export function ProfilePage({
             <div className="flex-1">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <h1 className="text-3xl mb-2">{user.name}</h1>
+                  <h1 className="text-3xl mb-2">{user.name || 'User'}</h1>
                   <div className="flex flex-col gap-2 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4" />
-                      <span>{user.email}</span>
+                      <span>{user.email || 'No email'}</span>
                     </div>
                     {user.location && (
                       <div className="flex items-center gap-2">
@@ -134,7 +185,7 @@ export function ProfilePage({
                 <Ticket className="w-6 h-6" style={{ color: isDarkMode ? '#60a5fa' : '#2563eb' }} />
               </div>
               <div>
-                <p className="text-3xl">{stats.vouchersCount}</p>
+                <p className="text-3xl">{stats.vouchersCount || 0}</p>
                 <p className="text-muted-foreground">Vouchers</p>
                 {onNavigateToVouchers && (
                   <p className="text-xs text-[#FFA1A3] mt-1">Click to view →</p>
@@ -149,7 +200,7 @@ export function ProfilePage({
                 <Star className="w-6 h-6" style={{ color: isDarkMode ? '#fbbf24' : '#d97706' }} />
               </div>
               <div>
-                <p className="text-3xl">{stats.reviewsCount}</p>
+                <p className="text-3xl">{stats.reviewsCount || 0}</p>
                 <p className="text-muted-foreground">Reviews</p>
               </div>
             </div>
@@ -165,7 +216,7 @@ export function ProfilePage({
                 <Award className="w-6 h-6 text-[#FFA1A3]" />
               </div>
               <div>
-                <p className="text-3xl">{stats.loyaltyPoints}</p>
+                <p className="text-3xl">{stats.loyaltyPoints || 0}</p>
                 <p className="text-muted-foreground">Loyalty Points</p>
                 {onNavigateToVouchers && (
                   <p className="text-xs text-[#FFA1A3] mt-1">Click to redeem →</p>
@@ -208,12 +259,14 @@ export function ProfilePage({
       </div>
 
       {/* Edit Profile Dialog */}
-      <EditProfileDialog
-        user={user}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onSave={handleSaveProfile}
-      />
+      {user && (
+        <EditProfileDialog
+          user={user}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onSave={handleSaveProfile}
+        />
+      )}
     </div>
   );
 }

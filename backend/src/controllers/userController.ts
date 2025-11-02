@@ -102,7 +102,29 @@ class UserController {
         }
     }
 
-    
+    // handle referrals
+    static async handleReferral(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const referralCode = req.body.referralCode
+            const referredId = req.body.referredId
+
+            const userExists = await UserModel.handleReferral(referralCode, referredId)
+
+            if (userExists === false) {
+                res.status(404).json({
+                    message: 'The referral code entered doesnt exist.',
+                });
+            }
+
+            res.status(200).json({
+                message: 'Referral handled successfully',
+            });
+            
+        } 
+        catch (error: any) {
+            console.log(`Error handling referral: ${error}`)
+        }
+    }
 }
 
 export default UserController;

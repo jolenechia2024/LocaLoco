@@ -1,42 +1,19 @@
 // hooks/useUser.ts
 import { useState, useEffect, useCallback } from 'react';
 import { User, UserStats } from '../types/user';
-import { BusinessOwner, MOCK_BUSINESS_OWNERS } from '../data/mockBusinessOwnerData'; // ✅ Import these
+import { BusinessOwner } from '../data/mockBusinessOwnerData';
 
-const MOCK_USERS: Record<string, User> = {
-  'user-1': {
-    id: 'user-1',
-    role: 'user',
-    name: 'John Tan',
-    email: 'john.tan@email.com',
-    memberSince: '2024-01-15',
-    bio: 'Food enthusiast and local business supporter',
-    location: 'Singapore',
-  },
-  // Remove business-1 from here since it should come from MOCK_BUSINESS_OWNERS
-};
-
-const MOCK_STATS: Record<string, UserStats> = {
-  'user-1': {
-    vouchersCount: 5,
-    reviewsCount: 12,
-    loyaltyPoints: 3500,
-  },
-  'business-1': {
-    vouchersCount: 0,
-    reviewsCount: 0,
-    loyaltyPoints: 0,
-  },
-};
+const API_BASE_URL = 'http://localhost:3000'; 
 
 export const useUser = (userId: string | null) => {
-  // ✅ Change type to support both User and BusinessOwner
   const [user, setUser] = useState<User | BusinessOwner | null>(null);
   const [stats, setStats] = useState<UserStats>({
     vouchersCount: 0,
     reviewsCount: 0,
     loyaltyPoints: 0,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('🔍 useUser - userId:', userId);
@@ -47,82 +24,130 @@ export const useUser = (userId: string | null) => {
       return;
     }
 
-    // Fetch real user data from backend
-    const fetchUserData = async () => {
+    const fetchUserProfile = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        console.log('🌐 Fetching user data for userId:', userId);
-        // Call your backend API to get user data
-        const response = await fetch(`http://localhost:3000/api/users/profile/${userId}`);
+        console.log('🌐 Fetching user profile for userId:', userId);
+        
+        const response = await fetch(`${API_BASE_URL}/api/users/profile/${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
 
         console.log('📡 Response status:', response.status, response.ok);
 
         if (!response.ok) {
           const errorText = await response.text();
           console.error('❌ API Error:', errorText);
-          throw new Error('Failed to fetch user data');
+          throw new Error(`Failed to fetch user profile: ${response.statusText}`);
         }
 
-        const userData = await response.json();
-        console.log('👤 useUser - Fetched user data from DB:', userData);
+        const data = await response.json();
+        console.log('✅ Raw API response:', data);
 
-        // Transform backend data to match frontend User type
-        const user: User = {
-          id: userData.id,
+        // ✅ Handle both response structures:
+        // 1. Direct user object: { id, name, email, ... }
+        // 2. Wrapped object: { profile: { id, name, email, ... }, vouchers: [...] }
+        const profileData = data.profile || data;
+
+        if (!profileData || !profileData.id) {
+          console.error('❌ API response invalid:', data);
+          throw new Error('Invalid API response: missing user id');
+        }
+
+        // ✅ Map API response to User type
+        const userData: User = {
+          id: profileData.id,
           role: 'user',
-          name: userData.name || 'User',
-          email: userData.email,
-          memberSince: userData.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-          bio: userData.bio || '',
-          location: userData.location || 'Singapore',
+          name: profileData.name || 'User',
+          email: profileData.email || 'user@email.com',
+          memberSince: profileData.createdAt 
+            ? profileData.createdAt.split('T')[0] 
+            : new Date().toISOString().split('T')[0],
+          bio: profileData.bio || '',
+          location: profileData.location || 'Singapore',
         };
 
-        setUser(user);
+        console.log('✅ Mapped user data:', userData);
+        setUser(userData);
 
-        // TODO: Fetch real stats from backend
-        setStats(MOCK_STATS[userId] || { vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+        // ✅ Set stats from response (or defaults for new users)
+        setStats({
+          vouchersCount: data.vouchers?.length || 0,
+          reviewsCount: data.reviews?.length || 0,
+          loyaltyPoints: profileData.loyaltyPoints || 0,
+        });
 
-      } catch (error) {
-        console.error('❌ Error fetching user data:', error);
+      } catch (err) {
+        console.error('❌ Error fetching user profile:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
 
-        // Fallback to creating a basic user object if API fails
-        const fallbackUser: User = {
+        // ✅ Fallback: Create default user on error
+        setUser({
           id: userId,
           role: 'user',
           name: 'User',
-          email: 'user@example.com',
+          email: 'user@email.com',
           memberSince: new Date().toISOString().split('T')[0],
           bio: '',
           location: 'Singapore',
-        };
-        setUser(fallbackUser);
-        setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUserData();
+    fetchUserProfile();
   }, [userId]);
 
-  const updateUser = useCallback((updatedUser: User | BusinessOwner) => {
-    console.log('🔄 updateUser called:', updatedUser);
-    
-    // ✅ Update the correct mock database based on type
-    if ('businessName' in updatedUser) {
-      // It's a BusinessOwner
-      MOCK_BUSINESS_OWNERS[updatedUser.id] = updatedUser as BusinessOwner;
-    } else {
-      // It's a regular User
-      MOCK_USERS[updatedUser.id] = updatedUser as User;
-    }
-    
-    // Force state update with completely new object
-    if (updatedUser.id === userId) {
-      setUser(() => {
-        const newUser = { ...updatedUser };
-        console.log('✅ State updated with:', newUser);
-        return newUser;
-      });
-    }
-  }, [userId]);
+  const updateUser = useCallback(
+    async (updatedUser: User | BusinessOwner) => {
+      console.log('🔄 updateUser called:', updatedUser);
 
-  return { user, stats, updateUser };
+      try {
+        // ✅ Determine user type
+        const isBusinessOwner = 'businessName' in updatedUser;
+        const userName = isBusinessOwner 
+          ? (updatedUser as BusinessOwner).businessName 
+          : (updatedUser as User).name;
+
+        const response = await fetch(`${API_BASE_URL}/api/user/profile/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            userId: updatedUser.id,
+            updates: {
+              name: userName,
+              image: 'image' in updatedUser ? updatedUser.image : undefined,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update user profile');
+        }
+
+        const data = await response.json();
+        console.log('✅ Profile updated:', data);
+
+        // ✅ Update local state
+        setUser({ ...updatedUser });
+        
+      } catch (err) {
+        console.error('❌ Error updating user:', err);
+        setError(err instanceof Error ? err.message : 'Update failed');
+      }
+    },
+    []
+  );
+
+  return { user, stats, updateUser, loading, error };
 };

@@ -1,12 +1,8 @@
-import { User } from '../types/User.js';
+import { User, UpdateProfileData } from '../types/User.js';
 import db from '../database/db.js'
-import { user } from '../database/schema.js';
+import { referrals, user, vouchers } from '../database/schema.js';
 import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
-
-interface UpdateProfileData {
-    name?: string;
-    image?: string;
-}
+import { date } from 'better-auth';
 
 class UserModel {
 
@@ -40,17 +36,11 @@ class UserModel {
      */
     public static async updateProfile(userId: string, updates: UpdateProfileData) {
         try {
-            // Check if user exists
-            const existingUser = await db.select().from(user).where(eq(user.id, userId)).limit(1);
-
-            if (!existingUser || existingUser.length === 0) {
-                throw new Error('User not found');
-            }
-
             // Update only the fields that are provided
             const updateData: any = {};
             if (updates.name !== undefined) updateData.name = updates.name;
             if (updates.image !== undefined) updateData.image = updates.image;
+            if (updates.email !== undefined) updateData.email = updates.email;
 
             // Perform the update
             await db.update(user)
@@ -68,7 +58,10 @@ class UserModel {
 
     /**
      * Deletes a user record from the database by its unique ID.
-     *
+     * 
+     * Removes the user entry identified by `userId` from the `user` table. 
+     * Any related data is assumed to be handled by database constraints or cascading rules.
+     * 
      * @param {string} userId - The unique identifier of the user to delete.
      * @returns {Promise<void>} Resolves when the user record has been successfully removed.
      */
@@ -78,6 +71,92 @@ class UserModel {
         } catch (error) {
             console.error('Error deleting user:', error);
             throw error;
+        }
+    }
+
+    public static async handleReferral(referralCode: string, referredId: string) {
+        try {
+
+            // Check if referral code is valid
+            const referrerResult = await db.select()
+                .from(user)
+                .where(eq(user.referralCode, referralCode));
+            
+            if (referrerResult.length === 0) {
+                console.log("Referral check failed: Code not found.");
+                return false; // Code doesn't exist
+            }
+
+            const referrerUser = referrerResult[0]!;
+
+            // Prevent self-referral
+            if (referrerUser.id === referredId) {
+                console.log("Referral check failed: User cannot refer themselves.");
+                return false;
+            }
+
+            // Check if user (referredId) has already been referred
+            const referredUserCheck = await db.select({ 
+                    referredByUserID: user.referredByUserID 
+                }).from(user).where(eq(user.id, referredId));
+
+            if (referredUserCheck[0]?.referredByUserID) {
+                console.log("Referral check failed: User already has a referrer.");
+                return false;
+            }
+
+            // === 2. TRANSACTION (All writes) ===
+            const transactionResult = await db.transaction(async (tx) => {
+                
+                const now = new Date();
+                const expiryDate = new Date(now);
+                expiryDate.setMonth(expiryDate.getMonth() + 1);
+                
+                // Insert the referral record
+                const referralInsertResult = await tx.insert(referrals).values({
+                    referrerUserId: referrerUser.id,
+                    referredUserId: referredId,
+                    referralCode,
+                    status: "claimed",
+                    referredAt: now.toISOString() // Use 'now' for consistency
+                });
+                
+                const newReferralId = referralInsertResult[0].insertId;
+
+                // Insert voucher for the REFERRED user
+                await tx.insert(vouchers).values({
+                    userId: referredId,
+                    refId: newReferralId,
+                    amount: 5,
+                    status: 'issued',
+                    issuedAt: now.toISOString(),
+                    expiresAt: expiryDate.toISOString()
+                });
+
+                // Insert voucher for the REFERRER user
+                await tx.insert(vouchers).values({
+                    userId: referrerUser.id,
+                    refId: newReferralId,
+                    amount: 5,
+                    status: 'issued',
+                    issuedAt: now.toISOString(),
+                    expiresAt: expiryDate.toISOString()
+                });
+
+                // update the new user referredByUserID column
+                await tx.update(user).set({
+                    referredByUserID: referrerUser.id,
+                }).where(eq(user.id, referredId))
+
+                return true;
+            });
+            
+            return transactionResult; 
+        } 
+        catch (error) {
+
+            console.error('Error handling referral:', error);
+            throw error; 
         }
     }
 }

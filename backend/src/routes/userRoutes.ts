@@ -12,4 +12,9 @@ userRouter.post('/api/user/update-profile', UserController.updateProfile.bind(Us
 // delete user
 userRouter.post('/api/user/delete-profile', UserController.deleteProfile.bind(UserController));
 
+// handle referral user
+userRouter.post('/api/user/referral', UserController.handleReferral.bind(UserController));
+
+// insert new user referral code
+
 export default userRouter
