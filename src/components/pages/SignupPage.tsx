@@ -32,7 +32,7 @@ interface SignupPageProps {
 }
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const PAYMENT_OPTIONS = ['Cash', 'Credit/Debit Card', 'PayNow', 'Digital Wallets (Apple/Google/Samsung/GrabPay)'];
+const PAYMENT_OPTIONS = ['cash','card','paynow','digital_wallets'];
 
 interface BusinessData {
   uen: string;
@@ -363,9 +363,9 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
             if (business.wallpaper) {
               wallpaperUrl = await uploadWallpaper(business.wallpaper);
             }
-  
+
             return {
-              userId, // Link business to user
+              ownerID: userId, // Link business to user
               uen: business.uen,
               businessName: business.businessName,
               businessCategory: business.businessCategory,
@@ -379,11 +379,11 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
               dateOfCreation: new Date().toISOString().slice(0, 10),
               priceTier: convertToBackendFormat(business.priceTier),
               open247: business.open247,
-              openingHours: business.openingHours,
+              openingHours: business.openingHours, // ✅ Send as object, NOT JSON.stringify()
               offersDelivery: business.offersDelivery,
               offersPickup: business.offersPickup,
-              paymentOptions: business.paymentOptions,
-              password: formData.password, // ✅ ADD THIS - Required for auth
+              paymentOptions: business.paymentOptions, // ✅ Send as array, NOT JSON.stringify()
+              password: formData.password,
             };
           })
         );

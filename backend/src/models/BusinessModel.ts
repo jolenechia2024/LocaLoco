@@ -8,46 +8,18 @@ import { businessOpeningHours } from '../database/schema.js';
 import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
 
 
-// helper interface and type for filtering purposes so that typescript wont complain
-type PriceTier = 'low' | 'medium' | 'high';
-interface FilterOptions {
-    search_query?: string;
-    price_tier?: PriceTier | PriceTier[]
-    business_category?: string | string[];
-    newly_added?: boolean;
-    open247?: boolean;
-    offers_delivery?: boolean;
-    offers_pickup?: boolean;
-    payment_options?: string[]; 
-    sort_by?: 'business_name' | 'date_of_creation' | 'price_tier';
-    sort_order?: 'asc' | 'desc';
-}
-
 class BusinessModel {
 
-    /**
-     * Retrieves all businesses from the database.
-     * 
-     * For each business, fetches its payment options and opening hours 
-     * (if not open 24/7), then returns a fully populated list of `Business` objects.
-     * 
-     * @returns {Promise<Business[]>} An array of all businesses with full details.
-     */
     public static async getAllBusinesses() {
-        // get all the businesses first
-        // loop through all the businesses and for each business, fetch the corresponding payment methods and opening hours
         const businessRows = await db.select().from(businesses)
         const container: Business[] = [];
 
         for (const business of businessRows) {
-            
-            // fetch the corresponding payment method
             const paymentRows = await db.select().from(businessPaymentOptions).where(eq(businessPaymentOptions.uen, business.uen))
             const paymentOptions = paymentRows.map(p => p.paymentOption)
 
             const openingHours: Record<DayOfWeek, HourEntry> = {} as Record<DayOfWeek, HourEntry>
             
-            // if not open247, get the opening hours
             if (!business.open247) {
                 const hourRows = await db.select().from(businessOpeningHours).where(eq(businessOpeningHours.uen, business.uen))
                 for (const h of hourRows) {
@@ -55,13 +27,15 @@ class BusinessModel {
                 }
             }
 
-            // build the business object from scratch to avoid type error
             const fullBusiness: Business = {
+                ownerID: business.ownerID,
                 uen: business.uen,
                 businessName: business.businessName,
                 businessCategory: business.businessCategory!, 
                 description: business.description!,
                 address: business.address!,
+                latitude: business.latitude,
+                longitude: business.longitude,
                 open247: Boolean(business.open247),
                 openingHours,
                 email: business.email!,
@@ -75,39 +49,71 @@ class BusinessModel {
                 offersPickup: Boolean(business.offersPickup),
                 paymentOptions
             }
-            // append to the array to be returned
             container.push(fullBusiness)
         }
 
         return container
     }
 
-    /**
-     * Fetches a business record by its UEN (Unique Entity Number).
-     * 
-     * Retrieves the business details, payment options, and opening hours 
-     * (if not open 24/7). Returns `null` if no business is found.
-     * 
-     * @param {string} uen - The business’s Unique Entity Number.
-     * @returns {Promise<Business | null>} The full `Business` object or `null` if not found.
-     */
-    public static async getBusinessByUEN(uen:string):Promise<Business | null> {
-        
-        const businessRow = await db.select().from(businesses).where(eq(businesses.uen,uen))
+    public static async getOwnedBusinesses(ownerId: string) {
+        const ownedBusinesses = await db.select().from(businesses).where(eq(businesses.ownerID, ownerId))
+        const container: Business[] = [];
 
-        // if none found return null immediately to avoid type error
+        for (const business of ownedBusinesses) {
+            const paymentRows = await db.select().from(businessPaymentOptions).where(eq(businessPaymentOptions.uen, business.uen))
+            const paymentOptions = paymentRows.map(p => p.paymentOption)
+
+            const openingHours: Record<DayOfWeek, HourEntry> = {} as Record<DayOfWeek, HourEntry>
+            
+            if (!business.open247) {
+                const hourRows = await db.select().from(businessOpeningHours).where(eq(businessOpeningHours.uen, business.uen))
+                for (const h of hourRows) {
+                    openingHours[h.dayOfWeek as DayOfWeek] = { open: h.openTime, close: h.closeTime }
+                }
+            }
+
+            const fullBusiness: Business = {
+                ownerID: business.ownerID,
+                uen: business.uen,
+                businessName: business.businessName,
+                businessCategory: business.businessCategory!, 
+                description: business.description!,
+                address: business.address!,
+                latitude: business.latitude,
+                longitude: business.longitude,
+                open247: Boolean(business.open247),
+                openingHours,
+                email: business.email!,
+                phoneNumber: business.phoneNumber!,
+                websiteLink: business.websiteLink ?? null,
+                socialMediaLink: business.socialMediaLink ?? null,
+                wallpaper: business.wallpaper!,
+                dateOfCreation: business.dateOfCreation!,
+                priceTier: business.priceTier!,
+                offersDelivery: Boolean(business.offersDelivery),
+                offersPickup: Boolean(business.offersPickup),
+                paymentOptions
+            }
+            container.push(fullBusiness)
+        }
+
+        return container
+    }
+
+    public static async getBusinessByUEN(uen: string): Promise<Business | null> {
+        const businessRow = await db.select().from(businesses).where(eq(businesses.uen, uen))
+
         if (businessRow.length === 0 || !businessRow[0]) {
             return null
         }
 
         const businessData = businessRow[0]
-        const paymentRow = await db.select().from(businessPaymentOptions).where(eq(businessPaymentOptions.uen,uen))
+        const paymentRow = await db.select().from(businessPaymentOptions).where(eq(businessPaymentOptions.uen, uen))
 
         const paymentOptions = paymentRow.map(p => p.paymentOption)
 
         const openingHours: Record<DayOfWeek, HourEntry> = {} as Record<DayOfWeek, HourEntry>
 
-        // if not open247, get the opening hours
         if (!businessData.open247) {
             const hourRows = await db.select().from(businessOpeningHours).where(eq(businessOpeningHours.uen, businessData.uen))
             for (const h of hourRows) {
@@ -115,12 +121,15 @@ class BusinessModel {
             }
         }
 
-        const fullBusiness:Business = {
+        const fullBusiness: Business = {
+            ownerID: businessData.ownerID,
             uen: businessData.uen,
             businessName: businessData.businessName,
             businessCategory: businessData.businessCategory!,
             description: businessData.description!,
             address: businessData.address!,
+            latitude: businessData.latitude,
+            longitude: businessData.longitude,
             open247: Boolean(businessData.open247),
             openingHours,
             email: businessData.email!,
@@ -138,18 +147,9 @@ class BusinessModel {
         return fullBusiness      
     }
 
-    /**
-     * Retrieves a list of businesses from the database that match the provided filter criteria.
-     * Supports searching by name/description, filtering by price tier, category, 
-     * payment options, opening hours, and newly added businesses. Results can also be sorted.
-     * 
-     * @param filters - Object containing filtering and sorting options.
-     * @returns An array of businesses matching the filters with full details.
-     */
     public static async getFilteredBusinesses(filters: FilterOptions): Promise<Business[]> {
         const conditions: any[] = [];
 
-        // Search query - case insensitive search
         if (filters.search_query) {
             const searchPattern = `%${filters.search_query}%`;
             conditions.push(
@@ -160,7 +160,6 @@ class BusinessModel {
             );
         }
 
-        // Price tier - multi-select support
         if (filters.price_tier) {
             if (Array.isArray(filters.price_tier) && filters.price_tier.length > 0) {
                 conditions.push(inArray(businesses.priceTier, filters.price_tier));
@@ -169,7 +168,6 @@ class BusinessModel {
             }
         }
 
-        // Business category - multi-select support
         if (filters.business_category) {
             if (Array.isArray(filters.business_category) && filters.business_category.length > 0) {
                 conditions.push(inArray(businesses.businessCategory, filters.business_category));
@@ -178,14 +176,12 @@ class BusinessModel {
             }
         }
 
-        // Newly added (last 7 days)
         if (filters.newly_added) {
             conditions.push(
                 gte(businesses.dateOfCreation, sql`DATE_SUB(CURDATE(), INTERVAL 7 DAY)`)
             );
         }
 
-        // Boolean filters
         if (filters.open247) {
             conditions.push(eq(businesses.open247, 1));
         }
@@ -196,9 +192,7 @@ class BusinessModel {
             conditions.push(eq(businesses.offersPickup, 1));
         }
 
-        // Payment options filter - business must have ALL selected options
         if (filters.payment_options && filters.payment_options.length > 0) {
-            // Subquery to find UENs that have all the required payment options
             const requiredCount = filters.payment_options.length;
             conditions.push(
                 sql`${businesses.uen} IN (
@@ -212,7 +206,6 @@ class BusinessModel {
         }
 
         try {
-            // Build main query with all conditions
             let query = db
                 .select()
                 .from(businesses)
@@ -222,7 +215,6 @@ class BusinessModel {
                 query = query.where(and(...conditions));
             }
 
-            // Apply sorting
             const sortDirection = filters.sort_order === 'asc' ? asc : desc;
             switch (filters.sort_by) {
                 case 'business_name':
@@ -237,21 +229,18 @@ class BusinessModel {
                     break;
             }
 
-            // Execute main query
             const businessRows = await query;
 
             if (businessRows.length === 0) {
                 return [];
             }
 
-            // Batch fetch payment options for all businesses (1 query instead of N)
             const allUens = businessRows.map(b => b.uen);
             const allPaymentOptions = await db
                 .select()
                 .from(businessPaymentOptions)
                 .where(inArray(businessPaymentOptions.uen, allUens));
 
-            // Batch fetch opening hours for non-24/7 businesses (1 query instead of N)
             const nonOpen247Uens = businessRows
                 .filter(b => !b.open247)
                 .map(b => b.uen);
@@ -263,7 +252,6 @@ class BusinessModel {
                     .where(inArray(businessOpeningHours.uen, nonOpen247Uens))
                 : [];
 
-            // Create lookup maps for O(1) access
             const paymentOptionsMap = new Map<string, string[]>();
             for (const payment of allPaymentOptions) {
                 if (!paymentOptionsMap.has(payment.uen)) {
@@ -283,13 +271,15 @@ class BusinessModel {
                 };
             }
 
-            // Map to Business objects
             const fullBusinesses: Business[] = businessRows.map(business => ({
+                ownerID: business.ownerID,
                 uen: business.uen,
                 businessName: business.businessName,
                 businessCategory: business.businessCategory!,
                 description: business.description!,
                 address: business.address!,
+                latitude: business.latitude,
+                longitude: business.longitude,
                 open247: Boolean(business.open247),
                 openingHours: openingHoursMap.get(business.uen) || ({} as Record<DayOfWeek, HourEntry>),
                 email: business.email!,
@@ -312,40 +302,33 @@ class BusinessModel {
         }
     }
 
-    /**
-     * Registers a new business in the database.
-     * 
-     * Inserts a new record into the `businesses` table, followed by its associated 
-     * payment options and opening hours (if not open 24/7). 
-     * 
-     * Each business is identified by a unique UEN. 
-     * 
-     * @param {Business} business - The `Business` object containing all required fields.
-     * @returns {Promise<void>} Resolves when the business and its related data are successfully inserted.
-     */
-    public static async registerBusiness (business:Business) {
-
+    public static async registerBusiness (business: Business) {
         try {
-            //insert into businesses
+            // ✅ Insert only into businesses table as database schema defines
             await db.insert(businesses).values({
+                ownerID: business.ownerID,
                 uen: business.uen,
                 businessName: business.businessName,
                 businessCategory: business.businessCategory,
                 description: business.description,
                 address: business.address,
-                open247: business.open247,
+                latitude: business.latitude || null,
+                longitude: business.longitude || null,
+                open247: business.open247 ? 1 : 0,
                 email: business.email,
                 phoneNumber: business.phoneNumber,
-                websiteLink: business.websiteLink,
-                socialMediaLink: business.socialMediaLink, 
-                wallpaper: business.wallpaper,
+                websiteLink: business.websiteLink || null,
+                socialMediaLink: business.socialMediaLink || null,
+                wallpaper: business.wallpaper || null,
                 dateOfCreation: business.dateOfCreation, 
                 priceTier: business.priceTier,
-                offersDelivery: business.offersDelivery,
-                offersPickup: business.offersPickup,
+                offersDelivery: business.offersDelivery ? 1 : 0,
+                offersPickup: business.offersPickup ? 1 : 0,
             } as typeof businesses.$inferInsert)
 
-            // loop through the payment options and insert
+
+                
+            // ✅ Insert payment options into separate table
             if (business.paymentOptions?.length) {
                 await Promise.all(
                     business.paymentOptions.map(option =>
@@ -357,8 +340,8 @@ class BusinessModel {
                 );
             }
 
-            // if business isnt 24/7, loop through the opening hrs and insert
-            if (!business.open247) {
+            // ✅ Insert opening hours into separate table
+            if (!business.open247 && business.openingHours) {
                 const openingHourEntries = Object.entries(business.openingHours) as [DayOfWeek, HourEntry][];
                 await Promise.all(
                     openingHourEntries.map(([day, hours]) =>
@@ -372,36 +355,23 @@ class BusinessModel {
                 );
             }
         }
-        catch (err:any) {
-            console.error('--- DETAILED DATABASE ERROR ---');
-            console.error(`Error Code: ${err.code}`);         // e.g., ER_DUP_ENTRY
-            console.error(`Error Number: ${err.errno}`);     // e.g., 1062
-            console.error(`SQL Message: ${err.sqlMessage}`); // The full MySQL error
-            console.error('Full Error Object:', err);
-            console.error('---------------------------------');
+        catch (err: any) {
+            console.error(`Error registering business: ${err}`)
+            throw err;
         }
     }
 
-    /**
-     * Searches for a business by name with fuzzy matching.
-     * Sanitizes input and tries exact match, partial match, and reverse partial match.
-     *
-     * @param searchName - The business name to search for (case-insensitive)
-     * @returns {Promise<{uen: string, name: string} | null>} Business UEN and name, or null if not found
-     */
     public static async searchBusinessByName(searchName: string): Promise<{uen: string, name: string} | null> {
         if (!searchName || !searchName.trim()) {
             return null;
         }
 
-        // Sanitize the input: lowercase, remove extra spaces and special chars
         const sanitized = searchName
             .toLowerCase()
             .replace(/[^\w\s'-]/g, '')
             .replace(/\s+/g, ' ')
             .trim();
 
-        // Try exact match first (case-insensitive)
         const exactMatch = await db.select({
             uen: businesses.uen,
             name: businesses.businessName
@@ -414,7 +384,6 @@ class BusinessModel {
             return { uen: exactMatch[0].uen, name: exactMatch[0].name };
         }
 
-        // Try partial match (search term is contained in business name)
         const partialMatch = await db.select({
             uen: businesses.uen,
             name: businesses.businessName
@@ -427,7 +396,6 @@ class BusinessModel {
             return { uen: partialMatch[0].uen, name: partialMatch[0].name };
         }
 
-        // Try reverse partial match (business name is contained in search term)
         const allBusinesses = await db.select({
             uen: businesses.uen,
             name: businesses.businessName
@@ -444,7 +412,76 @@ class BusinessModel {
         return null;
     }
 
+    public static async updateBusiness(business: BusinessToBeUpdated): Promise<void> {
+        try {
+            await db
+            .update(businesses)
+            .set({
+                ownerID: business.ownerID,
+                businessName: business.businessName,
+                businessCategory: business.businessCategory,
+                description: business.description,
+                address: business.address,
+                latitude: business.latitude,
+                longitude: business.longitude,
+                email: business.email,
+                phoneNumber: business.phoneNumber,
+                websiteLink: business.websiteLink || null,
+                socialMediaLink: business.socialMediaLink || null,
+                wallpaper: business.wallpaper || null,
+                priceTier: business.priceTier,
+                offersDelivery: business.offersDelivery ? 1 : 0,
+                offersPickup: business.offersPickup ? 1 : 0
+            }).where(eq(businesses.uen, business.uen))
 
+            if (business.paymentOptions?.length) {
+                await db.delete(businessPaymentOptions).where(eq(businessPaymentOptions.uen, business.uen))
+
+                await Promise.all(
+                    business.paymentOptions.map(option =>
+                        db.insert(businessPaymentOptions).values({
+                            uen: business.uen,
+                            paymentOption: option
+                        } as typeof businessPaymentOptions.$inferInsert)
+                    )
+                );
+            }
+
+            if (!business.open247 && business.openingHours) {
+                const openingHourEntries = Object.entries(business.openingHours) as [DayOfWeek, HourEntry][]
+
+                await db.delete(businessOpeningHours).where(eq(businessOpeningHours.uen, business.uen))
+
+                await Promise.all(
+                    openingHourEntries.map(([day, hours]) =>
+                        db.insert(businessOpeningHours).values({
+                            uen: business.uen,
+                            dayOfWeek: day,
+                            openTime: hours.open,
+                            closeTime: hours.close
+                        } as typeof businessOpeningHours.$inferInsert)
+                    )
+                )
+            }
+            else {
+                await db.delete(businessOpeningHours).where(eq(businessOpeningHours.uen, business.uen))
+            }
+        }
+        catch (err: any) {
+            console.error(`Error updating business: ${err}`)
+            throw err;
+        }
+    }
+
+    public static async deleteBusiness(uen: string): Promise<void> {
+        try {
+            await db.delete(businesses).where(eq(businesses.uen, uen))
+        }
+        catch (err: any) {
+            console.error(`Error deleting business: ${err}`)
+            throw err;
+        }
+    }
 }
 
 export default BusinessModel
