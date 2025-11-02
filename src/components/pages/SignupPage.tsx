@@ -100,7 +100,7 @@ const getAuthToken = async (): Promise<string | null> => {
       },
       body: JSON.stringify({
         email: 'pamika.lim.2024@computing.smu.edu.sg',
-        password: 'mTW!dR$M!ZVRX5h'
+        password: 'CKPF6pu@DBRJ7cK'
       })
     });
     
