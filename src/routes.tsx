@@ -65,7 +65,7 @@ export const AppRoutes = () => {
               </ErrorBoundary>}
         />
         <Route path={ROUTES.BUSINESS_PROFILE} element={<BusinessProfilePage />} />
-        <Route path={ROUTES.FORUM} element={<ForumPage />} />
+        <Route path={ROUTES.FORUM} element={<ForumPage/>} />
         <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
         <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
         <Route path={ROUTES.VOUCHERS} element={<VouchersPage />} />

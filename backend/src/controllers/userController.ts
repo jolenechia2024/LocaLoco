@@ -3,12 +3,27 @@ import UserModel from "../models/UserModel.js";
 
 class UserController {
 
+    // // Get user profile
+    // static async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    //     try {
+    //         const userId = String(req.body.userId) 
+    //         console.log(userId)
+
+    //         const user = await UserModel.getUserById(userId);
+    //         res.status(200).json(user);
+            
+    //     } catch (error) {
+    //         console.error('Error fetching profile:', error);
+    //         res.status(500).json({ error: 'Failed to fetch profile' });
+    //     }
+    // }
+
     // Update user profile
     static async updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const { userId, name, image, email } = req.body;
+            const { userId, name, image } = req.body;
 
-            console.log('Update profile request:', { userId, name, email, imageLength: image?.length });
+            console.log('Update profile request:', { userId, name, imageLength: image?.length });
 
             if (!userId) {
                 res.status(400).json({ error: 'User ID is required' });
@@ -19,7 +34,6 @@ class UserController {
             const updates: any = {};
             if (name !== undefined) updates.name = name;
             if (image !== undefined) updates.image = image;
-            if (email !== undefined) updates.email = email;
 
             // Check if there's anything to update
             if (Object.keys(updates).length === 0) {
@@ -56,38 +70,6 @@ class UserController {
         }
     }
 
-    // Get user profile
-    static async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
-        try {
-            const userId = req.params.userId || req.query.userId as string;
-
-            if (!userId) {
-                res.status(400).json({ error: 'User ID is required' });
-                return;
-            }
-
-            const user = await UserModel.getUserById(userId);
-
-            if (!user) {
-                res.status(404).json({ error: 'User not found' });
-                return;
-            }
-
-            res.status(200).json({
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                image: user.image,
-                emailVerified: user.emailVerified,
-                createdAt: user.createdAt,
-                hasBusiness: user.hasBusiness,
-            });
-        } catch (error) {
-            console.error('Error fetching profile:', error);
-            res.status(500).json({ error: 'Failed to fetch profile' });
-        }
-    }
-
     // delete user profile
     static async deleteProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
@@ -103,11 +85,13 @@ class UserController {
             res.status(200).json({
                 message: 'Profile deleted successfully',
             });
-        }
+        } 
         catch (error: any) {
             console.log(`Error deleting profile: ${error}`)
         }
     }
+
+    
 }
 
 export default UserController;

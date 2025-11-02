@@ -1,9 +1,10 @@
-// backend/lib/auth.ts (or wherever your auth.ts is)
+// backend/lib/auth.ts
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import db from "../database/db.js";
 import { user, session, account, verification } from "../database/schema.js";
 import dotenv from 'dotenv';
+
 
 const auth = betterAuth({
     database: drizzleAdapter(db, {
@@ -12,20 +13,22 @@ const auth = betterAuth({
     }),
     user: {
         additionalFields: {
-            role: { // ✅ Add role field
-                type: "string",
-                input: true, // Allow input during signup
-                defaultValue: "user"
-            },
+            // ❌ REMOVE THIS ENTIRE BLOCK:
+            // role: { 
+            //     type: "string",
+            //     input: true,
+            //     defaultValue: "user"
+            // },
+            
             hasBusiness: {
                 type: "boolean",
                 input: false
             },
-            firstName: { // ✅ Add firstName
+            firstName: {
                 type: "string",
                 input: true
             },
-            lastName: { // ✅ Add lastName
+            lastName: {
                 type: "string",
                 input: true
             },
@@ -44,9 +47,9 @@ const auth = betterAuth({
         autoSignIn: true
     }, 
     trustedOrigins: [
-        "http://localhost:3000", // for testing
-        "http://localhost:5173", // for dev
-        "https://localoco.azurewebsites.net" // for staging and prod 
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://localoco.azurewebsites.net" 
     ],
     socialProviders: {
         google: {
@@ -75,5 +78,6 @@ const auth = betterAuth({
         }
     }
 })
+
 
 export default auth;
