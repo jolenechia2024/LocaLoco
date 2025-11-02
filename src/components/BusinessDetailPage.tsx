@@ -4,6 +4,7 @@ import { useBusinesses } from "../hooks/useBusinesses";
 import { useBookmarks } from "../hooks/useBookmarks";
 import { useTheme } from "../hooks/useTheme";
 import { useReviews } from "../hooks/useReviews";
+import { useReviews } from "../hooks/useReviews";
 import { BusinessDetail } from "./BusinessDetail";
 
 export const BusinessDetailPage = () => {
@@ -14,6 +15,9 @@ export const BusinessDetailPage = () => {
   const { isBookmarked, toggleBookmark } = useBookmarks();
 
   const business = businesses.find((b) => b.id === id);
+
+  // Fetch reviews for this business
+  const { reviews, isLoading: reviewsLoading } = useReviews(id);
 
   // Fetch reviews for this business
   const { reviews, isLoading: reviewsLoading } = useReviews(id);
@@ -49,8 +53,8 @@ export const BusinessDetailPage = () => {
     >
       <BusinessDetail
         business={business}
-        reviews={mockReviews}
-        isBookmarked={isBookmarked(business.uen)}
+        reviews={reviews}
+        isBookmarked={isBookmarked(business.id)}
         onBookmarkToggle={toggleBookmark}
         onBack={() => navigate("/businesses")}
         onWriteReview={(business) => {
