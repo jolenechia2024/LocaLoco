@@ -1,6 +1,49 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, foreignKey, primaryKey, int, varchar, mysqlEnum, time, text, date, timestamp, tinyint, boolean, unique } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, foreignKey, primaryKey, int, varchar, mysqlEnum, time, text, date, timestamp, tinyint, boolean, unique, decimal, uniqueIndex } from "drizzle-orm/mysql-core"
 import { sql, InferSelectModel, InferInsertModel } from "drizzle-orm"
+import { timeStamp } from "console";
 
+// put these two tables first to avoid constraint issue
+export const businesses = mysqlTable("businesses", {
+    ownerID: varchar('owner_id', { length: 255 }).notNull().references(() => user.id, { onDelete: "cascade" } ),
+	uen: varchar({ length: 20 }).notNull(),
+	businessName: varchar("business_name", { length: 255 }).notNull(),
+	businessCategory: varchar("business_category", { length: 100 }),
+	description: text(),
+	address: varchar({ length: 500 }),
+    latitude: decimal({ precision: 9, scale: 6 }),
+    longitude: decimal({ precision: 9, scale: 6 }),
+	open247: tinyint().default(0),
+	email: varchar({ length: 100 }),
+	phoneNumber: varchar("phone_number", { length: 20 }),
+	websiteLink: varchar("website_link", { length: 255 }),
+	socialMediaLink: varchar("social_media_link", { length: 255 }),
+	wallpaper: varchar({ length: 255 }),
+	dateOfCreation: date("date_of_creation", { mode: 'string' }),
+	priceTier: mysqlEnum("price_tier", ['low','medium','high']),
+	offersDelivery: tinyint("offers_delivery").default(0),
+	offersPickup: tinyint("offers_pickup").default(0),
+},
+(table) => [
+	primaryKey({ columns: [table.uen], name: "businesses_uen"}),
+]);
+
+export const user = mysqlTable("user", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: text("name").notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at", { fsp: 3 }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { fsp: 3 })
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+  hasBusiness: boolean("has_business"),
+  referralCode: text("referral_code"),
+  referredByUserID: text("referred_by_user_id"),
+});
+
+// followed by the other business tables
 export const businessOpeningHours = mysqlTable("business_opening_hours", {
 	id: int().autoincrement().notNull(),
 	uen: varchar({ length: 20 }).notNull().references(() => businesses.uen, { onDelete: "cascade" } ),
@@ -23,52 +66,29 @@ export const businessPaymentOptions = mysqlTable("business_payment_options", {
 	primaryKey({ columns: [table.id], name: "business_payment_options_id"}),
 ]);
 
-export const businesses = mysqlTable("businesses", {
-	uen: varchar({ length: 20 }).notNull(),
-	ownerId: varchar("owner_id", { length: 36 }).references(() => user.id),
-	businessName: varchar("business_name", { length: 255 }).notNull(),
-	businessCategory: varchar("business_category", { length: 100 }),
-	description: text(),
-	address: varchar({ length: 500 }),
-	open247: tinyint().default(0),
-	email: varchar({ length: 100 }),
-	phoneNumber: varchar("phone_number", { length: 20 }),
-	websiteLink: varchar("website_link", { length: 255 }),
-	socialMediaLink: varchar("social_media_link", { length: 255 }),
-	wallpaper: varchar({ length: 255 }),
-	// you can use { mode: 'date' }, if you want to have Date as type for this column
-	dateOfCreation: date("date_of_creation", { mode: 'string' }),
-	priceTier: mysqlEnum("price_tier", ['low','medium','high']),
-	offersDelivery: tinyint("offers_delivery").default(0),
-	offersPickup: tinyint("offers_pickup").default(0),
-},
-(table) => [
-	primaryKey({ columns: [table.uen], name: "businesses_uen"}),
-]);
-
 export const forumPosts = mysqlTable('forum_posts', {
     id: int('id').autoincrement().notNull().primaryKey(),
-    userEmail: varchar('user_email', { length: 255 }).notNull().references(() => user.email),
-    businessUen: varchar('business_uen', { length: 20 }).references(() => businesses.uen),
+    userEmail: varchar('user_email', { length: 255 }).notNull().references(() => user.email, { onDelete: "cascade" } ),
+    uen: varchar('business_uen', { length: 20 }).references(() => businesses.uen, { onDelete: "cascade" } ),
     title: varchar('title', { length: 255 }),
     body: text('body').notNull(),
     likeCount: int('like_count').default(0),
     createdAt: timestamp('created_at', { mode: 'string' }).defaultNow(),
     }, (table) => [
-    index('business_uen').on(table.businessUen),
+    index('business_uen').on(table.uen),
     index('user_email').on(table.userEmail)
 ]);
 
 export const forumPostsReplies = mysqlTable('forum_posts_replies', {
     id: int('id').autoincrement().notNull().primaryKey(),
     postId: int('post_id').notNull(), 
-    userEmail: varchar('user_email', { length: 255 }).notNull().references(() => user.email),
+    userEmail: varchar('user_email', { length: 255 }).notNull().references(() => user.email, { onDelete: "cascade" } ),
     body: text('body').notNull(),
     likeCount: int('like_count').default(0),
     createdAt: timestamp('created_at', { mode: 'string' }).defaultNow(),
 }, (table) => [
     index('post_id').on(table.postId),
-    index('user_email').on(table.userEmail),
+    index('user_id').on(table.userEmail),
     foreignKey({
         columns: [table.postId],
         foreignColumns: [forumPosts.id],
@@ -78,8 +98,8 @@ export const forumPostsReplies = mysqlTable('forum_posts_replies', {
 
 export const businessReviews = mysqlTable('business_reviews', {
     id: int('id').primaryKey().autoincrement(),
-    userEmail: varchar('user_email', { length: 255 }).notNull().references(() => user.email),
-    businessUen: varchar('business_uen', { length: 20 }).references(() => businesses.uen),
+    userEmail: varchar('user_email', { length: 255 }).notNull().references(() => user.email, { onDelete: "cascade" } ),
+    uen: varchar('business_uen', { length: 20 }).references(() => businesses.uen, { onDelete: "cascade" } ),
     rating: int('rating').notNull(),
     body: text('body').notNull(),
     likeCount: int('like_count').default(0),
@@ -87,52 +107,49 @@ export const businessReviews = mysqlTable('business_reviews', {
 });
 
 export const referrals = mysqlTable("referrals", {
-    id: int().autoincrement().notNull(),
-    referrerUserId: varchar("referrer_user_id", { length: 36 }).notNull().references(() => user.id, { onDelete: "cascade" } ),
-    referredUserId: varchar("referred_user_id", { length: 36 }).notNull().references(() => user.id, { onDelete: "cascade" } ),
-    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
-},
-(table) => [
-    index("referred_user_idx").on(table.referredUserId),
-    index("referrer_user_idx").on(table.referrerUserId),
-    primaryKey({ columns: [table.id], name: "referrals_id"}),
+    id: int("ref_id").autoincrement().notNull(),
+    referrerUserId: varchar("referrer_id", { length: 36 }).notNull().references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    referredUserId: varchar("referred_id", { length: 36 }).notNull().references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    referralCode: varchar("referral_code", { length: 10 }).notNull(),
+    status: mysqlEnum("status", ["claimed","qualified","rewarded","rejected"]).notNull().default("claimed"),
+    referredAt: timestamp("referred_at", { mode: 'string' }).defaultNow().notNull(),
+    }, (table) => [
+    primaryKey({ columns: [table.id], name: "referrals_id" }),
+    index("idx_referrer").on(table.referrerUserId),
+    index("idx_referred").on(table.referredUserId),
+    uniqueIndex("uq_referrer_referred").on(table.referrerUserId, table.referredUserId)
 ]);
 
 export const vouchers = mysqlTable("vouchers", {
-    id: int().autoincrement().notNull(),
-    referrerUserId: varchar("referrer_user_id", { length: 36 }).notNull().references(() => user.id, { onDelete: "cascade" } ),
-    referredUserId: varchar("referred_user_id", { length: 36 }).notNull().references(() => user.id, { onDelete: "cascade" } ),
-    referralCode: varchar("referral_code", { length: 10 }).notNull(),
-    amount: int().notNull(),
-    status: mysqlEnum(['issued','redeemed','expired']).default('issued'),
-    issuedAt: timestamp("issued_at", { mode: 'string' }).defaultNow(),
-    redeemedAt: timestamp("redeemed_at", { mode: 'string' }),
-},
-(table) => [
-    index("referred_user_idx").on(table.referredUserId),
-    index("referrer_user_idx").on(table.referrerUserId),
-    primaryKey({ columns: [table.id], name: "vouchers_id"}),
-    unique("referral_code").on(table.referralCode),
+    id: int("voucher_id").autoincrement().notNull(),
+    userId: varchar("referrer_id", { length: 36 }).notNull().references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    refId: int("ref_id",).references(() => referrals.id, { onDelete: "set null", onUpdate: "cascade" }),
+    amount: int("amount").notNull(),
+    status: mysqlEnum("status", ["issued", "used", "expired", "revoked"]).notNull().default("issued"),
+    issuedAt: timestamp("issued_at", { mode: 'string' }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { mode: 'string' }),
+    }, (table) => [
+    primaryKey({ columns: [table.id], name: "voucher_id" }),
+    index("idx_v_user").on(table.userId),
+    index("idx_v_status").on(table.status),
+    index("idx_v_expires").on(table.expiresAt),
 ]);
 
-// THIS BLOCK ONWARDS IS FOR BETTER-AUTH TABLES ONLY
+export const businessAnnouncements = mysqlTable("business_announcements", {
+    announcementId: int("announcement_id").autoincrement().notNull(),
+    businessUen: varchar("business_uen", { length: 20 }).notNull().references(() => businesses.uen),
+    title: varchar({ length: 255 }).notNull(),
+    content: text().notNull(),
+    imageUrl: varchar("image_url", { length: 500 }),
+    createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().onUpdateNow(),
+},
+(table) => [
+    index("business_uen").on(table.businessUen),
+    primaryKey({ columns: [table.announcementId], name: "business_announcements_announcement_id"}),
+]);
 
-export const user = mysqlTable("user", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  name: text("name").notNull(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  emailVerified: boolean("email_verified").default(false).notNull(),
-  image: text("image"),
-  createdAt: timestamp("created_at", { fsp: 3 }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { fsp: 3 })
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
-  hasBusiness: boolean("has_business"),
-  referralCode: text("referral_code"),
-  referredByUserID: text("referred_by_user_id"),
-});
-
+// lastly, the tables required by better-auth
 export const session = mysqlTable("session", {
   id: varchar("id", { length: 36 }).primaryKey(),
   expiresAt: timestamp("expires_at", { fsp: 3 }).notNull(),

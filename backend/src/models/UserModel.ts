@@ -39,7 +39,7 @@ class UserModel {
     }
 
     // Get user by ID
-    public static async getUserById(userId: string) {
+    public static async (userId: string) {
         try {
             const result = await db.select().from(user).where(eq(user.id, userId)).limit(1);
             return result[0] || null;

@@ -58,7 +58,7 @@ export function LoginPage() {
       setError('Login failed. Please try again.');
     }
 
-    /* 
+  
     // UNCOMMENT THIS WHEN YOU WANT TO USE REAL API:
     const handleLogin = async (email: string, password: string, role: UserRole) => {
       const payload = new URLSearchParams();
@@ -70,7 +70,7 @@ export function LoginPage() {
       payload.append('mode', 'login');
 
       try {
-        const response = await fetch('http://localhost/final%20proj/IS216_WAD2_Grp3/backend/utils/processLogin.php', {
+        const response = await fetch('/api/getUsers, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: payload.toString(),
@@ -90,7 +90,6 @@ export function LoginPage() {
         setError('Login failed. Please check your login details and try again.');
       }
     };
-    */
   };
 
   const handleBack = () => {
