@@ -1,5 +1,6 @@
+// src/components/pages/SignupPage.tsx
 import React, { useState } from 'react';
-import { Store, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Store, ChevronRight, ChevronLeft, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
@@ -14,8 +15,16 @@ import {
   SelectValue,
 } from '../ui/select';
 import { useThemeStore } from '../../store/themeStore';
-import { useAuthStore } from '../../store/authStore';
 import { toast } from 'sonner';
+import { createAuthClient } from "better-auth/client";
+import { useAuthStore } from '../../store/authStore';
+
+// Client setup
+const baseURL = 'http://localhost:3000';
+const authClient = createAuthClient({
+  baseURL: baseURL
+});
+
 
 interface SignupPageProps {
   onSignup?: (data: any, role: UserRole) => void;
@@ -23,7 +32,26 @@ interface SignupPageProps {
 }
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const PAYMENT_OPTIONS = ['Cash', 'Credit/Debit Card', 'PayNow', 'Digital Wallets (Apple/Google/Samsung/GrabPay)'];
+const PAYMENT_OPTIONS = ['cash','card','paynow','digital_wallets'];
+
+interface BusinessData {
+  uen: string;
+  businessName: string;
+  businessCategory: string;
+  description: string;
+  address: string;
+  phoneNumber: string;
+  businessEmail: string;
+  websiteLink: string;
+  socialMediaLink: string;
+  wallpaper: File | null;
+  priceTier: string;
+  open247: boolean;
+  openingHours: { [day: string]: { open: string; close: string } };
+  offersDelivery: boolean;
+  offersPickup: boolean;
+  paymentOptions: string[];
+}
 
 const convertToBackendFormat = (tier: string): string => {
   const mapping: Record<string, string> = {
@@ -35,70 +63,85 @@ const convertToBackendFormat = (tier: string): string => {
   return mapping[tier] || tier;
 };
 
+const createEmptyBusiness = (): BusinessData => ({
+  uen: '',
+  businessName: '',
+  businessCategory: '',
+  description: '',
+  address: '',
+  phoneNumber: '',
+  businessEmail: '',
+  websiteLink: '',
+  socialMediaLink: '',
+  wallpaper: null,
+  priceTier: '',
+  open247: false,
+  openingHours: DAYS_OF_WEEK.reduce((acc, day) => {
+    acc[day] = { open: '09:00', close: '17:00' };
+    return acc;
+  }, {} as { [day: string]: { open: string; close: string } }),
+  offersDelivery: false,
+  offersPickup: false,
+  paymentOptions: [],
+});
+
 export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const navigate = useNavigate();
-  const login = useAuthStore((state) => state.login);
 
-  const headerBgColor = isDarkMode ? '#3a3a3a' : '#3a3a3a'; // Keep header dark always
-  const headerTextColor = '#ffffff'; // Keep header text white always
-  const bgColor = isDarkMode ? '#3a3a3a' : 'bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50';
   const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
   const textColor = isDarkMode ? '#ffffff' : '#000000';
-  const mutedTextColor = isDarkMode ? '#a1a1aa' : '#6b7280';
 
-  const [role, setRole] = useState<UserRole>('user');
+  const [error, setError] = useState('');
+  const [hasBusiness, setHasBusiness] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
-
+  const [currentBusinessIndex, setCurrentBusinessIndex] = useState(0);
   const [useSameHours, setUseSameHours] = useState(false);
   const [defaultHours, setDefaultHours] = useState({ open: '09:00', close: '17:00' });
-  
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    uen: '',
-    businessName: '',
-    businessCategory: '',
-    description: '',
-    address: '',
-    phoneNumber: '',
-    businessEmail: '',
-    websiteLink: '',
-    socialMediaLink: '',
-    wallpaper: null as File | null,
-    priceTier: '',
-    open247: false,
-    openingHours: DAYS_OF_WEEK.reduce((acc, day) => {
-      acc[day] = { open: '09:00', close: '17:00' };
-      return acc;
-    }, {} as { [day: string]: { open: string; close: string } }),
-    offersDelivery: false,
-    offersPickup: false,
-    paymentOptions: [] as string[],
   });
 
-  const totalSteps = role === 'business' ? 5 : 1;
+  const [businesses, setBusinesses] = useState<BusinessData[]>([createEmptyBusiness()]);
+
+  const totalSteps = hasBusiness ? 6 : 1;
+  const currentBusiness = businesses[currentBusinessIndex];
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setError('');
+  };
+
+  const handleBusinessChange = (field: string, value: any) => {
+    setBusinesses(prev =>
+      prev.map((business, idx) =>
+        idx === currentBusinessIndex ? { ...business, [field]: value } : business
+      )
+    );
+    setError('');
   };
 
   const handleOpeningHoursChange = (day: string, type: 'open' | 'close', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      openingHours: {
-        ...prev.openingHours,
-        [day]: {
-          ...prev.openingHours[day],
-          [type]: value
-        }
-      }
-    }));
+    setBusinesses(prev =>
+      prev.map((business, idx) =>
+        idx === currentBusinessIndex
+          ? {
+              ...business,
+              openingHours: {
+                ...business.openingHours,
+                [day]: { ...business.openingHours[day], [type]: value }
+              }
+            }
+          : business
+      )
+    );
   };
 
   const handleDefaultHoursChange = (type: 'open' | 'close', value: string) => {
@@ -108,7 +151,11 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         acc[day] = { ...defaultHours, [type]: value };
         return acc;
       }, {} as { [day: string]: { open: string; close: string } });
-      setFormData(prev => ({ ...prev, openingHours: newHours }));
+      setBusinesses(prev =>
+        prev.map((business, idx) =>
+          idx === currentBusinessIndex ? { ...business, openingHours: newHours } : business
+        )
+      );
     }
   };
 
@@ -119,56 +166,92 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         acc[day] = { ...defaultHours };
         return acc;
       }, {} as { [day: string]: { open: string; close: string } });
-      setFormData(prev => ({ ...prev, openingHours: newHours }));
+      setBusinesses(prev =>
+        prev.map((business, idx) =>
+          idx === currentBusinessIndex ? { ...business, openingHours: newHours } : business
+        )
+      );
     }
   };
 
   const handlePaymentToggle = (payment: string) => {
-    setFormData(prev => ({
-      ...prev,
-      paymentOptions: prev.paymentOptions.includes(payment)
-        ? prev.paymentOptions.filter(p => p !== payment)
-        : [...prev.paymentOptions, payment]
-    }));
+    setBusinesses(prev =>
+      prev.map((business, idx) =>
+        idx === currentBusinessIndex
+          ? {
+              ...business,
+              paymentOptions: business.paymentOptions.includes(payment)
+                ? business.paymentOptions.filter(p => p !== payment)
+                : [...business.paymentOptions, payment]
+            }
+          : business
+      )
+    );
+  };
+
+  const addBusiness = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setBusinesses(prev => [...prev, createEmptyBusiness()]);
+    setCurrentBusinessIndex(businesses.length);
+    setCurrentStep(2);
+  };
+
+  const removeBusiness = (index: number) => {
+    if (businesses.length === 1) return;
+    setBusinesses(prev => prev.filter((_, idx) => idx !== index));
+    if (currentBusinessIndex >= index && currentBusinessIndex > 0) {
+      setCurrentBusinessIndex(prev => prev - 1);
+    }
+  };
+
+  const handleBusinessToggle = (checked: boolean) => {
+    setHasBusiness(checked);
+    setError('');
+    if (!checked && currentStep > 1) {
+      setCurrentStep(1);
+    }
   };
 
   const validateStep = (step: number): boolean => {
-    if (role === 'user') {
+    if (step === 1) {
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-        toast.error('Please fill in all required fields');
+        setError('Please fill in all required fields');
         return false;
       }
       if (formData.password !== formData.confirmPassword) {
-        toast.error('Passwords do not match');
+        setError('Passwords do not match');
+        return false;
+      }
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters long');
         return false;
       }
       return true;
     }
 
+    if (!hasBusiness) return true;
+
     switch (step) {
-      case 1:
-        if (!formData.uen || !formData.businessName || !formData.businessCategory || !formData.description || !formData.address) {
-          toast.error('Please fill in all required fields');
-          return false;
-        }
-        return true;
       case 2:
-        if (!formData.businessEmail || !formData.phoneNumber) {
-          toast.error('Please fill in all required contact fields');
+        if (!currentBusiness.uen || !currentBusiness.businessName || !currentBusiness.businessCategory || !currentBusiness.description || !currentBusiness.address) {
+          setError('Please fill in all required fields');
           return false;
         }
         return true;
       case 3:
-        return true;
-      case 4:
-        return true;
-      case 5:
-        if (!formData.password || !formData.confirmPassword) {
-          toast.error('Please fill in password fields');
+        if (!currentBusiness.businessEmail || !currentBusiness.phoneNumber) {
+          setError('Please fill in all required contact fields');
           return false;
         }
-        if (formData.password !== formData.confirmPassword) {
-          toast.error('Passwords do not match');
+        if (!currentBusiness.businessEmail.includes('@')) {
+          setError('Please enter a valid business email');
+          return false;
+        }
+        if (!currentBusiness.wallpaper) {
+          setError('Please upload a business photo');
           return false;
         }
         return true;
@@ -177,7 +260,11 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, totalSteps));
     }
@@ -228,102 +315,129 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    e.stopPropagation();
+  
+    if (currentStep !== totalSteps) {
+      return;
+    }
+  
     if (!validateStep(currentStep)) {
       return;
     }
-
+  
     setIsLoading(true);
     setUploadStatus('');
-
+  
     try {
-      if (role === 'business') {
-        let wallpaperUrl = '';
-
-        if (formData.wallpaper) {
-          wallpaperUrl = await uploadWallpaper(formData.wallpaper);
-        }
-
-        const businessPayload = {
-          uen: formData.uen,
-          businessName: formData.businessName,
-          businessCategory: formData.businessCategory,
-          description: formData.description,
-          address: formData.address,
-          phoneNumber: formData.phoneNumber,
-          email: formData.businessEmail,
-          websiteLink: formData.websiteLink,
-          socialMediaLink: formData.socialMediaLink,
-          wallpaper: wallpaperUrl,
-          dateOfCreation: new Date().toISOString().slice(0, 10),
-          priceTier: convertToBackendFormat(formData.priceTier),
-          open247: formData.open247,
-          openingHours: formData.openingHours,
-          offersDelivery: formData.offersDelivery,
-          offersPickup: formData.offersPickup,
-          paymentOptions: formData.paymentOptions,
-          password: formData.password,
-          role,
-          mode: 'signup'
-        };
-
-        const response = await fetch('/api/register-business', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(businessPayload)
-        });
-
-        const result = await response.json();
-
-        if (result.success || response.ok) {
-          toast.success('Business registered successfully!');
-          if (onSignup) {
-            onSignup(formData, role);
-          } else {
-            login(result.userId || 'business-1', role);
-            navigate('/map');
-          }
-        } else {
-          toast.error('Signup failed: ' + (result.message || 'Unknown error'));
-        }
-      } else {
-        const userPayload = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-          role,
-          mode: 'signup'
-        };
-
-        const response = await fetch('/api/register-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userPayload)
-        });
-
-        const result = await response.json();
-
-        if (result.success || response.ok) {
-          toast.success('Account created successfully!');
-          if (onSignup) {
-            onSignup(formData, role);
-          } else {
-            login(result.userId || 'user-1', role);
-            navigate('/map');
-          }
-        } else {
-          toast.error('Signup failed: ' + (result.message || 'Unknown error'));
-        }
+      // STEP 1: Register user FIRST (must complete before businesses)
+      const userPayload = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password
+      };
+  
+      
+      const { data: userData, error: userError } = await authClient.signUp.email({
+        email: formData.email,
+        password: formData.password,
+        name: `${formData.firstName} ${formData.lastName}`,
+        callbackURL: baseURL
+      });
+      
+      if (userError) {
+        throw new Error('User registration failed: ' + userError.message);
       }
+      
+      const userId = userData.user.id; // ✅ Extract userId
+  
+      toast.success('User account created!');
+  
+      // STEP 2: NOW register all businesses concurrently
+      if (hasBusiness) {
+        // Upload all wallpapers concurrently
+        const businessRegistrations = await Promise.all(
+          businesses.map(async (business) => {
+            let wallpaperUrl = '';
+  
+            if (business.wallpaper) {
+              wallpaperUrl = await uploadWallpaper(business.wallpaper);
+            }
+
+            return {
+              ownerID: userId, // Link business to user
+              uen: business.uen,
+              businessName: business.businessName,
+              businessCategory: business.businessCategory,
+              description: business.description,
+              address: business.address,
+              phoneNumber: business.phoneNumber,
+              email: business.businessEmail,
+              websiteLink: business.websiteLink,
+              socialMediaLink: business.socialMediaLink,
+              wallpaper: wallpaperUrl,
+              dateOfCreation: new Date().toISOString().slice(0, 10),
+              priceTier: convertToBackendFormat(business.priceTier),
+              open247: business.open247,
+              openingHours: business.openingHours, // ✅ Send as object, NOT JSON.stringify()
+              offersDelivery: business.offersDelivery,
+              offersPickup: business.offersPickup,
+              paymentOptions: business.paymentOptions, // ✅ Send as array, NOT JSON.stringify()
+              password: formData.password,
+            };
+          })
+        );
+  
+        // Send all business registrations CONCURRENTLY
+        const results = await Promise.allSettled(
+          businessRegistrations.map(payload =>
+            fetch('/api/register-business', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            }).then(res => res.json())
+          )
+        );
+  
+        // Check results
+        const fulfilled = results.filter(r => r.status === 'fulfilled');
+        const successCount = fulfilled.filter(r => r.value?.success).length;
+  
+        if (successCount !== businesses.length) {
+          throw new Error(
+            `Registered user + ${successCount}/${businesses.length} businesses`
+          );
+        }
+  
+        toast.success('All businesses registered successfully!');
+      }
+      
+  
+      const store = useAuthStore.getState();
+      store.login(userId, 'user', 'better-auth-token');
+
+      setTimeout(() => {
+        navigate('/map');
+      }, 100);
+      
+      
+
+      // // STEP 3: Login and redirect
+      // if (onSignup) {
+      //   // onSignup({ ...formData, businesses, userId }, 'user');
+      // } else {
+      //   navigate('/map');
+      // }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setError('Error signing up: ' + errorMessage);
       toast.error('Error signing up: ' + errorMessage);
     } finally {
       setIsLoading(false);
       setUploadStatus('');
     }
   };
+  
 
   const handleBack = () => {
     if (onBack) {
@@ -334,15 +448,9 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   };
 
   const renderStepIndicator = () => {
-    if (role === 'user') return null;
+    if (!hasBusiness) return null;
 
-    const steps = [
-      'Basic Info',
-      'Contact',
-      'Hours',
-      'Details',
-      'Security'
-    ];
+    const steps = ['Account', 'Basic Info', 'Contact', 'Hours', 'Details', 'Review'];
 
     return (
       <div className="mb-8">
@@ -377,441 +485,526 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
     );
   };
 
-  const renderUserForm = () => (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="firstName">First Name</Label>
-          <Input
-            id="firstName"
-            type="text"
-            placeholder="John"
-            value={formData.firstName}
-            onChange={(e) => handleChange('firstName', e.target.value)}
-            required
-            className="bg-input-background"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="lastName">Last Name</Label>
-          <Input
-            id="lastName"
-            type="text"
-            placeholder="Doe"
-            value={formData.lastName}
-            onChange={(e) => handleChange('lastName', e.target.value)}
-            required
-            className="bg-input-background"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="john.doe@example.com"
-          value={formData.email}
-          onChange={(e) => handleChange('email', e.target.value)}
-          required
-          className="bg-input-background"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="••••••••"
-          value={formData.password}
-          onChange={(e) => handleChange('password', e.target.value)}
-          required
-          className="bg-input-background"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          placeholder="••••••••"
-          value={formData.confirmPassword}
-          onChange={(e) => handleChange('confirmPassword', e.target.value)}
-          required
-          className="bg-input-background"
-        />
-      </div>
-    </div>
-  );
-
-  const renderBusinessStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="space-y-3">
-            <h3>Basic Information</h3>
-            
+  const renderStep = () => {
+    if (currentStep === 1) {
+      return (
+        <div className="space-y-3">
+          <h3 style={{ color: textColor }}>Create Your Account</h3>
+          
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="uen">UEN (Unique Entity Number)</Label>
+              <Label htmlFor="firstName" className="text-foreground">First Name</Label>
               <Input
-                id="uen"
-                placeholder="Enter UEN"
-                value={formData.uen}
-                onChange={(e) => handleChange('uen', e.target.value)}
+                id="firstName"
+                type="text"
+                placeholder="First name"
+                value={formData.firstName}
+                onChange={(e) => handleChange('firstName', e.target.value)}
                 required
                 className="bg-input-background"
               />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name</Label>
+              <Label htmlFor="lastName" className="text-foreground">Last Name</Label>
               <Input
-                id="businessName"
-                placeholder="Your Business Name"
-                value={formData.businessName}
-                onChange={(e) => handleChange('businessName', e.target.value)}
-                required
-                className="bg-input-background"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="businessCategory">Business Category</Label>
-              <Select
-                value={formData.businessCategory}
-                onValueChange={(value: string) => handleChange('businessCategory', value)}
-              >
-                <SelectTrigger className="bg-input-background">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fnb">F&B</SelectItem>
-                  <SelectItem value="retail">Retail</SelectItem>
-                  <SelectItem value="services">Services</SelectItem>
-                  <SelectItem value="entertainment">Entertainment</SelectItem>
-                  <SelectItem value="health_wellness">Health/Wellness</SelectItem>
-                  <SelectItem value="professional_services">Professional Services</SelectItem>
-                  <SelectItem value="home_living">Home and Living</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <textarea
-                id="description"
-                placeholder="Tell customers about your business..."
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                required
-                className="w-full bg-input-background p-3 rounded-md border border-input focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Business Address</Label>
-              <Input
-                id="address"
-                placeholder="Street Address, City, Postal Code"
-                value={formData.address}
-                onChange={(e) => handleChange('address', e.target.value)}
+                id="lastName"
+                type="text"
+                placeholder="Last name"
+                value={formData.lastName}
+                onChange={(e) => handleChange('lastName', e.target.value)}
                 required
                 className="bg-input-background"
               />
             </div>
           </div>
-        );
 
-      case 2:
-        return (
-          <div className="space-y-3">
-            <h3>Contact Information</h3>
-            
-            <div className="space-y-2">
-              <Label htmlFor="businessEmail">Business Email</Label>
-              <Input
-                id="businessEmail"
-                type="email"
-                placeholder="contact@yourbusiness.com"
-                value={formData.businessEmail}
-                onChange={(e) => handleChange('businessEmail', e.target.value)}
-                required
-                className="bg-input-background"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
-              <Input
-                id="phoneNumber"
-                type="tel"
-                placeholder="+65 1234 5678"
-                value={formData.phoneNumber}
-                onChange={(e) => handleChange('phoneNumber', e.target.value)}
-                required
-                className="bg-input-background"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="websiteLink">Website</Label>
-              <Input
-                id="websiteLink"
-                type="url"
-                placeholder="https://www.yourbusiness.com"
-                value={formData.websiteLink}
-                onChange={(e) => handleChange('websiteLink', e.target.value)}
-                className="bg-input-background"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="socialMediaLink">Social Media</Label>
-              <Input
-                id="socialMediaLink"
-                type="url"
-                placeholder="https://instagram.com/yourbusiness"
-                value={formData.socialMediaLink}
-                onChange={(e) => handleChange('socialMediaLink', e.target.value)}
-                className="bg-input-background"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="wallpaper">Business Photo</Label>
-              <div className="flex items-center gap-4">
-                <label
-                  htmlFor="wallpaper"
-                  className="cursor-pointer px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors font-medium text-sm"
-                  >
-                  Choose File
-                </label>
-                <Input
-                  id="wallpaper"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleChange('wallpaper', e.target.files?.[0] || null)}
-                  disabled={isLoading}
-                  className="hidden"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {formData.wallpaper ? formData.wallpaper.name : 'No file chosen'}
-                </span>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-foreground">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Email address"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              required
+              className="bg-input-background"
+            />
           </div>
-        );
 
-      case 3:
-        return (
-          <div className="space-y-3">
-            <h3>Operating Hours</h3>
-            
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-foreground">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={(e) => handleChange('password', e.target.value)}
+              required
+              className="bg-input-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={(e) => handleChange('confirmPassword', e.target.value)}
+              required
+              className="bg-input-background"
+            />
+          </div>
+
+          <div className="pt-4 border-t">
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="open247"
-                checked={formData.open247}
-                onCheckedChange={(checked: boolean) => handleChange('open247', checked)}
+                id="hasBusiness"
+                checked={hasBusiness}
+                onCheckedChange={handleBusinessToggle}
+                className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                style={{ 
+                  borderColor: isDarkMode ? '#ffffff' : '#000000',
+                  backgroundColor: hasBusiness ? undefined : 'transparent'
+                }}
               />
-              <label htmlFor="open247" className="cursor-pointer">
-                Open 24/7
+              <label htmlFor="hasBusiness" className="cursor-pointer text-foreground">
+                I own a business
               </label>
             </div>
+            <p className="text-xs text-muted-foreground mt-1 ml-6">
+              Register your business to appear in LocalLoco directory
+            </p>
+          </div>
+        </div>
+      );
+    }
 
-            {!formData.open247 && (
-              <>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="sameHours"
-                    checked={useSameHours}
-                    onCheckedChange={handleSameHoursToggle}
-                  />
-                  <label htmlFor="sameHours" className="cursor-pointer text-sm">
-                    Same hours for all days
-                  </label>
-                </div>
-
-                {useSameHours ? (
-                  <div className="bg-input-background p-4 rounded-md space-y-2">
-                    <Label>Default Hours (All Days)</Label>
-                    <div className="flex items-center gap-3">
-                      <Input
-                        type="time"
-                        value={defaultHours.open}
-                        onChange={e => handleDefaultHoursChange('open', e.target.value)}
-                        disabled={isLoading}
-                        className="flex-1"
-                      />
-                      <span className="text-muted-foreground">to</span>
-                      <Input
-                        type="time"
-                        value={defaultHours.close}
-                        onChange={e => handleDefaultHoursChange('close', e.target.value)}
-                        disabled={isLoading}
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-input-background p-4 rounded-md max-h-80 overflow-y-auto">
-                    <div className="space-y-3">
-                      {DAYS_OF_WEEK.map(day => (
-                        <div key={day} className="flex items-center gap-3">
-                          <span className="w-24 text-sm font-medium">{day}</span>
-                          <Input
-                            type="time"
-                            value={formData.openingHours[day].open}
-                            onChange={e => handleOpeningHoursChange(day, 'open', e.target.value)}
-                            disabled={isLoading}
-                            className="flex-1"
-                          />
-                          <span className="text-muted-foreground text-sm">to</span>
-                          <Input
-                            type="time"
-                            value={formData.openingHours[day].close}
-                            onChange={e => handleOpeningHoursChange(day, 'close', e.target.value)}
-                            disabled={isLoading}
-                            className="flex-1"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+    if (currentStep === 2 && hasBusiness) {
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 style={{ color: textColor }}>Business {currentBusinessIndex + 1} of {businesses.length} - Basic Information</h3>
+            {businesses.length > 1 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeBusiness(currentBusinessIndex)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             )}
           </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-3">
-            <h3>Business Details</h3>
-            
-            <div className="space-y-2">
-              <Label htmlFor="priceTier">Price Tier</Label>
-              <Select
-                value={formData.priceTier}
-                onValueChange={(value: string) => handleChange('priceTier', value)}
-              >
-                <SelectTrigger className="bg-input-background">
-                  <SelectValue placeholder="Select price tier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="$">$ - Budget Friendly</SelectItem>
-                  <SelectItem value="$$">$$ - Moderate</SelectItem>
-                  <SelectItem value="$$$">$$$ - Upscale</SelectItem>
-                  <SelectItem value="$$$$">$$$$ - Fine Dining</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-3">
-              <Label>Service Options</Label>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="delivery"
-                    checked={formData.offersDelivery}
-                    onCheckedChange={(checked: boolean) => handleChange('offersDelivery', checked)}
-                    disabled={isLoading}
-                  />
-                  <label htmlFor="delivery" className="cursor-pointer">
-                    Offers Delivery
-                  </label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="pickup"
-                    checked={formData.offersPickup}
-                    onCheckedChange={(checked: boolean) => handleChange('offersPickup', checked)}
-                    disabled={isLoading}
-                  />
-                  <label htmlFor="pickup" className="cursor-pointer">
-                    Offers Pickup
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label>Payment Options</Label>
-              <div className="bg-input-background rounded-md p-4">
-                <div className="space-y-3">
-                  {PAYMENT_OPTIONS.map(payment => (
-                    <div key={payment} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={payment}
-                        checked={formData.paymentOptions.includes(payment)}
-                        onCheckedChange={() => handlePaymentToggle(payment)}
-                        disabled={isLoading}
-                      />
-                      <label htmlFor={payment} className="text-sm cursor-pointer flex-1">
-                        {payment}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="uen" className="text-foreground">UEN</Label>
+            <Input
+              id="uen"
+              placeholder="Unique Entity Number"
+              value={currentBusiness.uen}
+              onChange={(e) => handleBusinessChange('uen', e.target.value)}
+              required
+              className="bg-input-background"
+            />
           </div>
-        );
 
-      case 5:
-        return (
-          <div className="space-y-3">
-            <h3>Account Security</h3>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => handleChange('password', e.target.value)}
-                required
-                className="bg-input-background"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                required
-                className="bg-input-background"
-              />
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mt-4">
-              <p className="text-sm text-blue-900">
-                <strong>Almost done!</strong> Review your information and click "Create Account" to complete your registration.
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="businessName" className="text-foreground">Business Name</Label>
+            <Input
+              id="businessName"
+              placeholder="Business name"
+              value={currentBusiness.businessName}
+              onChange={(e) => handleBusinessChange('businessName', e.target.value)}
+              required
+              className="bg-input-background"
+            />
           </div>
-        );
 
-      default:
-        return null;
+          <div className="space-y-2">
+            <Label htmlFor="businessCategory" className="text-foreground">Business Category</Label>
+            <Select
+              value={currentBusiness.businessCategory}
+              onValueChange={(value: string) => handleBusinessChange('businessCategory', value)}
+            >
+              <SelectTrigger className="bg-input-background">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fnb">F&B</SelectItem>
+                <SelectItem value="retail">Retail</SelectItem>
+                <SelectItem value="services">Services</SelectItem>
+                <SelectItem value="entertainment">Entertainment</SelectItem>
+                <SelectItem value="health_wellness">Health/Wellness</SelectItem>
+                <SelectItem value="professional_services">Professional Services</SelectItem>
+                <SelectItem value="home_living">Home and Living</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-foreground">Description</Label>
+            <textarea
+              id="description"
+              placeholder="Tell customers about your business..."
+              value={currentBusiness.description}
+              onChange={(e) => handleBusinessChange('description', e.target.value)}
+              required
+              style={{ 
+                backgroundColor: isDarkMode ? '#3a3a3a' : '#f3f3f5',
+                color: textColor
+              }}
+              className="w-full p-3 rounded-md border border-input focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="address" className="text-foreground">Business Address</Label>
+            <Input
+              id="address"
+              placeholder="Street Address, City, Postal Code"
+              value={currentBusiness.address}
+              onChange={(e) => handleBusinessChange('address', e.target.value)}
+              required
+              className="bg-input-background"
+            />
+          </div>
+        </div>
+      );
     }
+
+    if (currentStep === 3 && hasBusiness) {
+      return (
+        <div className="space-y-3">
+          <h3 style={{ color: textColor }}>Business {currentBusinessIndex + 1} - Contact Information</h3>
+          
+          <div className="space-y-2">
+            <Label htmlFor="businessEmail" className="text-foreground">Business Email</Label>
+            <Input
+              id="businessEmail"
+              type="email"
+              placeholder="contact@yourbusiness.com"
+              value={currentBusiness.businessEmail}
+              onChange={(e) => handleBusinessChange('businessEmail', e.target.value)}
+              required
+              className="bg-input-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber" className="text-foreground">Phone Number</Label>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              placeholder="+65 1234 5678"
+              value={currentBusiness.phoneNumber}
+              onChange={(e) => handleBusinessChange('phoneNumber', e.target.value)}
+              required
+              className="bg-input-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="websiteLink" className="text-foreground">Website</Label>
+            <Input
+              id="websiteLink"
+              type="url"
+              placeholder="https://www.yourbusiness.com"
+              value={currentBusiness.websiteLink}
+              onChange={(e) => handleBusinessChange('websiteLink', e.target.value)}
+              className="bg-input-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="socialMediaLink" className="text-foreground">Social Media</Label>
+            <Input
+              id="socialMediaLink"
+              type="url"
+              placeholder="https://instagram.com/yourbusiness"
+              value={currentBusiness.socialMediaLink}
+              onChange={(e) => handleBusinessChange('socialMediaLink', e.target.value)}
+              className="bg-input-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="wallpaper" className="text-foreground">Business Photo *</Label>
+            <div className="flex items-center gap-4">
+              <label
+                htmlFor="wallpaper"
+                className="cursor-pointer px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors font-medium text-sm"
+              >
+                Choose File
+              </label>
+              <Input
+                id="wallpaper"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleBusinessChange('wallpaper', e.target.files?.[0] || null)}
+                disabled={isLoading}
+                className="hidden"
+                required
+              />
+              <span className="text-sm text-muted-foreground">
+                {currentBusiness.wallpaper ? currentBusiness.wallpaper.name : 'No file chosen'}
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentStep === 4 && hasBusiness) {
+      return (
+        <div className="space-y-3">
+          <h3 style={{ color: textColor }}>Business {currentBusinessIndex + 1} - Operating Hours</h3>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="open247"
+              checked={currentBusiness.open247}
+              onCheckedChange={(checked: boolean) => handleBusinessChange('open247', checked)}
+              className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              style={{ 
+                borderColor: isDarkMode ? '#ffffff' : '#000000',
+                backgroundColor: currentBusiness.open247 ? undefined : 'transparent'
+              }}
+            />
+            <label htmlFor="open247" className="cursor-pointer text-foreground">
+              Open 24/7
+            </label>
+          </div>
+
+          {!currentBusiness.open247 && (
+            <>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="sameHours"
+                  checked={useSameHours}
+                  onCheckedChange={handleSameHoursToggle}
+                  className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  style={{ 
+                    borderColor: isDarkMode ? '#ffffff' : '#000000',
+                    backgroundColor: useSameHours ? undefined : 'transparent'
+                  }}
+                />
+                <label htmlFor="sameHours" className="cursor-pointer text-sm text-foreground">
+                  Same hours for all days
+                </label>
+              </div>
+
+              {useSameHours ? (
+                <div 
+                  className="p-4 rounded-md space-y-2 border border-input"
+                  style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f3f3f5' }}
+                >
+                  <Label className="text-foreground">Default Hours (All Days)</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="time"
+                      value={defaultHours.open}
+                      onChange={e => handleDefaultHoursChange('open', e.target.value)}
+                      disabled={isLoading}
+                      style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff' }}
+                      className="flex-1"
+                    />
+                    <span className="text-muted-foreground">to</span>
+                    <Input
+                      type="time"
+                      value={defaultHours.close}
+                      onChange={e => handleDefaultHoursChange('close', e.target.value)}
+                      disabled={isLoading}
+                      style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff' }}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  className="p-4 rounded-md max-h-80 overflow-y-auto border border-input"
+                  style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f3f3f5' }}
+                >
+                  <div className="space-y-3">
+                    {DAYS_OF_WEEK.map(day => (
+                      <div key={day} className="flex items-center gap-3">
+                        <span className="w-24 text-sm font-medium text-foreground">{day}</span>
+                        <Input
+                          type="time"
+                          value={currentBusiness.openingHours[day].open}
+                          onChange={e => handleOpeningHoursChange(day, 'open', e.target.value)}
+                          disabled={isLoading}
+                          style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff' }}
+                          className="flex-1"
+                        />
+                        <span className="text-muted-foreground text-sm">to</span>
+                        <Input
+                          type="time"
+                          value={currentBusiness.openingHours[day].close}
+                          onChange={e => handleOpeningHoursChange(day, 'close', e.target.value)}
+                          disabled={isLoading}
+                          style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff' }}
+                          className="flex-1"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      );
+    }
+
+    if (currentStep === 5 && hasBusiness) {
+      return (
+        <div className="space-y-3">
+          <h3 style={{ color: textColor }}>Business {currentBusinessIndex + 1} - Business Details</h3>
+          
+          <div className="space-y-2">
+            <Label htmlFor="priceTier" className="text-foreground">Price Tier</Label>
+            <Select
+              value={currentBusiness.priceTier}
+              onValueChange={(value: string) => handleBusinessChange('priceTier', value)}
+            >
+              <SelectTrigger className="bg-input-background">
+                <SelectValue placeholder="Select price tier" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="$">$ - Budget Friendly</SelectItem>
+                <SelectItem value="$$">$$ - Moderate</SelectItem>
+                <SelectItem value="$$$">$$$ - Upscale</SelectItem>
+                <SelectItem value="$$$$">$$$$ - Fine Dining</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-foreground">Service Options</Label>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="delivery"
+                  checked={currentBusiness.offersDelivery}
+                  onCheckedChange={(checked: boolean) => handleBusinessChange('offersDelivery', checked)}
+                  disabled={isLoading}
+                  className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  style={{ 
+                    borderColor: isDarkMode ? '#ffffff' : '#000000',
+                    backgroundColor: currentBusiness.offersDelivery ? undefined : 'transparent'
+                  }}
+                />
+                <label htmlFor="delivery" className="cursor-pointer text-foreground">
+                  Offers Delivery
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="pickup"
+                  checked={currentBusiness.offersPickup}
+                  onCheckedChange={(checked: boolean) => handleBusinessChange('offersPickup', checked)}
+                  disabled={isLoading}
+                  className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  style={{ 
+                    borderColor: isDarkMode ? '#ffffff' : '#000000',
+                    backgroundColor: currentBusiness.offersPickup ? undefined : 'transparent'
+                  }}
+                />
+                <label htmlFor="pickup" className="cursor-pointer text-foreground">
+                  Offers Pickup
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-foreground">Payment Options</Label>
+            <div 
+              className="rounded-md p-4 border border-input"
+              style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f3f3f5' }}
+            >
+              <div className="space-y-3">
+                {PAYMENT_OPTIONS.map(payment => (
+                  <div key={payment} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={payment}
+                      checked={currentBusiness.paymentOptions.includes(payment)}
+                      onCheckedChange={() => handlePaymentToggle(payment)}
+                      disabled={isLoading}
+                      className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                      style={{ 
+                        borderColor: isDarkMode ? '#ffffff' : '#000000',
+                        backgroundColor: currentBusiness.paymentOptions.includes(payment) ? undefined : 'transparent'
+                      }}
+                    />
+                    <label htmlFor={payment} className="text-sm cursor-pointer flex-1 text-foreground">
+                      {payment}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentStep === 6 && hasBusiness) {
+      return (
+        <div className="space-y-3">
+          <h3 style={{ color: textColor }}>Review & Submit</h3>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <p className="text-sm text-blue-900">
+              <strong>Almost done!</strong> Review your information and click "Create Account" to complete your registration.
+            </p>
+          </div>
+
+          <div className="bg-muted/30 rounded-md p-4 space-y-3 max-h-96 overflow-y-auto">
+            <div>
+              <p className="text-sm font-medium text-foreground">Account Information</p>
+              <p className="text-sm text-muted-foreground">
+                {formData.firstName} {formData.lastName}
+              </p>
+              <p className="text-sm text-muted-foreground">{formData.email}</p>
+            </div>
+            
+            {businesses.map((business, index) => (
+              <div key={index} className="border-t pt-3">
+                <p className="text-sm font-medium text-foreground">Business {index + 1}: {business.businessName || 'Unnamed Business'}</p>
+                <p className="text-sm text-muted-foreground">Category: {business.businessCategory || 'Not set'}</p>
+                <p className="text-sm text-muted-foreground">Address: {business.address || 'Not set'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {business.businessEmail || 'No email'} • {business.phoneNumber || 'No phone'}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            type="button"
+            onClick={addBusiness}
+            className="w-full bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Another Business
+          </Button>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
     <div
       className={`min-h-screen relative ${!isDarkMode ? 'bg-gradient-to-br from-pink-50 via-pink-100 to-orange-50' : ''}`}
-      style={isDarkMode ? { backgroundColor: bgColor } : {}}
+      style={isDarkMode ? { backgroundColor: '#3a3a3a' } : {}}
     >
-      {/* Decorative Background Pattern */}
       {!isDarkMode && (
         <div className="absolute inset-0 opacity-10">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -825,8 +1018,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         </div>
       )}
 
-      {/* Header */}
-      <header className="shadow-md relative z-10" style={{ backgroundColor: headerBgColor, color: headerTextColor }}>
+      <header className="shadow-md relative z-10 bg-gray-700 text-white">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary rounded-lg">
@@ -835,81 +1027,78 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
             <div>
               <h1 className="text-xl font-semibold">LocalLoco</h1>
               <p className="text-sm opacity-90">
-                Discover and support local businesses in your community - or nearby you!
+                Discover and support local businesses in your community
               </p>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Form Container */}
       <div className="flex items-center justify-center min-h-[calc(100vh-100px)] p-4 relative z-10">
         <div className="w-full max-w-2xl">
           <form onSubmit={handleSubmit} className="rounded-lg shadow-lg p-8" style={{ backgroundColor: cardBgColor, color: textColor }}>
-            {/* Header */}
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-primary">Create Account</h2>
-              <p className="text-sm mt-1" style={{ color: mutedTextColor }}>Join LocalLoco today</p>
+              <p className="text-sm mt-1 text-muted-foreground">Join LocalLoco today</p>
             </div>
 
-            {/* Upload Status */}
             {uploadStatus && (
               <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-center text-blue-700">
                 {uploadStatus}
               </div>
             )}
 
-            {/* Account Type Selection */}
-            {(role === 'user' || currentStep === 1) && (
-              <div className="space-y-2 mb-6">
-                <Label htmlFor="role">Account Type</Label>
-                <Select 
-                  value={role} 
-                  onValueChange={(value: string) => {
-                    setRole(value as UserRole);
-                    setCurrentStep(1);
-                  }}
-                >
-                  <SelectTrigger className="bg-primary/80 text-white border-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">User Account</SelectItem>
-                    <SelectItem value="business">Business Account</SelectItem>
-                  </SelectContent>
-                </Select>
+            {renderStepIndicator()}
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2 mb-4">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {error}
               </div>
             )}
 
-            {/* Step Indicator */}
-            {renderStepIndicator()}
+            {hasBusiness && currentStep >= 2 && currentStep <= 5 && businesses.length > 0 && (
+              <div className="flex gap-2 flex-wrap mb-4">
+                {businesses.map((business, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setCurrentBusinessIndex(index)}
+                    className={`px-4 py-2 rounded-md text-sm transition-colors ${
+                      currentBusinessIndex === index
+                        ? 'bg-primary text-white'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    {business.businessName || `Business ${index + 1}`}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {/* Form Content */}
-            <div className="space-y-6 py-2">
-              {role === 'user' ? renderUserForm() : renderBusinessStep()}
+            <div className="space-y-4">
+              {renderStep()}
             </div>
 
-            {/* Navigation Buttons */}
             <div className="flex gap-4 mt-6 pt-4 border-t">
-              {role === 'business' && currentStep > 1 && (
+              {currentStep > 1 && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handlePrevious}
                   disabled={isLoading}
-                  className="flex-1 text-foreground"
+                  className="flex-1"
                 >
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Previous
                 </Button>
               )}
 
-              {role === 'user' || currentStep === totalSteps ? (
+              {currentStep === totalSteps ? (
                 <Button
                   type="submit"
                   className="flex-1 bg-primary hover:bg-primary/90 text-white"
                   disabled={isLoading}
-                  onClick={handleSubmit}
                 >
                   {isLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>
@@ -925,11 +1114,10 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
               )}
             </div>
 
-            {/* Back Link */}
-            <div className="text-center mt-4">
+            <div className="text-center pt-4">
               <button
                 type="button"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground"
                 onClick={handleBack}
               >
                 ← Back to welcome screen

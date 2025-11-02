@@ -1,7 +1,12 @@
-import { User, UpdateProfileData } from '../types/User.js';
+import { User } from '../types/User.js';
 import db from '../database/db.js'
-import { user } from '../database/auth-schema.js';
+import { user } from '../database/schema.js';
 import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
+
+interface UpdateProfileData {
+    name?: string;
+    image?: string;
+}
 
 class UserModel {
 
@@ -46,7 +51,6 @@ class UserModel {
             const updateData: any = {};
             if (updates.name !== undefined) updateData.name = updates.name;
             if (updates.image !== undefined) updateData.image = updates.image;
-            if (updates.email !== undefined) updateData.email = updates.email;
 
             // Perform the update
             await db.update(user)

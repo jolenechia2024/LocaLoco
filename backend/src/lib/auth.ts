@@ -1,9 +1,10 @@
-// backend/lib/auth.ts (or wherever your auth.ts is)
+// backend/lib/auth.ts
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import db from "../database/db.js";
-import { user, session, account, verification } from "../database/auth-schema.js";
+import { user, session, account, verification } from "../database/schema.js";
 import dotenv from 'dotenv';
+
 
 const auth = betterAuth({
     database: drizzleAdapter(db, {
@@ -16,6 +17,14 @@ const auth = betterAuth({
                 type: "boolean",
                 input: false,
                 defaultValue: false
+            },
+            firstName: {
+                type: "string",
+                input: true
+            },
+            lastName: {
+                type: "string",
+                input: true
             },
             referralCode: {
                 type: 'string',
@@ -70,5 +79,6 @@ const auth = betterAuth({
         }
     }
 })
+
 
 export default auth;

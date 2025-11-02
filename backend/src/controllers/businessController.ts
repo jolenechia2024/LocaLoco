@@ -75,7 +75,7 @@ class businessController {
     static async registerBusiness(req: Request, res: Response, next: NextFunction): Promise<void> {
 
         const business = {
-            ownerID: req.body.ownerID,
+            ownerID: req.body.userId || req.body.ownerID,
             uen: req.body.uen,
             businessName: req.body.businessName,
             businessCategory: req.body.businessCategory,
@@ -99,7 +99,7 @@ class businessController {
 
         try {
             await BusinessModel.registerBusiness(business)
-            res.status(200).json({ message: 'business registered' });
+            res.status(200).json({ success: true, message: 'business registered' });
         }
         catch (err:any) {
             console.error(`There was a problem registering the selected business: ${err}`)

@@ -14,7 +14,7 @@ import { useUser } from '../hooks/useUser';
 
 
 interface ForumPageProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 export function ForumPage({ onBack}: ForumPageProps) {
