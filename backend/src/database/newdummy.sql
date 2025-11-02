@@ -35,19 +35,25 @@ INSERT INTO user (id, name, email, email_verified, image, has_business) VALUES
 ('user-id-029', 'Chloe Wilson', 'user29@example.com', true, NULL, false),
 ('user-id-030', 'Dan Moore', 'user30@example.com', false, NULL, false);
 
--- Businesses data
-INSERT INTO businesses (uen, business_name, business_category, description, address, open247, email, phone_number, website_link, social_media_link, wallpaper, date_of_creation, price_tier, offers_delivery, offers_pickup) VALUES
-('202301234A', 'The Daily Loaf Bakery', 'fnb', 'Artisanal breads and pastries baked fresh daily with premium ingredients', '123 Orchard Road, Singapore 238858', FALSE, 'hello@dailyloaf.sg', '+65 6234 5678', 'https://www.dailyloaf.sg', 'https://instagram.com/dailyloafbakery', 'The_Daily_Loaf_Bakery.jpg', '2023-01-15', 'medium', TRUE, TRUE),
-('202302456B', 'Gents Grooming Parlor', 'services', 'Traditional barbershop offering classic cuts and modern styling for gentlemen', '456 Tanjong Pagar Road, Singapore 088463', FALSE, 'book@gentsgrooming.sg', '+65 6345 6789', 'https://www.gentsgrooming.sg', 'https://facebook.com/gentsgrooming', 'Gents_Grooming_Parlor.jpg', '2023-02-20', 'medium', FALSE, FALSE),
-('202303789C', 'Java Junction Cafe', 'fnb', 'Specialty coffee and light bites in a cozy atmosphere perfect for work or relaxation', '789 Bugis Street, Singapore 188735', FALSE, 'info@javajunction.sg', '+65 6456 7890', 'https://www.javajunction.sg', 'https://instagram.com/javajunctionsg', 'Java_Junction_Cafe.jpg', '2023-03-10', 'low', TRUE, TRUE),
-('202304012D', 'FitCore Studio', 'health_wellness', 'High-intensity fitness training with certified instructors and state-of-the-art equipment', '321 Marina Boulevard, Singapore 018985', FALSE, 'register@fitcorestudio.sg', '+65 6567 8901', 'https://www.fitcorestudio.sg', 'https://instagram.com/fitcoresg', 'FitCore_Studio.jpg', '2023-04-05', 'high', FALSE, FALSE),
-('202305345E', 'Artisan Alley Crafts', 'retail', 'Handmade crafts and unique gifts created by local artisans', '234 Haji Lane, Singapore 189218', FALSE, 'shop@artisanalley.sg', '+65 6678 9012', 'https://www.artisanalley.sg', 'https://instagram.com/artisanalleysg', 'Artisan_Alley_Crafts.jpg', '2023-05-18', 'medium', FALSE, TRUE),
-('202306678F', 'GreenScape Solutions', 'services', 'Professional landscaping and garden maintenance services for residential and commercial properties', '567 Changi Business Park, Singapore 486025', FALSE, 'enquiry@greenscape.sg', '+65 6789 0123', 'https://www.greenscape.sg', 'https://facebook.com/greenscapesg', 'GreenScape_Solutions.jpg', '2023-06-22', 'high', FALSE, FALSE),
-('202307901G', 'Chapter & Verse Books', 'retail', 'Independent bookstore featuring curated selections and rare finds for book lovers', '890 Bras Basah Road, Singapore 189555', FALSE, 'hello@chapterverse.sg', '+65 6890 1234', 'https://www.chapterverse.sg', 'https://instagram.com/chapterversesg', 'Chapter_&_Verse_Books.jpg', '2023-07-08', 'low', TRUE, TRUE),
-('202308234H', 'Chic Street Boutique', 'retail', 'Trendy fashion and accessories for the modern woman', '145 Arab Street, Singapore 199827', FALSE, 'shop@chicstreet.sg', '+65 6901 2345', 'https://www.chicstreet.sg', 'https://instagram.com/chicstreetsg', 'Chic_Street_Boutique.jpg', '2023-08-14', 'medium', TRUE, TRUE),
-('202309567I', 'Elegance & Co', 'retail', 'Premium designer fashion and luxury accessories for discerning customers', '2 Orchard Turn, ION Orchard, Singapore 238801', FALSE, 'concierge@eleganceco.sg', '+65 6012 3456', 'https://www.eleganceco.sg', 'https://instagram.com/elegancecosg', 'Elegance_&_Co.jpg', '2023-09-01', 'high', FALSE, TRUE),
-('202310890J', 'Mama\'s Kitchen', 'fnb', 'Home-style comfort food with authentic local flavors in a warm family setting', '678 Tiong Bahru Road, Singapore 158789', FALSE, 'reservations@mamaskitchen.sg', '+65 6123 4567', 'https://www.mamaskitchen.sg', 'https://facebook.com/mamaskitchensg', 'Mama\'s_Kitchen.jpg', '2023-10-12', 'low', TRUE, TRUE),
-('202312456L', 'Pawfect Grooming', 'services', 'Professional pet grooming services with gentle care for your furry friends', '234 Serangoon Road, Singapore 218078', FALSE, 'book@pawfectgrooming.sg', '+65 6345 6789', 'https://www.pawfectgrooming.sg', 'https://instagram.com/pawfectsg', 'Pawfect_Grooming.jpeg', '2023-12-05', 'medium', FALSE, TRUE);
+
+-- businesses data
+INSERT INTO businesses 
+(owner_id, uen, business_name, business_category, description, address, open247, email, phone_number, website_link, social_media_link, wallpaper, date_of_creation, price_tier, offers_delivery, offers_pickup)
+VALUES
+('user-id-001', '202301234A', 'The Daily Loaf Bakery', 'fnb', 'Artisanal breads and pastries baked fresh daily with premium ingredients', '123 Orchard Road, Singapore 238858', FALSE, 'hello@dailyloaf.sg', '+65 6234 5678', 'https://www.dailyloaf.sg', 'https://instagram.com/dailyloafbakery', 'The_Daily_Loaf_Bakery.jpg', '2023-01-15', 'medium', TRUE, TRUE),
+('user-id-002', '202302456B', 'Gents Grooming Parlor', 'services', 'Traditional barbershop offering classic cuts and modern styling for gentlemen', '456 Tanjong Pagar Road, Singapore 088463', FALSE, 'book@gentsgrooming.sg', '+65 6345 6789', 'https://www.gentsgrooming.sg', 'https://facebook.com/gentsgrooming', 'Gents_Grooming_Parlor.jpg', '2023-02-20', 'medium', FALSE, FALSE),
+('user-id-003', '202303789C', 'Java Junction Cafe', 'fnb', 'Specialty coffee and light bites in a cozy atmosphere perfect for work or relaxation', '789 Bugis Street, Singapore 188735', FALSE, 'info@javajunction.sg', '+65 6456 7890', 'https://www.javajunction.sg', 'https://instagram.com/javajunctionsg', 'Java_Junction_Cafe.jpg', '2023-03-10', 'low', TRUE, TRUE),
+('user-id-003', '202304012D', 'FitCore Studio', 'health_wellness', 'High-intensity fitness training with certified instructors and state-of-the-art equipment', '321 Marina Boulevard, Singapore 018985', FALSE, 'register@fitcorestudio.sg', '+65 6567 8901', 'https://www.fitcorestudio.sg', 'https://instagram.com/fitcoresg', 'FitCore_Studio.jpg', '2023-04-05', 'high', FALSE, FALSE),
+('user-id-004', '202305345E', 'Artisan Alley Crafts', 'retail', 'Handmade crafts and unique gifts created by local artisans', '234 Haji Lane, Singapore 189218', FALSE, 'shop@artisanalley.sg', '+65 6678 9012', 'https://www.artisanalley.sg', 'https://instagram.com/artisanalleysg', 'Artisan_Alley_Crafts.jpg', '2023-05-18', 'medium', FALSE, TRUE),
+('user-id-004', '202306678F', 'GreenScape Solutions', 'services', 'Professional landscaping and garden maintenance services for residential and commercial properties', '567 Changi Business Park, Singapore 486025', FALSE, 'enquiry@greenscape.sg', '+65 6789 0123', 'https://www.greenscape.sg', 'https://facebook.com/greenscapesg', 'GreenScape_Solutions.jpg', '2023-06-22', 'high', FALSE, FALSE),
+('user-id-005', '202307901G', 'Chapter & Verse Books', 'retail', 'Independent bookstore featuring curated selections and rare finds for book lovers', '890 Bras Basah Road, Singapore 189555', FALSE, 'hello@chapterverse.sg', '+65 6890 1234', 'https://www.chapterverse.sg', 'https://instagram.com/chapterversesg', 'Chapter_&_Verse_Books.jpg', '2023-07-08', 'low', TRUE, TRUE),
+('user-id-005', '202308234H', 'Chic Street Boutique', 'retail', 'Trendy fashion and accessories for the modern woman', '145 Arab Street, Singapore 199827', FALSE, 'shop@chicstreet.sg', '+65 6901 2345', 'https://www.chicstreet.sg', 'https://instagram.com/chicstreetsg', 'Chic_Street_Boutique.jpg', '2023-08-14', 'medium', TRUE, TRUE),
+('user-id-006', '202309567I', 'Elegance & Co', 'retail', 'Premium designer fashion and luxury accessories for discerning customers', '2 Orchard Turn, ION Orchard, Singapore 238801', FALSE, 'concierge@eleganceco.sg', '+65 6012 3456', 'https://www.eleganceco.sg', 'https://instagram.com/elegancecosg', 'Elegance_&_Co.jpg', '2023-09-01', 'high', FALSE, TRUE),
+('user-id-001', '202310890J', 'Mama\'s Kitchen', 'fnb', 'Home-style comfort food with authentic local flavors in a warm family setting', '678 Tiong Bahru Road, Singapore 158789', FALSE, 'reservations@mamaskitchen.sg', '+65 6123 4567', 'https://www.mamaskitchen.sg', 'https://facebook.com/mamaskitchensg', 'Mama\'s_Kitchen.jpg', '2023-10-12', 'low', TRUE, TRUE),
+
+
+
+('user-id-002', '202312456L', 'Pawfect Grooming', 'services', 'Professional pet grooming services with gentle care for your furry friends', '234 Serangoon Road, Singapore 218078', FALSE, 'book@pawfectgrooming.sg', '+65 6345 6789', 'https://www.pawfectgrooming.sg', 'https://instagram.com/pawfectsg', 'Pawfect_Grooming.jpeg', '2023-12-05', 'medium', FALSE, TRUE);
 
 -- Payment options
 INSERT INTO business_payment_options (uen, payment_option) VALUES
@@ -124,6 +130,8 @@ INSERT INTO business_opening_hours (uen, day_of_week, open_time, close_time) VAL
 ('202307901G', 'Saturday', '10:00:00', '22:00:00'),
 ('202307901G', 'Sunday', '11:00:00', '20:00:00'),
 
+
+
 -- Chic Street Boutique
 ('202308234H', 'Monday', '11:00:00', '20:00:00'),
 ('202308234H', 'Tuesday', '11:00:00', '20:00:00'),
@@ -176,6 +184,9 @@ INSERT INTO business_reviews (user_email, business_uen, rating, body, like_count
 ('user9@example.com', '202302456B', 5, 'Best fade I''ve had in Tanjong Pagar. The place is clean, professional, and they take their time. Highly recommend.', 14, '2025-10-23 16:45:00'),
 ('user10@example.com', '202302456B', 4, 'Good, reliable spot for a gentleman''s cut. A bit pricey, but the quality and service are consistent.', 6, '2025-10-24 12:00:00'),
 
+
+
+
 -- Reviews for 'Java Junction Cafe' (202303789C)
 ('user11@example.com', '202303789C', 5, 'My favourite cozy corner in Bugis. The flat white is consistently excellent, and there are plenty of power sockets to work.', 25, '2025-10-20 10:10:00'),
 ('user12@example.com', '202303789C', 4, 'Nice latte art and friendly baristas. Their cheesecake is surprisingly good! A great place to relax.', 11, '2025-10-21 15:00:00'),
@@ -203,6 +214,9 @@ INSERT INTO business_reviews (user_email, business_uen, rating, body, like_count
 ('user28@example.com', '202306678F', 5, 'They handle our monthly garden maintenance, and it''s never looked better. Reliable, thorough, and very knowledgeable.', 10, '2025-10-22 10:00:00'),
 ('user29@example.com', '202306678F', 4, 'Did a wonderful job landscaping my condo balcony. They were tidy and respectful. It was expensive, but the quality is undeniable.', 6, '2025-10-23 16:00:00'),
 ('user30@example.com', '202306678F', 4, 'Good design advice, and they were patient with all my changes. The final result is beautiful.', 4, '2025-10-24 11:45:00'),
+
+
+
 
 -- Reviews for 'Chapter & Verse Books' (202307901G)
 ('user1@example.com', '202307901G', 5, 'My absolute favorite bookstore. The curation is impeccable, with a great mix of bestsellers and obscure indie titles.', 28, '2025-10-20 16:00:00'),
@@ -232,9 +246,74 @@ INSERT INTO business_reviews (user_email, business_uen, rating, body, like_count
 ('user19@example.com', '202310890J', 3, 'Food was a bit too oily and salty for my personal taste, but I can see why people love the strong flavors.', 3, '2025-10-23 20:00:00'),
 ('user20@example.com', '202310890J', 5, 'The portions are generous and the service is fast and friendly. A real gem in Tiong Bahru.', 18, '2025-10-24 12:45:00'),
 
+
+
+
 -- Reviews for 'Pawfect Grooming' (202312456L)
 ('user21@example.com', '202312456L', 5, 'The groomers are so patient and gentle. My dog is usually very anxious, but he came back happy and looking great!', 21, '2025-10-20 09:45:00'),
 ('user22@example.com', '202312456L', 5, 'They did a fantastic job on my cat, which is not an easy task! Very professional and clearly experienced.', 16, '2025-10-21 11:30:00'),
 ('user23@example.com', '202312456L', 4, 'Good, clean cut for my poodle. The facility is clean and doesn''t have that strong "wet dog" smell. Booking was easy.', 9, '2025-10-22 14:30:00'),
 ('user24@example.com', '202312456L', 2, 'They missed trimming some of my dog''s nails and the cut was uneven. I had to point it out. Not very thorough.', 1, '2025-10-23 10:30:00'),
 ('user25@example.com', '202312456L', 4, 'Staff seem to genuinely love animals. Prices are fair for the area. My dog always comes back looking and smelling pawfect!', 8, '2025-10-24 16:30:00');
+
+-- ========================================
+-- Forum Posts
+-- ========================================
+INSERT INTO forum_posts (user_email, business_uen, title, body, like_count, created_at)
+VALUES
+-- Posts linked to businesses
+('user1@example.com', '202301234A', 'Best bakery in town?', 'Anyone else obsessed with The Daily Loaf’s sourdough? I think it’s the best in SG.', 18, '2025-10-25 09:00:00'),
+('user3@example.com', '202303789C', 'Java Junction new seasonal drink', 'They just launched a Pumpkin Spice Latte — tried it yesterday and it’s actually good?? Thoughts?', 12, '2025-10-25 10:30:00'),
+('user7@example.com', '202304012D', 'FitCore class schedule changes', 'Anyone know why they removed the 7am HIIT class on Fridays? It was the only one I could make.', 9, '2025-10-25 11:45:00'),
+('user14@example.com', '202310890J', 'Mama’s Kitchen lunch crowd', 'Went at 12pm and the queue was insane 😭 worth waiting though, best rendang ever.', 22, '2025-10-25 12:10:00'),
+('user25@example.com', '202312456L', 'Pawfect Grooming experiences?', 'Thinking of bringing my dog here — anyone got feedback? Is it worth the price?', 14, '2025-10-25 14:20:00'),
+
+-- General business discussion
+('user10@example.com', NULL, 'Best cafes to work from in SG', 'I’m looking for chill cafes with good WiFi and power sockets. Suggestions?', 27, '2025-10-25 15:40:00'),
+('user5@example.com', NULL, 'Starting a small F&B business', 'Anyone here started a bakery or cafe recently? Looking for advice on suppliers and licenses.', 19, '2025-10-25 16:30:00'),
+('user18@example.com', NULL, 'Is premium gym membership worth it?', 'Been considering switching from ActiveSG to a boutique gym. Worth paying 3x more?', 11, '2025-10-25 17:10:00'),
+('user20@example.com', NULL, 'Online business visibility tips', 'Trying to help my friend’s shop get more Google reviews — any tips or best practices?', 8, '2025-10-25 18:00:00'),
+('user8@example.com', NULL, 'Underrated local brands', 'Let’s share some cool Singapore brands that deserve more attention!', 15, '2025-10-25 19:00:00');
+
+-- ========================================
+-- Forum Replies
+-- ========================================
+INSERT INTO forum_posts_replies (post_id, user_email, body, like_count, created_at)
+VALUES
+-- Replies to bakery post
+(1, 'user2@example.com', 'Agreed! Their croissants are top tier too. I go every weekend.', 6, '2025-10-25 09:20:00'),
+(1, 'user5@example.com', 'Totally worth the calories 😍 I wish they opened earlier tho.', 3, '2025-10-25 09:45:00'),
+
+-- Replies to Java Junction post
+(2, 'user12@example.com', 'Yeah it’s surprisingly good! Not too sweet. They nailed the balance.', 5, '2025-10-25 10:50:00'),
+(2, 'user14@example.com', 'Pumpkin spice in SG feels weird but I’m here for it lol.', 2, '2025-10-25 11:00:00'),
+
+-- Replies to FitCore post
+(3, 'user19@example.com', 'They said it was due to low attendance, but I think it’ll come back soon.', 4, '2025-10-25 12:00:00'),
+(3, 'user17@example.com', 'Email them! They’re usually responsive to feedback.', 1, '2025-10-25 12:15:00'),
+
+
+
+-- Replies to Mama’s Kitchen post
+(4, 'user16@example.com', '100% worth it. Go before 11:30 and you’ll skip the line.', 7, '2025-10-25 12:20:00'),
+(4, 'user19@example.com', 'Try their Cendol next time — it’s elite.', 3, '2025-10-25 12:30:00'),
+
+-- Replies to Pawfect Grooming post
+(5, 'user23@example.com', 'My poodle looked amazing after! Staff are super gentle.', 6, '2025-10-25 14:40:00'),
+(5, 'user24@example.com', 'Had a bad experience once — uneven trim. Might’ve been a one-off though.', 2, '2025-10-25 14:50:00'),
+
+-- Replies to general posts
+(6, 'user11@example.com', 'Java Junction and Plain Vanilla are solid choices for working!', 8, '2025-10-25 15:50:00'),
+(6, 'user13@example.com', 'Also check out The Book Café — chill vibes + power sockets.', 5, '2025-10-25 16:00:00'),
+
+(7, 'user1@example.com', 'I started a small café last year! Focus on sourcing ingredients locally — saves a ton.', 10, '2025-10-25 16:45:00'),
+(7, 'user4@example.com', 'Don’t forget to register for SFA licensing early — they’re super strict.', 7, '2025-10-25 16:50:00'),
+
+(8, 'user15@example.com', 'Depends. If you value community and good trainers, yes. If just for treadmill — no.', 4, '2025-10-25 17:20:00'),
+
+(9, 'user21@example.com', 'Encourage happy customers to leave reviews right after checkout. Works wonders.', 5, '2025-10-25 18:10:00'),
+(9, 'user22@example.com', 'Offer a small incentive like discount coupons for verified reviews.', 3, '2025-10-25 18:15:00'),
+
+(10, 'user26@example.com', 'Love brands like The Daily Loaf and Artisan Alley — quality local stuff.', 4, '2025-10-25 19:10:00'),
+(10, 'user30@example.com', '+1 for Artisan Alley! Picked up cool handmade gifts there.', 2, '2025-10-25 19:20:00');
+

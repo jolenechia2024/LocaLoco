@@ -96,42 +96,42 @@ class BusinessModel {
         const businessRow = await db.select().from(businesses).where(eq(businesses.uen,uen))
 
         // if none found return null immediately to avoid type error
-        if (businessRow.length === 0) {
+        if (businessRow.length === 0 || !businessRow[0]) {
             return null
         }
-        
-        const business = businessRow[0] as Business
+
+        const businessData = businessRow[0]
         const paymentRow = await db.select().from(businessPaymentOptions).where(eq(businessPaymentOptions.uen,uen))
-        
+
         const paymentOptions = paymentRow.map(p => p.paymentOption)
 
         const openingHours: Record<DayOfWeek, HourEntry> = {} as Record<DayOfWeek, HourEntry>
-            
+
         // if not open247, get the opening hours
-        if (!business.open247) {
-            const hourRows = await db.select().from(businessOpeningHours).where(eq(businessOpeningHours.uen, business.uen))
+        if (!businessData.open247) {
+            const hourRows = await db.select().from(businessOpeningHours).where(eq(businessOpeningHours.uen, businessData.uen))
             for (const h of hourRows) {
                 openingHours[h.dayOfWeek as DayOfWeek] = { open: h.openTime, close: h.closeTime }
             }
-        } 
+        }
 
         const fullBusiness:Business = {
-            uen: business.uen,
-            businessName: business.businessName,
-            businessCategory: business.businessCategory!, 
-            description: business.description!,
-            address: business.address!,
-            open247: Boolean(business.open247),
+            uen: businessData.uen,
+            businessName: businessData.businessName,
+            businessCategory: businessData.businessCategory!,
+            description: businessData.description!,
+            address: businessData.address!,
+            open247: Boolean(businessData.open247),
             openingHours,
-            email: business.email!,
-            phoneNumber: business.phoneNumber!,
-            websiteLink: business.websiteLink ?? null,
-            socialMediaLink: business.socialMediaLink ?? null,
-            wallpaper: business.wallpaper!,
-            dateOfCreation: business.dateOfCreation!,
-            priceTier: business.priceTier!,
-            offersDelivery: Boolean(business.offersDelivery),
-            offersPickup: Boolean(business.offersPickup),
+            email: businessData.email!,
+            phoneNumber: businessData.phoneNumber!,
+            websiteLink: businessData.websiteLink ?? null,
+            socialMediaLink: businessData.socialMediaLink ?? null,
+            wallpaper: businessData.wallpaper!,
+            dateOfCreation: businessData.dateOfCreation!,
+            priceTier: businessData.priceTier!,
+            offersDelivery: Boolean(businessData.offersDelivery),
+            offersPickup: Boolean(businessData.offersPickup),
             paymentOptions
         }
 
@@ -382,8 +382,69 @@ class BusinessModel {
         }
     }
 
+    /**
+     * Searches for a business by name with fuzzy matching.
+     * Sanitizes input and tries exact match, partial match, and reverse partial match.
+     *
+     * @param searchName - The business name to search for (case-insensitive)
+     * @returns {Promise<{uen: string, name: string} | null>} Business UEN and name, or null if not found
+     */
+    public static async searchBusinessByName(searchName: string): Promise<{uen: string, name: string} | null> {
+        if (!searchName || !searchName.trim()) {
+            return null;
+        }
 
-    
+        // Sanitize the input: lowercase, remove extra spaces and special chars
+        const sanitized = searchName
+            .toLowerCase()
+            .replace(/[^\w\s'-]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        // Try exact match first (case-insensitive)
+        const exactMatch = await db.select({
+            uen: businesses.uen,
+            name: businesses.businessName
+        })
+        .from(businesses)
+        .where(sql`LOWER(${businesses.businessName}) = ${sanitized}`)
+        .limit(1);
+
+        if (exactMatch.length > 0 && exactMatch[0]) {
+            return { uen: exactMatch[0].uen, name: exactMatch[0].name };
+        }
+
+        // Try partial match (search term is contained in business name)
+        const partialMatch = await db.select({
+            uen: businesses.uen,
+            name: businesses.businessName
+        })
+        .from(businesses)
+        .where(sql`LOWER(${businesses.businessName}) LIKE ${'%' + sanitized + '%'}`)
+        .limit(1);
+
+        if (partialMatch.length > 0 && partialMatch[0]) {
+            return { uen: partialMatch[0].uen, name: partialMatch[0].name };
+        }
+
+        // Try reverse partial match (business name is contained in search term)
+        const allBusinesses = await db.select({
+            uen: businesses.uen,
+            name: businesses.businessName
+        })
+        .from(businesses);
+
+        for (const business of allBusinesses) {
+            const businessNameLower = business.name.toLowerCase().replace(/[^\w\s'-]/g, '').replace(/\s+/g, ' ').trim();
+            if (sanitized.includes(businessNameLower)) {
+                return { uen: business.uen, name: business.name };
+            }
+        }
+
+        return null;
+    }
+
+
 }
 
 export default BusinessModel

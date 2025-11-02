@@ -2,6 +2,7 @@ export interface ForumPost {
     id: number,
     userEmail: string,
     businessUen: string | null,
+    businessName?: string | null,
     title: string | null,
     body: string,
     likeCount: number,

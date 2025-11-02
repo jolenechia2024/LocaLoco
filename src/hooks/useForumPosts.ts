@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useForumStore } from './useForumStore';
 import { transformBackendToForumDiscussion } from '../utils/forumUtils';
 import { ForumDiscussion, ForumReply } from '../types/forum';
+import { fetchBusinessUenByName } from '../utils/businessNameUtils';
 
 // Backend types (matching your API response from http://localhost:3000/api/forum-posts)
 interface BackendForumPost {
@@ -78,9 +79,23 @@ export const useForumPosts = () => {
     addDiscussion(discussion);
 
     try {
+      // Try to fetch business UEN if businessTag is provided
+      let businessUen: string | null = null;
+
+      if (discussion.businessTag && discussion.businessTag.trim()) {
+        console.log('Searching for business:', discussion.businessTag);
+        businessUen = await fetchBusinessUenByName(discussion.businessTag);
+
+        if (businessUen) {
+          console.log('Found business UEN:', businessUen);
+        } else {
+          console.log('No business found for:', discussion.businessTag);
+        }
+      }
+
       const postData = {
         userEmail: 'user1@example.com', // Use a valid user email from database
-        businessUen: null, // Always null for now - user input is free text, not actual business UENs
+        businessUen: businessUen, // Link to business if found, otherwise null
         title: discussion.title,
         body: discussion.content,
       };

@@ -158,6 +158,69 @@ export function MapDiscoveryPage() {
           center={userLocation ?? defaultCenter}
           onLoad={(map) => (mapRef.current = map)}
         >
+          {/* LEGEND CARD INSIDE MAP */}
+          <div
+            key={isDarkMode ? 'dark' : 'light'} // forces re-render on theme change
+            className={`absolute z-10 p-3 rounded-lg shadow-lg`}
+            style={{ backgroundColor: panelBg, top: '55px', left: '10px' }}
+          >
+            <div className="flex flex-col gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <img
+                  src="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                  alt="User Location"
+                  className="w-4 h-4"
+                />
+                <span className={textMain}>Your location</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <img
+                  src="http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                  alt="Nearest Business"
+                  className="w-4 h-4"
+                />
+                <span className={textMain}>Nearest businesses</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <img
+                  src="http://maps.google.com/mapfiles/ms/icons/pink-dot.png"
+                  alt="Selected Business"
+                  className="w-4 h-4"
+                />
+                <span className={textMain}>Selected business</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Center on User Button */}
+          {userLocation && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '55px', // below the fullscreen icon
+                right: '10px',
+                zIndex: 10,
+              }}
+            >
+              <button
+                onClick={() => {
+                  if (mapRef.current && userLocation) {
+                    mapRef.current.panTo(userLocation);
+                    mapRef.current.setZoom(16);
+                  }
+                }}
+                className="p-2 rounded-full bg-white shadow-lg hover:bg-gray-100"
+                title="Go to my location"
+              >
+                <img
+                  src="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                  alt="My Location"
+                  className="w-6 h-6"
+                />
+              </button>
+            </div>
+          )}
+
           {/* User marker (green) */}
           {userLocation && (
             <>
