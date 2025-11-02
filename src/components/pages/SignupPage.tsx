@@ -25,7 +25,6 @@ const authClient = createAuthClient({
   baseURL: baseURL
 });
 
-
 interface SignupPageProps {
   onSignup?: (data: any, role: UserRole) => void;
   onBack?: () => void;
@@ -40,6 +39,9 @@ interface BusinessData {
   businessCategory: string;
   description: string;
   address: string;
+  postalCode: string;
+  latitude: string;
+  longitude: string;
   phoneNumber: string;
   businessEmail: string;
   websiteLink: string;
@@ -69,6 +71,9 @@ const createEmptyBusiness = (): BusinessData => ({
   businessCategory: '',
   description: '',
   address: '',
+  postalCode: '',
+  latitude: '',
+  longitude: '',
   phoneNumber: '',
   businessEmail: '',
   websiteLink: '',
@@ -85,6 +90,102 @@ const createEmptyBusiness = (): BusinessData => ({
   paymentOptions: [],
 });
 
+// OneMap API functions
+const getAuthToken = async (): Promise<string | null> => {
+  try {
+    const response = await fetch('https://www.onemap.gov.sg/api/auth/post/getToken', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: 'pamika.lim.2024@computing.smu.edu.sg',
+        password: 'mTW!dR$M!ZVRX5h'
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get OneMap token');
+    }
+    
+    const data = await response.json();
+    return data.access_token;
+  } catch (error) {
+    console.error('Failed to get OneMap token:', error);
+    return null;
+  }
+};
+
+const getAddressFromPostalCode = async (postalCode: string): Promise<string> => {
+  if (postalCode.length !== 6 || isNaN(Number(postalCode))) {
+    return '';
+  }
+
+  const authToken = await getAuthToken();
+  if (!authToken) {
+    throw new Error('Unable to authenticate with OneMap API');
+  }
+
+  try {
+    const response = await fetch(
+      `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${postalCode}&returnGeom=N&getAddrDetails=Y`,
+      {
+        headers: {
+          'Authorization': authToken
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('OneMap API request failed');
+    }
+
+    const data = await response.json();
+    if (data.results && data.results.length > 0) {
+      return data.results[0].ADDRESS;
+    }
+    return '';
+  } catch (error) {
+    console.error('Error fetching address from postal code:', error);
+    throw error;
+  }
+};
+
+const getLatLngFromAddress = async (address: string): Promise<{ lat: string; lng: string }> => {
+  if (!address || address.trim() === '') {
+    return { lat: '', lng: '' };
+  }
+
+  const apiKey = 'AIzaSyCn-aVVBxUbCBYihIeKHePKcTq7O4KfMlY';
+  const encodedAddress = encodeURIComponent(address);
+  
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`
+    );
+
+    if (!response.ok) {
+      throw new Error('Google Geocoding API request failed');
+    }
+
+    const data = await response.json();
+    
+    if (data.status === 'OK' && data.results.length > 0) {
+      const location = data.results[0].geometry.location;
+      return {
+        lat: location.lat.toString(),
+        lng: location.lng.toString(),
+      };
+    } else {
+      console.warn('No results found for address:', address);
+      return { lat: '', lng: '' };
+    }
+  } catch (error) {
+    console.error('Error fetching lat/lng:', error);
+    throw error;
+  }
+};
+
 export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const navigate = useNavigate();
@@ -100,6 +201,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   const [currentBusinessIndex, setCurrentBusinessIndex] = useState(0);
   const [useSameHours, setUseSameHours] = useState(false);
   const [defaultHours, setDefaultHours] = useState({ open: '09:00', close: '17:00' });
+  const [isFetchingAddress, setIsFetchingAddress] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -126,6 +228,70 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
       )
     );
     setError('');
+  };
+
+  const handlePostalCodeChange = async (postalCode: string) => {
+    // Update postal code in business data
+    handleBusinessChange('postalCode', postalCode);
+    
+    // Only trigger API call when we have exactly 6 digits
+    if (postalCode.length === 6 && !isNaN(Number(postalCode))) {
+      setIsFetchingAddress(true);
+      try {
+        const address = await getAddressFromPostalCode(postalCode);
+        if (address) {
+          handleBusinessChange('address', address);
+          
+          // Get lat/lng from the address and log to console
+          const { lat, lng } = await getLatLngFromAddress(address);
+          handleBusinessChange('latitude', lat);
+          handleBusinessChange('longitude', lng);
+          
+          // Console.log the coordinates instead of showing in UI
+          // console.log('Coordinates for address:', address);
+          // console.log('Latitude:', lat);
+          // console.log('Longitude:', lng);
+          
+          toast.success('Address updated successfully');
+        } else {
+          console.log('No address found for postal code:', postalCode);
+        }
+      } catch (error) {
+        console.error('Error processing postal code:', error);
+        // Don't show toast error for API failures during typing
+      } finally {
+        setIsFetchingAddress(false);
+      }
+    } else {
+      // Clear address if postal code is invalid, but don't show errors during typing
+      if (postalCode.length === 0) {
+        handleBusinessChange('address', '');
+        handleBusinessChange('latitude', '');
+        handleBusinessChange('longitude', '');
+      }
+    }
+  };
+
+  const handleAddressChange = async (address: string) => {
+    handleBusinessChange('address', address);
+    
+    if (address.trim()) {
+      try {
+        const { lat, lng } = await getLatLngFromAddress(address);
+        handleBusinessChange('latitude', lat);
+        handleBusinessChange('longitude', lng);
+        
+        // Console.log the coordinates instead of showing in UI
+        // console.log('Coordinates for manually entered address:', address);
+        // console.log('Latitude:', lat);
+        // console.log('Longitude:', lng);
+      } catch (error) {
+        console.error('Error getting coordinates for address:', error);
+      }
+    } else {
+      handleBusinessChange('latitude', '');
+      handleBusinessChange('longitude', '');
+    }
   };
 
   const handleOpeningHoursChange = (day: string, type: 'open' | 'close', value: string) => {
@@ -337,7 +503,6 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         password: formData.password
       };
   
-      
       const { data: userData, error: userError } = await authClient.signUp.email({
         email: formData.email,
         password: formData.password,
@@ -371,6 +536,9 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
               businessCategory: business.businessCategory,
               description: business.description,
               address: business.address,
+              postalCode: business.postalCode,
+              latitude: business.latitude,
+              longitude: business.longitude,
               phoneNumber: business.phoneNumber,
               email: business.businessEmail,
               websiteLink: business.websiteLink,
@@ -379,10 +547,10 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
               dateOfCreation: new Date().toISOString().slice(0, 10),
               priceTier: convertToBackendFormat(business.priceTier),
               open247: business.open247,
-              openingHours: business.openingHours, // ✅ Send as object, NOT JSON.stringify()
+              openingHours: business.openingHours,
               offersDelivery: business.offersDelivery,
               offersPickup: business.offersPickup,
-              paymentOptions: business.paymentOptions, // ✅ Send as array, NOT JSON.stringify()
+              paymentOptions: business.paymentOptions,
               password: formData.password,
             };
           })
@@ -411,7 +579,6 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   
         toast.success('All businesses registered successfully!');
       }
-      
   
       const store = useAuthStore.getState();
       store.login(userId, 'user', 'better-auth-token');
@@ -420,14 +587,6 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         navigate('/map');
       }, 100);
       
-      
-
-      // // STEP 3: Login and redirect
-      // if (onSignup) {
-      //   // onSignup({ ...formData, businesses, userId }, 'user');
-      // } else {
-      //   navigate('/map');
-      // }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       setError('Error signing up: ' + errorMessage);
@@ -437,7 +596,6 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
       setUploadStatus('');
     }
   };
-  
 
   const handleBack = () => {
     if (onBack) {
@@ -623,6 +781,39 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
             />
           </div>
 
+          {/* Address and Postal Code */}
+          <div className="space-y-2">
+            <Label className="text-foreground">Business Address</Label>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="md:col-span-1">
+                <Label htmlFor="postalCode" className="text-sm text-foreground">Postal Code</Label>
+                <Input
+                  id="postalCode"
+                  type="text"
+                  placeholder="123456"
+                  value={currentBusiness.postalCode}
+                  onChange={(e) => handlePostalCodeChange(e.target.value)}
+                  maxLength={6}
+                  className="bg-input-background"
+                />
+                {isFetchingAddress && (
+                  <p className="text-xs text-blue-500 mt-1">Fetching address...</p>
+                )}
+              </div>
+              <div className="md:col-span-3">
+                <Label htmlFor="address" className="text-sm text-foreground">Address</Label>
+                <Input
+                  id="address"
+                  placeholder="Street Address, City, Postal Code"
+                  value={currentBusiness.address}
+                  onChange={(e) => handleAddressChange(e.target.value)}
+                  required
+                  className="bg-input-background w-full"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="businessCategory" className="text-foreground">Business Category</Label>
             <Select
@@ -660,22 +851,11 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
               rows={3}
             />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="address" className="text-foreground">Business Address</Label>
-            <Input
-              id="address"
-              placeholder="Street Address, City, Postal Code"
-              value={currentBusiness.address}
-              onChange={(e) => handleBusinessChange('address', e.target.value)}
-              required
-              className="bg-input-background"
-            />
-          </div>
         </div>
       );
     }
 
+    // ... rest of the renderStep function remains the same for steps 3, 4, 5, and 6
     if (currentStep === 3 && hasBusiness) {
       return (
         <div className="space-y-3">
@@ -978,6 +1158,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
                 <p className="text-sm font-medium text-foreground">Business {index + 1}: {business.businessName || 'Unnamed Business'}</p>
                 <p className="text-sm text-muted-foreground">Category: {business.businessCategory || 'Not set'}</p>
                 <p className="text-sm text-muted-foreground">Address: {business.address || 'Not set'}</p>
+                <p className="text-sm text-muted-foreground">Postal Code: {business.postalCode || 'Not set'}</p>
                 <p className="text-sm text-muted-foreground">
                   {business.businessEmail || 'No email'} • {business.phoneNumber || 'No phone'}
                 </p>
