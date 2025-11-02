@@ -8,9 +8,11 @@ export interface BackendBusiness {
   description: string;
   address: string;
   phoneNumber: string;
+  email?: string;
   websiteLink?: string;
   wallpaper: string;
   priceTier: string;
+  open247?: boolean;
   openingHours: {
     [day: string]: {
       open: string;
@@ -47,19 +49,22 @@ const priceTierMap: Record<string, Business['priceRange']> = {
  */
 export function transformBackendToBusiness(backend: BackendBusiness): Business {
   return {
+    uen: backend.uen, // Add uen field
     id: backend.uen,
     name: backend.businessName,
     category: categoryMap[backend.businessCategory] || 'services', // fallback category
     description: backend.description,
     address: backend.address,
     phone: backend.phoneNumber,
+    email: backend.email || '', // Add email field
     website: backend.websiteLink,
     image: backend.wallpaper,
     priceRange: priceTierMap[backend.priceTier] || 'medium',
     hours: backend.openingHours,
-    offersDelivery: backend.offersDelivery,
-    offersPickup: backend.offersPickup,
-    paymentOptions: backend.paymentOptions,
+    open247: backend.open247 || false, // Add open247 field
+    offersDelivery: backend.offersDelivery || false,
+    offersPickup: backend.offersPickup || false,
+    paymentOptions: backend.paymentOptions || [],
     rating: 0, // default or map if data available
     reviewCount: 0,
     coordinates: undefined, // supply if available

@@ -25,6 +25,7 @@ export const businessPaymentOptions = mysqlTable("business_payment_options", {
 
 export const businesses = mysqlTable("businesses", {
 	uen: varchar({ length: 20 }).notNull(),
+	ownerId: varchar("owner_id", { length: 36 }).references(() => user.id),
 	businessName: varchar("business_name", { length: 255 }).notNull(),
 	businessCategory: varchar("business_category", { length: 100 }),
 	description: text(),

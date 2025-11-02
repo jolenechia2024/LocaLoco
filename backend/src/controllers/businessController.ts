@@ -29,9 +29,33 @@ class businessController {
         try {
             const business = await BusinessModel.getBusinessByUEN(String(req.query.uen))
             res.status(200).json(business);
-        } 
+        }
         catch (error) {
             console.error(`There was a problem fetching the selected business: ${error}`)
+            next(error);
+        }
+    }
+
+    static async searchBusinessByName(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const searchName = String(req.query.name || '').trim();
+
+            if (!searchName) {
+                res.status(400).json({ error: 'Name parameter is required' });
+                return;
+            }
+
+            const business = await BusinessModel.searchBusinessByName(searchName);
+
+            if (!business) {
+                res.status(404).json({ error: 'Business not found' });
+                return;
+            }
+
+            res.status(200).json(business);
+        }
+        catch (error) {
+            console.error(`There was a problem searching for business: ${error}`)
             next(error);
         }
     }

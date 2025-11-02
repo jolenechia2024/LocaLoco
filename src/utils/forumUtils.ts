@@ -5,6 +5,7 @@ interface BackendForumPost {
   id: number;
   userEmail: string;
   businessUen: string | null;
+  businessName?: string | null;
   title: string | null;
   body: string;
   likeCount: number;
@@ -43,7 +44,7 @@ export const transformBackendToForumDiscussion = (
   return {
     id: String(backendPost.id),
     title: backendPost.title || 'Untitled',
-    businessTag: backendPost.businessUen || undefined,
+    businessTag: backendPost.businessName || undefined, // Use businessName instead of businessUen
     content: backendPost.body,
     userName: backendPost.userEmail.split('@')[0], // Extract name from email
     userAvatar: undefined,
