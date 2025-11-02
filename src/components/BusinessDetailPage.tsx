@@ -16,7 +16,7 @@ export const BusinessDetailPage = () => {
   const business = businesses.find((b) => b.id === id);
 
   // Fetch reviews for this business
-  const { reviews, isLoading: reviewsLoading } = useReviews(id);
+  const { reviews, isLoading: reviewsLoading } = useReviews(business?.uen);
 
   if (!business) {
     return (
