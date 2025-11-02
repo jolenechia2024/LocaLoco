@@ -1,7 +1,8 @@
 import { createAuthClient } from "better-auth/client";
 
+const baseURL = 'http://localhost:3000'
 const authClient = createAuthClient({
-    baseURL: String(process.env.BETTER_AUTH_URL)
+    baseURL: baseURL
 });
 
 document.addEventListener('DOMContentLoaded', (()=>{
@@ -18,7 +19,7 @@ document.addEventListener('DOMContentLoaded', (()=>{
         try {
             const { data, error } = await authClient.signUp.email({ 
                 email, name, password,
-                callbackURL: String(process.env.BETTER_AUTH_URL)
+                callbackURL: baseURL
             });
             console.log({ data, error });
         } catch (err) {
@@ -34,7 +35,7 @@ document.addEventListener('DOMContentLoaded', (()=>{
         try {
             const { data, error } = await authClient.signIn.email({ 
                 email, password,
-                callbackURL: String(process.env.BETTER_AUTH_URL)
+                callbackURL: baseURL
             });
             console.log({ data, error });
         } catch (err) {
@@ -48,7 +49,7 @@ document.addEventListener('DOMContentLoaded', (()=>{
         try {
             const { data, error } = await authClient.signIn.social({ 
                 provider: "google",
-                callbackURL: String(process.env.BETTER_AUTH_URL)
+                callbackURL: baseURL
             });
             console.log({ data, error });
         } 
