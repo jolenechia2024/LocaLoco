@@ -3,8 +3,8 @@ import UserController from "../controllers/userController.js";
 
 const userRouter = Router();
 
-// Get user profile by ID
-// userRouter.post('/api/user/get-profile', UserController.getProfile.bind(UserController));
+// Get user profile by ID (GET request with userId as URL parameter)
+userRouter.get('/api/users/profile/:userId', UserController.getProfile.bind(UserController));
 
 // Update user profile
 userRouter.post('/api/user/update-profile', UserController.updateProfile.bind(UserController));

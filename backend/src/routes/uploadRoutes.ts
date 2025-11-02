@@ -7,8 +7,16 @@ const containerName = 'images';
 
 imageUploadRouter.get('/api/url-generator', async (req, res) => {
     try {
+        const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
 
-        const connectionString = String(process.env.AZURE_STORAGE_CONNECTION_STRING)
+        if (!connectionString) {
+            console.error('❌ AZURE_STORAGE_CONNECTION_STRING is not defined in environment variables');
+            return res.status(500).json({
+                message: 'Azure Storage connection string not configured',
+                error: 'Missing AZURE_STORAGE_CONNECTION_STRING environment variable'
+            });
+        }
+
         const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString)
         const containerClient = blobServiceClient.getContainerClient(containerName) // local instance of the container
         const originalFilename = String(req.query.filename)
