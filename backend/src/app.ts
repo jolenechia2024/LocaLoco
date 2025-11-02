@@ -9,8 +9,7 @@ import businessRouter from './routes/businessRoutes.js';
 import imageUploadRouter from './routes/uploadRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import { toNodeHandler } from 'better-auth/node';
-import auth from './lib/auth.js'; // This will now correctly have all process.env variables
-import featureRouter from './routes/featureRoutes.js';
+import auth from './lib/auth.js';
 
 const app: Application = express();
 
@@ -77,6 +76,10 @@ app.use(
 // __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables from .env file
+const envPath = path.resolve(__dirname, '../../.env');
+dotenv.config({ path: envPath });
 
 // resolve and serve compiled frontend directory (Vite builds to root/dist)
 const frontendPath = path.resolve(__dirname, '../../dist');
