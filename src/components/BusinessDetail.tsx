@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, MapPin, Phone, Globe, Clock, ArrowLeft, Bookmark, MessageSquare } from 'lucide-react';
+import { Star, MapPin, Phone, Globe, Clock, ArrowLeft, Bookmark, MessageSquare, Share2 } from 'lucide-react';
 import { Business, Review } from '../types/business';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -11,7 +11,6 @@ import { MapPlaceholder } from './MapPlaceholder';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useThemeStore } from '../store/themeStore';
 import { ForumDiscussion } from '../types/forum';
-
 
 interface BusinessDetailProps {
   business: Business;
@@ -30,15 +29,18 @@ export function BusinessDetail({
   onBack,
   onWriteReview,
 }: BusinessDetailProps) {
-    const isDarkMode = useThemeStore(state => state.isDarkMode);
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
 
   const [selectedTab, setSelectedTab] = useState('overview');
   const [threads, setThreads] = useState<ForumDiscussion[]>([]);
   const [threadsLoading, setThreadsLoading] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
 
   const textColor = isDarkMode ? '#ffffff' : '#000000';
+  const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
+  const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
 
-  // Fetch threads when Threads tab is selected
   useEffect(() => {
     if (selectedTab === 'threads' && threads.length === 0) {
       fetchThreads();
@@ -52,13 +54,12 @@ export function BusinessDetail({
       if (!response.ok) throw new Error('Failed to fetch threads');
 
       const data = await response.json();
-      // Transform backend data to ForumDiscussion format
       const transformedThreads: ForumDiscussion[] = data.map((post: any) => ({
         id: post.id.toString(),
         title: post.title || 'Discussion',
         businessTag: business.name,
         content: post.body,
-        userName: post.userEmail.split('@')[0], // Use email username part
+        userName: post.userEmail.split('@')[0],
         createdAt: post.createdAt,
         likes: post.likeCount || 0,
         replies: post.replies.map((reply: any) => ({
@@ -76,6 +77,29 @@ export function BusinessDetail({
       console.error('Error fetching threads:', error);
     } finally {
       setThreadsLoading(false);
+    }
+  };
+
+  // ✅ Share functionality
+  const handleShare = async (platform: 'copy' | 'whatsapp' | 'email') => {
+    const shareText = `Check out ${business.name} - ${business.description}`;
+    const businessUrl = window.location.origin + `/business/${business.uen}`;
+
+    try {
+      if (platform === 'copy') {
+        await navigator.clipboard.writeText(`${shareText}\n${businessUrl}`);
+        setShareMessage('Copied to clipboard! ✓');
+        setTimeout(() => setShareMessage(''), 2000);
+      } else if (platform === 'whatsapp') {
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + businessUrl)}`;
+        window.open(whatsappUrl, '_blank');
+      } else if (platform === 'email') {
+        const emailUrl = `mailto:?subject=Check out ${business.name}&body=${encodeURIComponent(shareText + '\n' + businessUrl)}`;
+        window.location.href = emailUrl;
+      }
+      setShowShareMenu(false);
+    } catch (error) {
+      console.error('Share failed:', error);
     }
   };
 
@@ -99,7 +123,7 @@ export function BusinessDetail({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between gap-4">
         <Button
           variant="outline"
           size="sm"
@@ -109,12 +133,58 @@ export function BusinessDetail({
           <ArrowLeft className="w-4 h-4" />
           Back to Results
         </Button>
+
+        {/* ✅ Share Button */}
+        <div className="relative">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowShareMenu(!showShareMenu)}
+            className="flex items-center gap-2 text-foreground"
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
+
+          {showShareMenu && (
+            <div
+              className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-10 border ${borderColor}`}
+              style={{ backgroundColor: cardBgColor }}
+            >
+              <button
+                onClick={() => handleShare('copy')}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 text-foreground rounded-t-lg"
+              >
+                Copy Link
+              </button>
+              <button
+                onClick={() => handleShare('whatsapp')}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 text-foreground"
+              >
+                Share on WhatsApp
+              </button>
+              <button
+                onClick={() => handleShare('email')}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 dark:hover:bg-gray-700 text-foreground rounded-b-lg"
+              >
+                Share via Email
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Share success message */}
+      {shareMessage && (
+        <div className="text-sm text-green-600 text-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
+          {shareMessage}
+        </div>
+      )}
 
       {/* Hero Section */}
       <Card className="overflow-hidden">
         <div className="relative">
-        <ImageWithFallback
+          <ImageWithFallback
             src={`https://localoco.blob.core.windows.net/images/${business.image}`}
             alt={business.name}
             className="w-full h-48 object-cover"
@@ -140,15 +210,13 @@ export function BusinessDetail({
                 )}
               </div>
               <Button
-                variant={isBookmarked ? "default" : "secondary"}
+                variant="secondary"
                 size="sm"
                 onClick={() => onBookmarkToggle(business.uen)}
                 className="bg-white/20 border-white/30 text-white hover:bg-white/30"
               >
                 <Bookmark
-                  className={`w-4 h-4 ${
-                    isBookmarked ? 'fill-white' : 'fill-none'
-                  }`}
+                  className={`w-4 h-4 ${isBookmarked ? 'fill-white' : 'fill-none'}`}
                 />
               </Button>
             </div>
@@ -178,20 +246,20 @@ export function BusinessDetail({
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-foreground">{business.description}</p>
-                
+
                 <Separator />
-                
+
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-foreground">{business.address}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-foreground">{business.phone}</span>
                   </div>
-                  
+
                   {business.website && (
                     <div className="flex items-center gap-2">
                       <Globe className="w-4 h-4 text-muted-foreground" />
@@ -241,15 +309,15 @@ export function BusinessDetail({
               <MessageSquare className="w-5 h-5" style={{ color: textColor }} />
               <h3 style={{ color: textColor }}>Customer Reviews</h3>
             </div>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               className="bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white"
               onClick={() => onWriteReview?.(business)}
             >
               Write Review
             </Button>
           </div>
-          
+
           <div className="space-y-4">
             {businessReviews.length > 0 ? (
               businessReviews.map((review) => (
@@ -279,7 +347,9 @@ export function BusinessDetail({
                 <Card key={thread.id} className="border-border bg-card">
                   <CardContent className="p-6 space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-2">{thread.title}</h3>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        {thread.title}
+                      </h3>
                       <p className="text-sm text-muted-foreground mb-2">
                         By {thread.userName} • {new Date(thread.createdAt).toLocaleDateString()}
                       </p>
@@ -294,15 +364,17 @@ export function BusinessDetail({
                       <span>{thread.likes} Likes</span>
                     </div>
 
-                    {/* Replies */}
                     {thread.replies.length > 0 && (
                       <div className="ml-6 space-y-3 border-l-2 border-border pl-4">
                         {thread.replies.map((reply) => (
                           <div key={reply.id} className="space-y-1">
-                            <p className="text-sm font-medium text-foreground">{reply.userName}</p>
+                            <p className="text-sm font-medium text-foreground">
+                              {reply.userName}
+                            </p>
                             <p className="text-sm text-muted-foreground">{reply.content}</p>
                             <p className="text-xs text-muted-foreground">
-                              {new Date(reply.createdAt).toLocaleDateString()} • {reply.likes} Likes
+                              {new Date(reply.createdAt).toLocaleDateString()} •{' '}
+                              {reply.likes} Likes
                             </p>
                           </div>
                         ))}
@@ -315,7 +387,9 @@ export function BusinessDetail({
               <Card className="border-border bg-card">
                 <CardContent className="p-8 text-center">
                   <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-foreground">No threads yet. Start a discussion about this business!</p>
+                  <p className="text-foreground">
+                    No threads yet. Start a discussion about this business!
+                  </p>
                 </CardContent>
               </Card>
             )}
