@@ -66,16 +66,8 @@ class UserModel {
         }
     }
 
-    /**
-     * Deletes a user record from the database by its unique ID.
-     * 
-     * Removes the user entry identified by `userId` from the `user` table. 
-     * Any related data is assumed to be handled by database constraints or cascading rules.
-     * 
-     * @param {string} userId - The unique identifier of the user to delete.
-     * @returns {Promise<void>} Resolves when the user record has been successfully removed.
-     */
-    public static async deleteProfile(userId: string) {
+    // Get user by ID
+    public static async (userId: string) {
         try {
             await db.delete(user).where(eq(user.id, userId))
         } catch (error) {
