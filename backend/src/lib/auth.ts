@@ -8,21 +8,15 @@ import dotenv from 'dotenv';
 
 const auth = betterAuth({
     database: drizzleAdapter(db, {
-        provider: "mysql", 
+        provider: "mysql",
         schema: { user, session, account, verification }
     }),
     user: {
         additionalFields: {
-            // ❌ REMOVE THIS ENTIRE BLOCK:
-            // role: { 
-            //     type: "string",
-            //     input: true,
-            //     defaultValue: "user"
-            // },
-            
             hasBusiness: {
                 type: "boolean",
-                input: false
+                input: false,
+                defaultValue: false
             },
             firstName: {
                 type: "string",
@@ -34,22 +28,29 @@ const auth = betterAuth({
             },
             referralCode: {
                 type: 'string',
-                input: false
+                input: false,
+                required: false
             },
             referredByUserID: {
                 type: 'string',
-                input: false
+                input: false,
+                required: false
             }
         }
     },
-    emailAndPassword: { 
-        enabled: true, 
+    advanced: {
+        crossSubDomainCookies: {
+            enabled: true,
+        },
+    },
+    emailAndPassword: {
+        enabled: true,
         autoSignIn: true
-    }, 
+    },
     trustedOrigins: [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "https://localoco.azurewebsites.net" 
+        "http://localhost:3000", // for testing
+        "http://localhost:5173", // for dev
+        "https://localoco.azurewebsites.net" // for staging and prod
     ],
     socialProviders: {
         google: {

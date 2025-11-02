@@ -5,39 +5,31 @@ import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
 import { date } from 'better-auth';
 
 class UserModel {
-    
+
     /**
      * Retrieves a user record from the database by its unique ID.
-     * 
-     * Searches the `user` table for a record that matches the provided `userId`. 
-     * Returns the first matching user object if found, or `null` if no such user exists.
-     * 
+     *
      * @param {string} userId - The unique identifier of the user.
      * @returns {Promise<User | null>} The `User` object corresponding to the ID, or `null` if not found.
      */
-    public static async getProfile(userId: string) {
+    public static async getUserById(userId: string) {
         try {
-            const profile = await db.select().from(user).where(eq(user.id, userId))
-            const availableVouchers = await db.select().from(vouchers).where(eq(vouchers.userId, userId))
-            
-            return {
-                profile: profile[0],
-                vouchers: availableVouchers
-            }
-        } 
-        catch (error) {
-            console.error(`Error fetching user: ${userId}`);
+            console.log('🔍 getUserById called with userId:', userId);
+            const result = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+            console.log('📊 Query result:', result);
+            return result[0] || null;
+        } catch (error) {
+            console.error('❌ Error fetching user:', error);
             throw error;
         }
     }
 
     /**
      * Updates the profile information of a user in the database.
-     * 
-     * Accepts partial updates for the user's `name`, `email`, and `image`. 
-     * Only the fields provided in `updates` are modified, leaving other fields unchanged. 
-     * After updating, fetches and returns the fully updated user object.
-     * 
+     *
+     * Accepts partial updates for the user's `name`, `email`, and `image`.
+     * Only the fields provided in `updates` are modified, leaving other fields unchanged.
+     *
      * @param {string} userId - The unique identifier of the user to update.
      * @param {UpdateProfileData} updates - Object containing the profile fields to update.
      * @returns {Promise<User>} The updated `User` object reflecting the changes.
