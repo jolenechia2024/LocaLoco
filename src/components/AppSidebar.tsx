@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { 
-  Home, 
-  Box, 
-  Layers, 
-  Bell, 
+import {
+  Home,
+  Box,
+  Layers,
+  Bell,
   Moon,
   Sun,
   Settings,
@@ -13,7 +14,8 @@ import {
   Bookmark,
   Ticket,
   User,
-  LogOut
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
@@ -26,6 +28,15 @@ import {
   DropdownMenuTrigger,
   DropdownMenuPortal,
 } from './ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import { Button } from './ui/button';
 import { useThemeStore } from '../store/themeStore';
 
 
@@ -39,23 +50,27 @@ interface AppSidebarProps {
   notificationCount?: number;
   isDarkMode?: boolean;
   onThemeToggle?: () => void;
+  isAuthenticated?: boolean;
 }
 
 
-export function AppSidebar({ 
-  onNavigate, 
-  onLogout, 
+export function AppSidebar({
+  onNavigate,
+  onLogout,
   currentView,
   userName = "User",
   userEmail = "user@example.com",
   avatarUrl,
   notificationCount = 0,
-  onThemeToggle
+  onThemeToggle,
+  isAuthenticated = true
 }: AppSidebarProps) {
+  const navigate = useNavigate();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const role = useAuthStore((state) => state.role);
   
   // Detect screen size
@@ -85,9 +100,9 @@ export function AppSidebar({
   const allMenuItems = [
     { icon: Home, label: 'Home', view: 'map' as const },
     { icon: Box, label: 'Explore', view: 'list' as const },
-    { icon: Bookmark, label: 'Bookmarks', view: 'bookmarks' as const },
-    { icon: Ticket, label: 'Vouchers', view: 'vouchers' as const, userOnly: true },
-    { icon: Layers, label: 'Forum', view: 'forum' as const },
+    { icon: Bookmark, label: 'Bookmarks', view: 'bookmarks' as const, requiresAuth: true },
+    { icon: Ticket, label: 'Vouchers', view: 'vouchers' as const, userOnly: true, requiresAuth: true },
+    { icon: Layers, label: 'Forum', view: 'forum' as const, requiresAuth: true },
   ];
 
 
@@ -100,20 +115,25 @@ export function AppSidebar({
 
 
   const bottomMenuItems = [
-    { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0 },
+    { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
     { icon: isDarkMode ? Sun : Moon, label: 'Theme', view: null, isThemeToggle: true },
-    { icon: Settings, label: 'Settings', view: 'settings' as const },
+    { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
   ];
 
 
   const handleMenuClick = (
-    view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | null, 
-    isThemeToggle?: boolean
+    view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | null,
+    isThemeToggle?: boolean,
+    requiresAuth?: boolean
   ) => {
     if (isThemeToggle && onThemeToggle) {
       onThemeToggle();
     } else if (view) {
-      onNavigate(view);
+      if (requiresAuth && !isAuthenticated) {
+        setShowLoginPrompt(true);
+      } else {
+        onNavigate(view);
+      }
     }
   };
 
@@ -130,9 +150,12 @@ export function AppSidebar({
   // Combine all menu items for mobile view
   const allBottomNavItems = [
     ...mainMenuItems.filter(item => item.view !== 'vouchers'), // Remove vouchers from mobile
-    { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0 },
-    { icon: null, label: 'Profile', view: 'profile' as const, isAvatar: true }, // Avatar instead of icon
-    { icon: Settings, label: 'Settings', view: 'settings' as const },
+    { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
+    ...(isAuthenticated
+      ? [{ icon: null, label: 'Profile', view: 'profile' as const, isAvatar: true }]
+      : [{ icon: LogIn, label: 'Login', view: null as const, isLoginButton: true }]
+    ),
+    { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
   ];
 
   return (
@@ -169,14 +192,17 @@ export function AppSidebar({
             {mainMenuItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentView === item.view;
+              const isDisabled = 'requiresAuth' in item && item.requiresAuth && !isAuthenticated;
 
               return (
                 <button
                   key={item.label}
-                  onClick={() => handleMenuClick(item.view)}
+                  onClick={() => handleMenuClick(item.view, false, 'requiresAuth' in item ? item.requiresAuth : false)}
                   className={`w-full rounded-lg p-3 flex items-center gap-3 transition-colors ${
                     isActive
                       ? 'bg-[#FFA1A3]/20 text-[#FFA1A3]'
+                      : isDisabled
+                      ? `${secondaryTextColor} opacity-30 cursor-not-allowed`
                       : `${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'}`
                   }`}
                 >
@@ -192,12 +218,17 @@ export function AppSidebar({
           <nav className={`px-3 py-4 space-y-1 border-t ${borderColor}`}>
             {bottomMenuItems.map((item) => {
               const Icon = item.icon;
+              const isDisabled = 'requiresAuth' in item && item.requiresAuth && !isAuthenticated;
 
               return (
                 <button
                   key={item.label}
-                  onClick={() => handleMenuClick(item.view, item.isThemeToggle)}
-                  className={`w-full rounded-lg p-3 flex items-center gap-3 ${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'} transition-colors relative`}
+                  onClick={() => handleMenuClick(item.view, item.isThemeToggle, 'requiresAuth' in item ? item.requiresAuth : false)}
+                  className={`w-full rounded-lg p-3 flex items-center gap-3 transition-colors relative ${
+                    isDisabled
+                      ? `${secondaryTextColor} opacity-30 cursor-not-allowed`
+                      : `${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'}`
+                  }`}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   {isExpanded && (
@@ -213,12 +244,25 @@ export function AppSidebar({
             })}
           </nav>
 
-          <div className={`p-3 border-t ${borderColor}`}>
-            <div className={`w-full rounded-lg p-3 flex items-center gap-3 ${textColor} transition-colors relative`}>
+          {!isAuthenticated && (
+            <div className={`p-3 border-t ${borderColor}`}>
               <button
-                onClick={() => handleMenuClick('profile')}
-                className={`flex items-center gap-3 ${hoverBgColor} transition-colors rounded-lg flex-1`}
+                onClick={() => navigate('/login')}
+                className={`w-full rounded-lg p-3 flex items-center justify-center gap-2 bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white transition-colors`}
               >
+                <LogIn className="w-5 h-5 flex-shrink-0" />
+                {isExpanded && <span className="text-sm font-medium whitespace-nowrap">Login / Sign Up</span>}
+              </button>
+            </div>
+          )}
+
+          {isAuthenticated && (
+            <div className={`p-3 border-t ${borderColor}`}>
+              <div className={`w-full rounded-lg p-3 flex items-center gap-3 ${textColor} transition-colors relative`}>
+                <button
+                  onClick={() => handleMenuClick('profile')}
+                  className={`flex items-center gap-3 ${hoverBgColor} transition-colors rounded-lg flex-1`}
+                >
                 <div className="relative flex-shrink-0">
                   <Avatar className="w-10 h-10">
                     {avatarUrl ? (
@@ -298,6 +342,7 @@ export function AppSidebar({
               )}
             </div>
           </div>
+          )}
         </div>
       )}
 
@@ -331,16 +376,24 @@ export function AppSidebar({
                 const isThemeToggle = 'isThemeToggle' in item && item.isThemeToggle;
                 const hasNotification = 'hasNotification' in item && item.hasNotification;
                 const isAvatar = 'isAvatar' in item && item.isAvatar;
+                const isLoginButton = 'isLoginButton' in item && item.isLoginButton;
+                const isDisabled = 'requiresAuth' in item && item.requiresAuth && !isAuthenticated;
 
                 return (
                   <button
                     key={item.label}
-                    onClick={() => handleMenuClick(item.view, isThemeToggle)}
+                    onClick={() => {
+                      if (isLoginButton) {
+                        navigate('/login');
+                      } else {
+                        handleMenuClick(item.view, isThemeToggle, 'requiresAuth' in item ? item.requiresAuth : false);
+                      }
+                    }}
                     className={`inline-flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors relative ${
                       isActive
                         ? 'bg-[#FFA1A3]/20 text-[#FFA1A3]'
                         : `${secondaryTextColor} active:bg-gray-100 ${isDarkMode ? 'active:bg-gray-700' : ''}`
-                    }`}
+                    } ${isDisabled ? 'opacity-30 cursor-not-allowed' : ''}`}
                     style={{ minWidth: '64px', flexShrink: 0 }}
                   >
                     {isAvatar ? (
@@ -367,6 +420,44 @@ export function AppSidebar({
           </div>
         </div>
       )}
+
+      {/* Login Prompt Modal */}
+      <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sign in Required</DialogTitle>
+            <DialogDescription>
+              Sign in to access our full services including bookmarks, notifications, forum, and more.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-center">
+            <Button
+              variant="outline"
+              onClick={() => setShowLoginPrompt(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setShowLoginPrompt(false);
+                navigate('/login');
+              }}
+              className="bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white"
+            >
+              Sign In
+            </Button>
+            <Button
+              onClick={() => {
+                setShowLoginPrompt(false);
+                navigate('/signup');
+              }}
+              variant="outline"
+            >
+              Sign Up
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

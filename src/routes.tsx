@@ -45,17 +45,20 @@ import { BookmarksPage } from './components/BookmarksPage';
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path={ROUTES.HOME} element={<WelcomePage />} />
+      {/* Public Routes - No Auth Required */}
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
       <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
-      {/* ROUTES.VERIFICATION removed - SignupPage handles all registration */}
 
-      {/* Protected Routes with Layout */}
-      <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+      {/* Public Routes with Layout - Guests can browse */}
+      <Route element={<MainLayout />}>
+        <Route path={ROUTES.HOME} element={<MapDiscoveryPage />} />
         <Route path={ROUTES.MAP} element={<MapDiscoveryPage />} />
         <Route path={ROUTES.BUSINESSES} element={<BusinessListPage />} />
         <Route path={ROUTES.BUSINESS} element={<BusinessDetailPage />} />
+      </Route>
+
+      {/* Protected Routes with Layout - Auth Required */}
+      <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route path={ROUTES.BOOKMARKS} element={<BookmarksPage />} />
         <Route
             path={ROUTES.PROFILE}
