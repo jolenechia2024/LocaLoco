@@ -518,11 +518,8 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
       console.log('📋 Registered user ID:', userData?.user?.id);
       console.log('📧 Registered user email:', userData?.user?.email);
 
-      // Check if autoSignIn worked immediately after signup
-      let session = await authClient.getSession();
-      console.log('🔍 Session immediately after signup:', session);
-
-      if (!session?.data?.session) {
+      // If autoSignIn didn't work, manually sign in
+      if (!userData?.session) {
         console.log('⚠️ No session after signup, manually signing in...');
 
         // IMPORTANT: Manually sign in after signup to ensure session is created
@@ -538,25 +535,18 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         }
 
         console.log('✅ Signed in manually:', signInData);
-
-        // Get the session after manual sign-in
-        session = await authClient.getSession();
-        console.log('🔍 Session after manual sign-in:', session);
       }
 
-      if (!session?.data?.session) {
+      // Get userId and accessToken from the signup/signin response
+      const userId = userData?.user?.id;
+      const accessToken = userData?.session?.token;
+
+      if (!userId || !accessToken) {
         throw new Error('No session created after signup. Please try logging in manually.');
       }
 
-      console.log('🔍 Full session data:', JSON.stringify(session.data, null, 2));
-
-      const userId = session.data.user.id;
-      const accessToken = session.data.session.token;
-
       console.log('✅ Final session userId:', userId);
       console.log('✅ Final session token:', accessToken);
-      console.log('✅ Session object keys:', Object.keys(session.data.session));
-      console.log('✅ Does userId match registered user?', userId === userData?.user?.id);
 
       toast.success('Account created and logged in!');
   

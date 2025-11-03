@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../../types/user';
 import {
   Dialog,
@@ -36,7 +36,33 @@ export function EditProfileDialog({
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isGoogleUser, setIsGoogleUser] = useState<boolean>(false);
+  const [checkingProvider, setCheckingProvider] = useState<boolean>(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if user signed in with Google
+  useEffect(() => {
+    const checkAuthProvider = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/users/auth-provider/${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          // If user has a Google account linked, they're a Google user
+          setIsGoogleUser(data.provider === 'google');
+        }
+      } catch (error) {
+        console.error('Error checking auth provider:', error);
+        // Default to false (allow email editing) if check fails
+        setIsGoogleUser(false);
+      } finally {
+        setCheckingProvider(false);
+      }
+    };
+
+    if (open) {
+      checkAuthProvider();
+    }
+  }, [user.id, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,15 +70,17 @@ export function EditProfileDialog({
     setSaving(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/users/profile', {
-        method: 'PUT',
+      const response = await fetch('http://localhost:3000/api/user/update-profile', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: user.id,
           name: formData.name,
-          image: formData.avatarUrl || null,
+          email: formData.email,
+          imageUrl: formData.avatarUrl || null,
+          bio: formData.bio || '',
         }),
       });
 
@@ -66,8 +94,10 @@ export function EditProfileDialog({
       // Update local user object with new data
       const updatedUser = {
         ...user,
-        name: result.user.name,
-        avatarUrl: result.user.image,
+        name: result.name,
+        email: result.email,
+        avatarUrl: result.image,
+        bio: result.bio || '',
       };
 
       onSave(updatedUser);
@@ -103,19 +133,34 @@ export function EditProfileDialog({
     setUploading(true);
 
     try {
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setPreviewUrl(base64String);
-        setFormData((prev) => ({ ...prev, avatarUrl: base64String }));
-        setUploading(false);
-      };
-      reader.onerror = () => {
-        alert('Error reading file');
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
+      // Step 1: Get upload URL from backend
+      const urlResponse = await fetch(`http://localhost:3000/api/url-generator?filename=${encodeURIComponent(file.name)}`);
+      if (!urlResponse.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+      const { uploadUrl, blobName } = await urlResponse.json();
+
+      // Step 2: Upload file to Azure Blob Storage
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'x-ms-blob-type': 'BlockBlob',
+          'Content-Type': file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image to storage');
+      }
+
+      // Step 3: Construct the permanent blob URL (without SAS token)
+      const blobUrl = uploadUrl.split('?')[0]; // Remove SAS token from URL
+
+      // Step 4: Set preview and update form data
+      setPreviewUrl(blobUrl);
+      setFormData((prev) => ({ ...prev, avatarUrl: blobUrl }));
+      setUploading(false);
     } catch (error) {
       console.error('Error uploading image:', error);
       alert('Failed to upload image');
@@ -234,12 +279,23 @@ export function EditProfileDialog({
                 id="email"
                 type="email"
                 value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="your.email@example.com"
-                disabled
+                disabled={checkingProvider || isGoogleUser}
               />
-              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Email cannot be changed
-              </p>
+              {checkingProvider ? (
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Checking account type...
+                </p>
+              ) : isGoogleUser ? (
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Email cannot be changed for Google accounts
+                </p>
+              ) : (
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  You can update your email address
+                </p>
+              )}
             </div>
 
             <div className="grid gap-2">
