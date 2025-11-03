@@ -35,30 +35,26 @@ class UserController {
             console.log('🔵 updateProfile endpoint hit');
             console.log('🔵 Request body:', JSON.stringify(req.body, null, 2));
 
-            const { userId, name, email, image } = req.body;
+            const { userId, name, email, imageUrl, bio, hasBusiness } = req.body;
 
-            console.log('🔵 Extracted values:', { userId, name, email, imageLength: image?.length });
+            console.log('🔵 Extracted values:', { userId, name, email, imageUrl: imageUrl?.length, bio, hasBusiness });
 
             if (!userId) {
                 console.log('❌ Missing userId');
                 res.status(400).json({ error: 'User ID is required' });
-                return;
+                process.exit(1)
             }
 
             // Prepare update data
             const updates: any = {};
             if (name !== undefined) updates.name = name;
             if (email !== undefined) updates.email = email;
-            if (image !== undefined) updates.image = image;
+            if (imageUrl !== undefined) updates.imageUrl = imageUrl;
+            if (bio !== undefined) updates.bio = bio;
+            if (hasBusiness !== undefined) updates.hasBusiness = hasBusiness;
+            updates.updatedAt = new Date()
 
             console.log('🔵 Updates object:', JSON.stringify(updates, null, 2));
-
-            // Check if there's anything to update
-            if (Object.keys(updates).length === 0) {
-                console.log('❌ No fields to update');
-                res.status(400).json({ error: 'No fields to update' });
-                return;
-            }
 
             console.log('🔵 Calling UserModel.updateProfile with userId:', userId);
             const updatedUser = await UserModel.updateProfile(userId, updates);
@@ -71,16 +67,7 @@ class UserController {
             }
 
             console.log('✅ Profile updated successfully, sending response');
-            res.status(200).json({
-                message: 'Profile updated successfully',
-                user: {
-                    id: updatedUser.id,
-                    name: updatedUser.name,
-                    email: updatedUser.email,
-                    image: updatedUser.image,
-                    createdAt: updatedUser.createdAt,
-                }
-            });
+            res.status(200).json(updatedUser)
         } catch (error: any) {
             if (error.message === 'User not found') {
                 console.log('❌ Error: User not found');

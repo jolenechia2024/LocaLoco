@@ -15,11 +15,16 @@ class UserModel {
     public static async getUserById(userId: string) {
         try {
             console.log('🔍 getUserById called with userId:', userId);
-            const result = await db.select().from(user).where(eq(user.id, userId)).limit(1);
-            console.log('📊 Query result:', result);
-            return result[0] || null;
-        } catch (error) {
-            console.error('❌ Error fetching user:', error);
+            const profile = await db.select().from(user).where(eq(user.id, userId))
+            const availableVouchers = await db.select().from(vouchers).where(eq(vouchers.userId, userId))
+
+            return {
+                profile: profile[0] || null,
+                vouchers: availableVouchers
+            }
+        }
+        catch (error) {
+            console.error(`❌ Error fetching user: ${userId}`, error);
             throw error;
         }
     }
@@ -43,8 +48,11 @@ class UserModel {
             // Update only the fields that are provided
             const updateData: any = {};
             if (updates.name !== undefined) updateData.name = updates.name;
-            if (updates.image !== undefined) updateData.image = updates.image;
             if (updates.email !== undefined) updateData.email = updates.email;
+            if (updates.imageUrl !== undefined) updateData.image = updates.imageUrl;
+            if (updates.bio !== undefined) updateData.bio = updates.bio;
+            if (updates.hasBusiness !== undefined) updateData.hasBusiness = updates.hasBusiness;
+            updateData.updatedAt = updates.updatedAt
 
             console.log('🟢 updateData to be written to DB:', JSON.stringify(updateData, null, 2));
 
