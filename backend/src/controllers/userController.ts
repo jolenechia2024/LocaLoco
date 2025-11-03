@@ -32,13 +32,15 @@ class UserController {
     // Update user profile
     static async updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const { userId, name, image } = req.body;
-            const { userId, name, image } = req.body;
+            console.log('🔵 updateProfile endpoint hit');
+            console.log('🔵 Request body:', JSON.stringify(req.body, null, 2));
 
-            console.log('Update profile request:', { userId, name, imageLength: image?.length });
-            console.log('Update profile request:', { userId, name, imageLength: image?.length });
+            const { userId, name, email, image } = req.body;
+
+            console.log('🔵 Extracted values:', { userId, name, email, imageLength: image?.length });
 
             if (!userId) {
+                console.log('❌ Missing userId');
                 res.status(400).json({ error: 'User ID is required' });
                 return;
             }
@@ -46,23 +48,29 @@ class UserController {
             // Prepare update data
             const updates: any = {};
             if (name !== undefined) updates.name = name;
+            if (email !== undefined) updates.email = email;
             if (image !== undefined) updates.image = image;
+
+            console.log('🔵 Updates object:', JSON.stringify(updates, null, 2));
 
             // Check if there's anything to update
             if (Object.keys(updates).length === 0) {
+                console.log('❌ No fields to update');
                 res.status(400).json({ error: 'No fields to update' });
                 return;
             }
 
-            console.log('Updates to apply:', Object.keys(updates));
-
+            console.log('🔵 Calling UserModel.updateProfile with userId:', userId);
             const updatedUser = await UserModel.updateProfile(userId, updates);
+            console.log('🔵 Result from UserModel.updateProfile:', JSON.stringify(updatedUser, null, 2));
 
             if (!updatedUser) {
+                console.log('❌ User not found after update');
                 res.status(404).json({ error: 'User not found after update' });
                 return;
             }
 
+            console.log('✅ Profile updated successfully, sending response');
             res.status(200).json({
                 message: 'Profile updated successfully',
                 user: {
@@ -75,11 +83,33 @@ class UserController {
             });
         } catch (error: any) {
             if (error.message === 'User not found') {
+                console.log('❌ Error: User not found');
                 res.status(404).json({ error: 'User not found' });
             } else {
-                console.error('Error updating profile:', error);
+                console.error('❌ Error updating profile:', error);
                 res.status(500).json({ error: 'Failed to update profile' });
             }
+        }
+    }
+
+    // Get user's auth provider (check if they use Google, email/password, etc.)
+    static async getAuthProvider(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const userId = String(req.params.userId);
+            console.log('🔍 Checking auth provider for userId:', userId);
+
+            if (!userId) {
+                res.status(400).json({ error: 'User ID is required' });
+                return;
+            }
+
+            const provider = await UserModel.getAuthProvider(userId);
+
+            res.status(200).json({ provider });
+
+        } catch (error) {
+            console.error('Error checking auth provider:', error);
+            res.status(500).json({ error: 'Failed to check auth provider' });
         }
     }
 

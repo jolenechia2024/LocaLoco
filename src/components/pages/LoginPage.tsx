@@ -18,7 +18,9 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  // Use reactive session hook
+  const { data: session, isPending } = authClient.useSession();
 
   const headerBgColor = isDarkMode ? '#3a3a3a' : '#ffffff';
   const headerTextColor = isDarkMode ? '#ffffff' : '#000000';
@@ -27,41 +29,16 @@ export function LoginPage() {
   const textColor = isDarkMode ? '#ffffff' : '#000000';
   const mutedTextColor = isDarkMode ? '#a1a1aa' : '#6b7280';
 
-  // Check for existing session on page load (important for Google OAuth callback)
+  // Automatically redirect if session exists (important for Google OAuth callback)
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        // Small delay to allow logout to complete on backend
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        const session = await authClient.getSession();
-        console.log('Checking session on page load:', session);
-
-        if (session?.data?.session) {
-          // User has a valid session (e.g., from Google OAuth)
-          const user = session.data.user;
-          const userId = user?.id || 'unknown';
-          const accessToken = session.data.session.token;
-
-          console.log('✅ Session found, logging in:', { userId });
-
-          // Update auth store with session data
-          login(userId, 'user', accessToken);
-
-          // Redirect to map
-          navigate('/map', { replace: true });
-        } else {
-          console.log('No active session found');
-        }
-      } catch (err) {
-        console.error('Error checking session:', err);
-      } finally {
-        setIsCheckingSession(false);
-      }
-    };
-
-    checkSession();
-  }, [login, navigate]);
+    if (!isPending && session?.user && session?.session) {
+      console.log('✅ Session detected on login page, redirecting to map');
+      const userId = session.user.id;
+      const accessToken = session.session.token;
+      login(userId, 'user', accessToken);
+      navigate('/map', { replace: true });
+    }
+  }, [session, isPending, login, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     console.log('🎯 handleSubmit called!', { email, password: password ? '***' : 'empty' });
@@ -101,29 +78,9 @@ export function LoginPage() {
         return;
       }
 
-      // Check if we have a valid session
-      console.log('🔍 Checking session after login...');
-      const session = await authClient.getSession();
-      console.log('📊 Session after login:', session);
-
-      if (session?.data?.session) {
-        // Extract user info from session
-        const user = session.data.user;
-        const userId = user?.id || 'unknown';
-        const accessToken = session.data.session.token;
-
-        console.log('✅ Login successful:', { userId });
-
-        // Update auth store with real data - everyone is 'user' role
-        login(userId, 'user', accessToken);
-
-        console.log('🚀 Navigating to /map');
-        // Navigate to map
-        navigate('/map');
-      } else {
-        console.error('❌ No session after login');
-        setError('Login failed. No session created.');
-      }
+      // Session will be automatically detected by useSession hook
+      // and the useEffect above will handle the redirect
+      console.log('✅ Login successful, waiting for session sync...');
     } catch (err) {
       console.error('❌ Unexpected login error:', err);
       setError('An unexpected error occurred. Please try again.');

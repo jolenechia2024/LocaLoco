@@ -26,19 +26,20 @@ export const useUser = (userId: string | null) => {
       return;
     }
 
-<<<<<<< HEAD
-    const fetchUserProfile = async () => {
+    const fetchUserProfile = async (signal: AbortSignal) => {
       setLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
-          method: 'POST',
+        console.log('🌐 Fetching user profile for userId:', userId);
+
+        const response = await fetch(`${API_BASE_URL}/api/users/profile/${userId}`, {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials: 'include', // if using cookies for auth
-          body: JSON.stringify({ userId }),
+          credentials: 'include',
+          signal: signal, // Pass abort signal to fetch
         });
 
         if (!response.ok) {
@@ -68,100 +69,53 @@ export const useUser = (userId: string | null) => {
           loyaltyPoints: 0, // Add if you have loyalty points logic
         });
       } catch (err) {
+        // Ignore abort errors (happens during logout/unmount)
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log('🛑 Fetch aborted (user logged out or component unmounted)');
+          return;
+        }
+
         console.error('❌ Error fetching user profile:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
-        
-        // Fallback to default user on error
-        setUser({
-          id: userId,
-          role: 'user',
-          name: 'User',
-          email: 'user@email.com',
-          memberSince: new Date().toISOString().split('T')[0],
-          bio: '',
-          location: '',
-        });
+        setUser(null); // Clear user on error instead of creating fallback
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserProfile();
-=======
-    // Fetch real user data from backend
-    const fetchUserData = async () => {
-      try {
-        console.log('🌐 Fetching user data for userId:', userId);
-        // Call your backend API to get user data
-        const response = await fetch(`http://localhost:3000/api/users/profile/${userId}`);
+    // Add abort controller to cancel fetch on unmount/logout
+    const controller = new AbortController();
+    fetchUserProfile(controller.signal);
 
-        console.log('📡 Response status:', response.status, response.ok);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ API Error:', errorText);
-          throw new Error('Failed to fetch user data');
-        }
-
-        const userData = await response.json();
-        console.log('👤 useUser - Fetched user data from DB:', userData);
-
-        // Transform backend data to match frontend User type
-        const user: User = {
-          id: userData.id,
-          role: 'user',
-          name: userData.name || 'User',
-          email: userData.email,
-          memberSince: userData.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-          bio: userData.bio || '',
-          location: userData.location || 'Singapore',
-        };
-
-        setUser(user);
-
-        // TODO: Fetch real stats from backend
-        setStats(MOCK_STATS[userId] || { vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
-
-      } catch (error) {
-        console.error('❌ Error fetching user data:', error);
-
-        // Fallback to creating a basic user object if API fails
-        const fallbackUser: User = {
-          id: userId,
-          role: 'user',
-          name: 'User',
-          email: 'user@example.com',
-          memberSince: new Date().toISOString().split('T')[0],
-          bio: '',
-          location: 'Singapore',
-        };
-        setUser(fallbackUser);
-        setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
-      }
+    // Cleanup function to abort fetch if component unmounts or userId changes
+    return () => {
+      controller.abort();
     };
-
-    fetchUserData();
->>>>>>> bc4734c (1. Fixed the linking up username with creating forum posts/replies)
   }, [userId]);
 
-  const updateUser = useCallback(async (updatedUser: User | BusinessOwner) => {
-    console.log('🔄 updateUser called:', updatedUser);
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/user/profile/update`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          userId: updatedUser.id,
-          updates: {
-            name: updatedUser.name,
-            image: 'image' in updatedUser ? updatedUser.image : undefined,
+  const updateUser = useCallback(
+    async (updatedUser: User | BusinessOwner) => {
+      console.log('🔄 updateUser called:', updatedUser);
+
+      try {
+        // ✅ Determine user type
+        const isBusinessOwner = 'businessName' in updatedUser;
+        const userName = isBusinessOwner 
+          ? (updatedUser as BusinessOwner).businessName 
+          : (updatedUser as User).name;
+
+        const response = await fetch(`${API_BASE_URL}/api/user/update-profile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
-      });
+          credentials: 'include',
+          body: JSON.stringify({
+            userId: updatedUser.id,
+            name: userName,
+            image: 'image' in updatedUser ? updatedUser.image : undefined,
+          }),
+        });
 
       if (!response.ok) {
         throw new Error('Failed to update user profile');
