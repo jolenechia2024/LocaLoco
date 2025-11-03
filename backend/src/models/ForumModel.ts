@@ -114,7 +114,6 @@ class ForumModel {
                 id: post.id,
                 userEmail: post.userEmail,
                 businessUen: post.businessUen,
-                businessName: businessName,
                 title: post.title || null,
                 body: post.body,
                 likeCount: post.likeCount!,

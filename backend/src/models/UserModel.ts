@@ -1,6 +1,6 @@
 import { User, UpdateProfileData } from '../types/User.js';
 import db from '../database/db.js'
-import { referrals, user, vouchers, account } from '../database/schema.js';
+import { referrals, user, userPoints, vouchers } from '../database/schema.js';
 import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
 import { date } from 'better-auth';
 
@@ -45,11 +45,13 @@ class UserModel {
                 ));
             
             const successfulReferralsCount = successfulReferralsResult.length;
+            const availablePoints = await db.select().from(userPoints).where(eq(userPoints.userEmail, profile[0]!.email))
 
             return {
                 profile: profile[0] || null,
                 vouchers: vouchersWithReferralCode,
-                successfulReferrals: successfulReferralsCount
+                successfulReferrals: successfulReferralsCount,
+                points: availablePoints[0]!.points
             }
         } 
         catch (error) {
