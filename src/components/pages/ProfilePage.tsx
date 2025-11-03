@@ -9,6 +9,8 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { BusinessCard } from '../BusinessCard';
 import { EditProfileDialog } from './EditProfileDialog';
+import { useThemeStore } from '../../store/themeStore';
+import ReferralPanel from '../pages/ReferralPanel';
 
 interface ProfilePageProps {
   user: User;  
@@ -170,6 +172,22 @@ export function ProfilePage({
                 )}
               </div>
             </div>
+          </Card>
+        </div>
+
+        {/* Referral Panel Section */}
+        <div className="mb-8">
+          <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor }}>
+            {Number.isFinite(Number(user.id)) ? (
+              <ReferralPanel
+                userId={Number(user.id)}
+                appBaseUrl={window.location.origin}
+              />
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                Referral panel unavailable: user id is not numeric.
+              </div>
+            )}
           </Card>
         </div>
 

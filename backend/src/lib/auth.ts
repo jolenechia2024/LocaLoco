@@ -40,7 +40,8 @@ const auth = betterAuth({
             referralCode: {
                 type: 'string',
                 input: false,
-                required: false
+                required: false,
+                defaultValue: () => generateReferralCode()  // Auto-generate on user creation
             },
             referredByUserID: {
                 type:'string',

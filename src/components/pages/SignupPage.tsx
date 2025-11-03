@@ -1,5 +1,5 @@
 // src/components/pages/SignupPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Store, ChevronRight, ChevronLeft, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +18,7 @@ import { useThemeStore } from '../../store/themeStore';
 import { toast } from 'sonner';
 import { createAuthClient } from "better-auth/client";
 import { useAuthStore } from '../../store/authStore';
+import { ReferralCodeDialog } from '../ReferralCodeDialog';
 
 // Client setup
 const baseURL = 'http://localhost:3000';
@@ -110,6 +111,10 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   });
 
   const [businesses, setBusinesses] = useState<BusinessData[]>([createEmptyBusiness()]);
+  
+  // 🔹 REFERRAL: Dialog state
+  const [showReferralDialog, setShowReferralDialog] = useState(false);
+  const [newUserId, setNewUserId] = useState<string | null>(null);
 
   const totalSteps = hasBusiness ? 6 : 1;
   const currentBusiness = businesses[currentBusinessIndex];
@@ -117,6 +122,41 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError('');
+  };
+
+  // 🔹 REFERRAL: Handle referral code submission
+  const handleReferralSubmit = async (referralCode: string) => {
+    if (newUserId && referralCode) {
+      try {
+        const response = await fetch('http://localhost:3000/api/user/referral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            referralCode: referralCode,
+            referredId: newUserId
+          })
+        });
+        
+        if (response.ok) {
+          toast.success('Referral code applied! You and your friend will receive $5 vouchers!');
+        } else {
+          toast.error('Invalid referral code');
+        }
+      } catch (error) {
+        console.error('Error applying referral code:', error);
+        toast.error('Could not apply referral code');
+      }
+    }
+    
+    setShowReferralDialog(false);
+    setTimeout(() => navigate('/map'), 100);
+  };
+
+  // 🔹 REFERRAL: Handle dialog skip
+  const handleReferralSkip = () => {
+    setShowReferralDialog(false);
+    setTimeout(() => navigate('/map'), 100);
   };
 
   const handleBusinessChange = (field: string, value: any) => {
@@ -455,9 +495,11 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         isAuthenticated: store.isAuthenticated
       });
 
-      setTimeout(() => {
-        navigate('/map');
-      }, 100);
+      // 🔹 REFERRAL: Show referral code dialog after successful signup
+      setNewUserId(userId);
+      setShowReferralDialog(true);
+      
+      // Navigation happens after dialog is closed (see handleReferralSubmit/Skip)
       
       
 
@@ -1179,6 +1221,13 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
           </form>
         </div>
       </div>
+
+      {/* 🔹 REFERRAL: Show dialog after successful signup */}
+      <ReferralCodeDialog
+        open={showReferralDialog}
+        onSubmit={handleReferralSubmit}
+        onSkip={handleReferralSkip}
+      />
     </div>
   );
 }
