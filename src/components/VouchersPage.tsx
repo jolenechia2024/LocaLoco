@@ -1,7 +1,7 @@
 //localStorage.removeItem('user-points-storage');
 //location.reload(); -> to reload the voucher points coz now its saved
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { 
@@ -31,8 +31,7 @@ import { availableVouchers, mockRedeemedVouchers } from '../data/mockVoucherData
 import { toast, Toaster } from 'sonner';
 import { useThemeStore } from '../store/themeStore';
 import { useUserPointsStore } from '../store/userStore';
-
-
+import { getVouchers } from '../types/ref';
 
 interface VouchersPageProps {
   onBack: () => void;
@@ -46,12 +45,46 @@ export function VouchersPage({
   onRedeemVoucher,
   initialTab = 'available',
 }: VouchersPageProps) {
-  const currentPoints = useUserPointsStore((state) => state.currentPoints);  
+  const navigate = useNavigate();
+  const role = useAuthStore((state) => state.role); // ✅ Get user role
+  const userId = useAuthStore((state) => state.userId); // ✅ Get user ID
+  const currentPoints = useUserPointsStore((state) => state.currentPoints);
+  const deductPoints = useUserPointsStore((state) => state.deductPoints);
+  const isDarkMode = useThemeStore(state => state.isDarkMode);
+  
   console.log('Current points:', currentPoints);
 
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [redeemedVouchers, setRedeemedVouchers] = useState<RedeemedVoucher[]>(mockRedeemedVouchers);
-  const isDarkMode = useThemeStore(state => state.isDarkMode);
+  const [myVouchers, setMyVouchers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user vouchers from database
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const data = await getVouchers({ 
+          userId, 
+          status: 'issued', 
+          limit: 100 
+        });
+        console.log('📦 Fetched vouchers from database:', data);
+        setMyVouchers(data.vouchers || []);
+      } catch (error) {
+        console.error('Error fetching vouchers:', error);
+        toast.error('Failed to load your vouchers');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVouchers();
+  }, [userId]);
 
   // Color variables for dark/light mode
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
@@ -353,7 +386,7 @@ export function VouchersPage({
               Available Vouchers ({availableVouchers.length})
             </TabsTrigger>
             <TabsTrigger value="my-vouchers">
-              My Vouchers ({redeemedVouchers.length})
+              My Vouchers ({loading ? '...' : myVouchers.length})
             </TabsTrigger>
           </TabsList>
 
@@ -366,13 +399,75 @@ export function VouchersPage({
           </TabsContent>
 
           <TabsContent value="my-vouchers" className="space-y-6 mt-6">
-            {redeemedVouchers.length > 0 ? (
+            {loading ? (
+              <Card style={{ backgroundColor: cardBgColor, borderColor: borderColor }}>
+                <CardContent className="p-12 text-center">
+                  <div className="animate-spin w-8 h-8 border-4 border-[#FFA1A3] border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p style={{ color: secondaryTextColor }}>Loading your vouchers...</p>
+                </CardContent>
+              </Card>
+            ) : myVouchers.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {redeemedVouchers.map((redeemedVoucher) => (
-                  <RedeemedVoucherCard 
-                    key={redeemedVoucher.id} 
-                    redeemedVoucher={redeemedVoucher} 
-                  />
+                {myVouchers.map((voucher) => (
+                  <Card key={voucher.voucherId} style={{ backgroundColor: cardBgColor, borderColor: borderColor }}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div 
+                          className="p-3 rounded-lg" 
+                          style={{ backgroundColor: 'rgba(255, 161, 163, 0.2)' }}
+                        >
+                          <DollarSign className="w-6 h-6 text-[#FFA1A3]" />
+                        </div>
+                        <Badge className={
+                          voucher.status === 'used' ? 'bg-green-600 text-white' :
+                          voucher.status === 'expired' ? 'bg-gray-600 text-white' :
+                          voucher.status === 'revoked' ? 'bg-red-600 text-white' :
+                          'bg-[#FFA1A3] text-white'
+                        }>
+                          {voucher.status === 'used' && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                          {voucher.status.charAt(0).toUpperCase() + voucher.status.slice(1)}
+                        </Badge>
+                      </div>
+                      <CardTitle className="mt-3" style={{ color: textColor }}>
+                        ${voucher.amount} Voucher
+                      </CardTitle>
+                      <CardDescription style={{ color: secondaryTextColor }}>
+                        Referral reward voucher
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-sm" style={{ color: secondaryTextColor }}>
+                          {voucher.referralCode ? 'Referral Code Used' : 'Voucher ID'}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 px-3 py-2 rounded-lg text-center tracking-wider text-sm" 
+                                style={{ backgroundColor: accentBgColor, color: textColor }}>
+                            {voucher.referralCode || `#${voucher.voucherId}`}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyVoucherCode(voucher.referralCode || `#${voucher.voucherId}`)}
+                            disabled={voucher.status === 'used' || voucher.status === 'expired'}
+                            style={{ color: textColor, borderColor: borderColor }}
+                            className={isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <div style={{ color: secondaryTextColor }}>
+                          <p>Issued: {new Date(voucher.issuedAt).toLocaleDateString()}</p>
+                          {voucher.expiresAt && (
+                            <p>Expires: {new Date(voucher.expiresAt).toLocaleDateString()}</p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             ) : (
@@ -381,13 +476,13 @@ export function VouchersPage({
                   <Gift className="w-16 h-16 mx-auto mb-4" style={{ color: secondaryTextColor }} />
                   <h3 className="text-xl mb-2" style={{ color: textColor }}>No Vouchers Yet</h3>
                   <p className="mb-4" style={{ color: secondaryTextColor }}>
-                    Redeem vouchers from the Available Vouchers tab to get started!
+                    Refer friends to earn $5 vouchers!
                   </p>
                   <Button 
-                    onClick={() => setActiveTab('available')}
+                    onClick={() => navigate('/profile')}
                     className="bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white"
                   >
-                    Browse Vouchers
+                    View Referral Code
                   </Button>
                 </CardContent>
               </Card>

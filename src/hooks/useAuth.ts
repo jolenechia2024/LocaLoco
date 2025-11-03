@@ -11,7 +11,7 @@ export const useAuth = () => {
 
   // Extract only the specific values and functions we need from the store
   const storeUserId = useAuthStore((state) => state.userId);
-  const storeAccessToken = useAuthStore((state) => state.accessToken);
+  const storeAccessToken = useAuthStore((state) => state.token);
   const storeRole = useAuthStore((state) => state.role);
   const storeIsAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const storeLogin = useAuthStore((state) => state.login);
@@ -32,11 +32,9 @@ export const useAuth = () => {
         console.log('🔄 Syncing session to store:', userId);
         storeLogin(userId, currentRole, accessToken);
       }
-    } else if (!isPending && !session?.user && storeIsAuthenticated) {
-      // Session expired or user logged out on backend
-      console.log('🔄 Session expired, clearing store');
-      storeLogout();
     }
+    // Don't auto-logout on session load - only if user explicitly logs out
+    // This prevents premature logout during initial session load
   }, [session, isPending, storeUserId, storeAccessToken, storeRole, storeIsAuthenticated, storeLogin, storeLogout]);
 
   const login = useCallback(
@@ -136,7 +134,7 @@ export const useAuth = () => {
       storeLogout();
       console.log('✅ Local store cleared');
 
-      // Redirect to home/login
+      // Redirect to welcome page
       navigate(ROUTES.HOME);
     }
   }, [storeLogout, navigate]);

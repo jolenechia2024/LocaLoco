@@ -15,7 +15,8 @@ import {
   Ticket,
   User,
   LogOut,
-  LogIn
+  LogIn,
+  RefreshCw
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
@@ -67,12 +68,17 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const navigate = useNavigate();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const role = useAuthStore((state) => state.role);
   const setRole = useAuthStore(state => state.setRole);
+  
+  // Feature not implemented yet - hide account toggle
+  const hasMultipleAccounts = false;
+  const onAccountToggle = undefined;
 
   
   
@@ -113,14 +119,18 @@ export function AppSidebar({
     { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
     { icon: isDarkMode ? Sun : Moon, label: 'Theme', view: null, isThemeToggle: true },
     { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
+    ...(isAuthenticated ? [{ icon: LogOut, label: 'Logout', view: null, isLogout: true }] : []),
   ];
 
   const handleMenuClick = (
     view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | null,
     isThemeToggle?: boolean,
-    requiresAuth?: boolean
+    requiresAuth?: boolean,
+    isLogout?: boolean
   ) => {
-    if (isThemeToggle && onThemeToggle) {
+    if (isLogout) {
+      onLogout();
+    } else if (isThemeToggle && onThemeToggle) {
       onThemeToggle();
     } else if (view) {
       if (requiresAuth && !isAuthenticated) {
@@ -147,6 +157,7 @@ export function AppSidebar({
       : [{ icon: LogIn, label: 'Login', view: null as const, isLoginButton: true }]
     ),
     { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
+    ...(isAuthenticated ? [{ icon: LogOut, label: 'Logout', view: null, isLogout: true }] : []),
   ];
 
   return (
@@ -230,13 +241,16 @@ export function AppSidebar({
             {bottomMenuItems.map((item) => {
               const Icon = item.icon;
               const isDisabled = 'requiresAuth' in item && item.requiresAuth && !isAuthenticated;
+              const isLogout = 'isLogout' in item && item.isLogout;
 
               return (
                 <button
                   key={item.label}
-                  onClick={() => handleMenuClick(item.view, item.isThemeToggle, 'requiresAuth' in item ? item.requiresAuth : false)}
+                  onClick={() => handleMenuClick(item.view, item.isThemeToggle, 'requiresAuth' in item ? item.requiresAuth : false, isLogout)}
                   className={`w-full rounded-lg p-3 flex items-center gap-3 transition-colors relative ${
-                    isDisabled
+                    isLogout
+                      ? 'text-red-500 hover:bg-red-500/10'
+                      : isDisabled
                       ? `opacity-25 cursor-not-allowed ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`
                       : `${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'}`
                   }`}
@@ -402,6 +416,7 @@ export function AppSidebar({
                 const hasNotification = 'hasNotification' in item && item.hasNotification;
                 const isAvatar = 'isAvatar' in item && item.isAvatar;
                 const isLoginButton = 'isLoginButton' in item && item.isLoginButton;
+                const isLogout = 'isLogout' in item && item.isLogout;
                 const isDisabled = 'requiresAuth' in item && item.requiresAuth && !isAuthenticated;
 
                 return (
@@ -410,6 +425,8 @@ export function AppSidebar({
                     onClick={() => {
                       if (isLoginButton) {
                         navigate('/login');
+                      } else if (isLogout) {
+                        onLogout();
                       } else {
                         handleMenuClick(item.view, isThemeToggle, 'requiresAuth' in item ? item.requiresAuth : false);
                       }
@@ -417,6 +434,8 @@ export function AppSidebar({
                     className={`inline-flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors relative ${
                       isActive
                         ? 'bg-[#FFA1A3]/20 text-[#FFA1A3]'
+                        : isLogout
+                        ? 'text-red-500 active:bg-red-500/10'
                         : isDisabled
                         ? `opacity-25 cursor-not-allowed ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`
                         : `${secondaryTextColor} active:bg-gray-100 ${isDarkMode ? 'active:bg-gray-700' : ''}`

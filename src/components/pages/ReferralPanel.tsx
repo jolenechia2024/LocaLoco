@@ -1,7 +1,8 @@
 import React from 'react';
 import { getReferralInfo } from '../../types/ref';
+
 type Props = {
-  userId: number; // from your auth state
+  userId: number | string; // from your auth state
   appBaseUrl?: string; // e.g., "http://localhost:5173"
 };
 
@@ -14,11 +15,16 @@ export default function ReferralPanel({ userId, appBaseUrl = window.location.ori
   React.useEffect(() => {
     (async () => {
       setLoading(true);
-      const data = await getReferralInfo(userId);
-      setCode(data.referralCode);
-      setCount(data.successfulReferrals);
-      setTotalAmt(data.vouchers.totalAmount);
-      setLoading(false);
+      try {
+        const data = await getReferralInfo(userId);
+        setCode(data.referralCode);
+        setCount(data.successfulReferrals);
+        setTotalAmt(data.vouchers.totalAmount);
+      } catch (error) {
+        console.error('Error loading referral info:', error);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [userId]);
 

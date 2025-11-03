@@ -18,11 +18,38 @@ class UserModel {
     public static async getProfile(userId: string) {
         try {
             const profile = await db.select().from(user).where(eq(user.id, userId))
-            const availableVouchers = await db.select().from(vouchers).where(eq(vouchers.userId, userId))
             
+            // Fetch vouchers with referral code (join with referrals table)
+            const vouchersWithReferralCode = await db
+                .select({
+                    voucherId: vouchers.voucherId,
+                    userId: vouchers.userId,
+                    refId: vouchers.refId,
+                    amount: vouchers.amount,
+                    status: vouchers.status,
+                    issuedAt: vouchers.issuedAt,
+                    expiresAt: vouchers.expiresAt,
+                    referralCode: referrals.referralCode
+                })
+                .from(vouchers)
+                .leftJoin(referrals, eq(vouchers.refId, referrals.refId))
+                .where(eq(vouchers.userId, userId));
+            
+            // Count successful referrals (where this user is the referrer and status is 'claimed')
+            const successfulReferralsResult = await db
+                .select()
+                .from(referrals)
+                .where(and(
+                    eq(referrals.referrerId, userId),
+                    eq(referrals.status, 'claimed')
+                ));
+            
+            const successfulReferralsCount = successfulReferralsResult.length;
+
             return {
-                profile: profile,
-                vouchers: availableVouchers
+                profile: profile[0] || null,
+                vouchers: vouchersWithReferralCode,
+                successfulReferrals: successfulReferralsCount
             }
         } 
         catch (error) {
@@ -106,7 +133,7 @@ class UserModel {
 
             // Check if user (referredId) has already been referred
             const referredUserCheck = await db.select({ 
-                    referredByUserID: user.referredByUserID 
+                    referredByUserID: user.referredByUserId 
                 }).from(user).where(eq(user.id, referredId));
 
             if (referredUserCheck[0]?.referredByUserID) {
@@ -121,13 +148,17 @@ class UserModel {
                 const expiryDate = new Date(now);
                 expiryDate.setMonth(expiryDate.getMonth() + 1);
                 
+                // Convert to MySQL datetime format (YYYY-MM-DD HH:MM:SS)
+                const mysqlNow = now.toISOString().slice(0, 19).replace('T', ' ');
+                const mysqlExpiry = expiryDate.toISOString().slice(0, 19).replace('T', ' ');
+                
                 // Insert the referral record
                 const referralInsertResult = await tx.insert(referrals).values({
-                    referrerUserId: referrerUser.id,
-                    referredUserId: referredId,
+                    referrerId: referrerUser.id,
+                    referredId: referredId,
                     referralCode,
                     status: "claimed",
-                    referredAt: now.toISOString() // Use 'now' for consistency
+                    referredAt: mysqlNow
                 });
                 
                 const newReferralId = referralInsertResult[0].insertId;
@@ -138,8 +169,8 @@ class UserModel {
                     refId: newReferralId,
                     amount: 5,
                     status: 'issued',
-                    issuedAt: now.toISOString(),
-                    expiresAt: expiryDate.toISOString()
+                    issuedAt: mysqlNow,
+                    expiresAt: mysqlExpiry
                 });
 
                 // Insert voucher for the REFERRER user
@@ -148,13 +179,13 @@ class UserModel {
                     refId: newReferralId,
                     amount: 5,
                     status: 'issued',
-                    issuedAt: now.toISOString(),
-                    expiresAt: expiryDate.toISOString()
+                    issuedAt: mysqlNow,
+                    expiresAt: mysqlExpiry
                 });
 
                 // update the new user referredByUserID column
                 await tx.update(user).set({
-                    referredByUserID: referrerUser.id,
+                    referredByUserId: referrerUser.id,
                 }).where(eq(user.id, referredId))
 
                 return true;

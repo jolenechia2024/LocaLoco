@@ -26,7 +26,7 @@ class BusinessModel {
             }
 
             const fullBusiness: Business = {
-                ownerID: business.ownerID,
+                ownerID:business.ownerId,
                 uen: business.uen,
                 businessName: business.businessName,
                 businessCategory: business.businessCategory!, 
@@ -53,8 +53,9 @@ class BusinessModel {
         return container
     }
 
-    public static async getOwnedBusinesses(ownerId: string) {
-        const ownedBusinesses = await db.select().from(businesses).where(eq(businesses.ownerID, ownerId))
+    public static async getOwnedBusinesses(ownerId:string) {
+
+        const ownedBusinesses = await db.select().from(businesses).where(eq(businesses.ownerId, ownerId))
         const container: Business[] = [];
 
         for (const business of ownedBusinesses) {
@@ -71,7 +72,7 @@ class BusinessModel {
             }
 
             const fullBusiness: Business = {
-                ownerID: business.ownerID,
+                ownerID:business.ownerId,
                 uen: business.uen,
                 businessName: business.businessName,
                 businessCategory: business.businessCategory!, 
@@ -104,41 +105,41 @@ class BusinessModel {
         if (businessRow.length === 0 || !businessRow[0]) {
             return null
         }
-
-        const businessData = businessRow[0]
-        const paymentRow = await db.select().from(businessPaymentOptions).where(eq(businessPaymentOptions.uen, uen))
-
+        
+        const business = businessRow[0]!
+        const paymentRow = await db.select().from(businessPaymentOptions).where(eq(businessPaymentOptions.uen,uen))
+        
         const paymentOptions = paymentRow.map(p => p.paymentOption)
 
         const openingHours: Record<DayOfWeek, HourEntry> = {} as Record<DayOfWeek, HourEntry>
 
-        if (!businessData.open247) {
-            const hourRows = await db.select().from(businessOpeningHours).where(eq(businessOpeningHours.uen, businessData.uen))
+        if (!business.open247) {
+            const hourRows = await db.select().from(businessOpeningHours).where(eq(businessOpeningHours.uen, business.uen))
             for (const h of hourRows) {
                 openingHours[h.dayOfWeek as DayOfWeek] = { open: h.openTime, close: h.closeTime }
             }
         }
 
-        const fullBusiness: Business = {
-            ownerID: businessData.ownerID,
-            uen: businessData.uen,
-            businessName: businessData.businessName,
-            businessCategory: businessData.businessCategory!,
-            description: businessData.description!,
-            address: businessData.address!,
-            latitude: businessData.latitude,
-            longitude: businessData.longitude,
-            open247: Boolean(businessData.open247),
+        const fullBusiness:Business = {
+            ownerID: business.ownerId,
+            uen: business.uen,
+            businessName: business.businessName,
+            businessCategory: business.businessCategory!, 
+            description: business.description!,
+            address: business.address!,
+            latitude: business.latitude!,
+            longitude: business.longitude!,
+            open247: Boolean(business.open247),
             openingHours,
-            email: businessData.email!,
-            phoneNumber: businessData.phoneNumber!,
-            websiteLink: businessData.websiteLink ?? null,
-            socialMediaLink: businessData.socialMediaLink ?? null,
-            wallpaper: businessData.wallpaper!,
-            dateOfCreation: businessData.dateOfCreation!,
-            priceTier: businessData.priceTier!,
-            offersDelivery: Boolean(businessData.offersDelivery),
-            offersPickup: Boolean(businessData.offersPickup),
+            email: business.email!,
+            phoneNumber: business.phoneNumber!,
+            websiteLink: business.websiteLink ?? null,
+            socialMediaLink: business.socialMediaLink ?? null,
+            wallpaper: business.wallpaper!,
+            dateOfCreation: business.dateOfCreation!,
+            priceTier: business.priceTier!,
+            offersDelivery: Boolean(business.offersDelivery),
+            offersPickup: Boolean(business.offersPickup),
             paymentOptions
         }
 
@@ -270,7 +271,7 @@ class BusinessModel {
             }
 
             const fullBusinesses: Business[] = businessRows.map(business => ({
-                ownerID: business.ownerID,
+                ownerID:business.ownerId,
                 uen: business.uen,
                 businessName: business.businessName,
                 businessCategory: business.businessCategory!,
@@ -304,11 +305,11 @@ class BusinessModel {
         try {
 
             // update the user table to reflect that the user is now a business owner
-            await db.update(user).set({hasBusiness: true}).where(eq(user.id, business.ownerID))
+            await db.update(user).set({hasBusiness: 1}).where(eq(user.id, business.ownerID))
 
             // ✅ Insert only into businesses table as database schema defines
             await db.insert(businesses).values({
-                ownerID: business.ownerID,
+                ownerId:business.ownerID,
                 uen: business.uen,
                 businessName: business.businessName,
                 businessCategory: business.businessCategory,
@@ -422,7 +423,7 @@ class BusinessModel {
             await db
             .update(businesses)
             .set({
-                ownerID: business.ownerID,
+                ownerId: business.ownerID,
                 businessName: business.businessName,
                 businessCategory: business.businessCategory,
                 description: business.description,

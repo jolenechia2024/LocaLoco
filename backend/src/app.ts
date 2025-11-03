@@ -97,13 +97,11 @@ app.get('/health', async (req, res) => {
     })
 });
 
-//  handler for better auth
-app.all('/api/auth/{*any}', toNodeHandler(auth)); // handler for better-auth
-
-
-app.use(businessRouter)
-app.use(userRouter)
-app.use(featureRouter)
+app.use(businessRouter) // router for business functionality
+app.use(userRouter) // router for user functionality
+app.use(featureRouter) // router for small features
+app.use(imageUploadRouter) // router for the images
+app.use('/api/auth', toNodeHandler(auth)); // handler for better-auth
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));

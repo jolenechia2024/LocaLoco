@@ -14,14 +14,19 @@ class UserController {
                 return;
             }
 
-            const user = await UserModel.getUserById(userId);
+            const result = await UserModel.getUserById(userId);
 
-            if (!user) {
+            if (!result || !result.profile) {
                 res.status(404).json({ error: 'User not found' });
                 return;
             }
 
-            res.status(200).json(user);
+            // Flatten the response to include vouchers and successfulReferrals
+            res.status(200).json({
+                ...result.profile,
+                vouchers: result.vouchers,
+                successfulReferrals: result.successfulReferrals
+            });
 
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -134,7 +139,87 @@ class UserController {
         }
     }
 
-    
+    // handle referrals
+    static async handleReferral(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const referralCode = req.body.referralCode
+            const referredId = req.body.referredId
+
+            if (!referralCode || !referredId) {
+                res.status(400).json({
+                    message: 'Referral code and user ID are required',
+                });
+                return;
+            }
+
+            const result = await UserModel.handleReferral(referralCode, referredId)
+
+            if (result === false) {
+                res.status(400).json({
+                    message: 'Invalid referral code or already used',
+                });
+                return;
+            }
+
+            res.status(200).json({
+                message: 'Referral handled successfully',
+                success: true
+            });
+            
+        } 
+        catch (error: any) {
+            console.error(`Error handling referral:`, error);
+            res.status(500).json({
+                message: 'Server error processing referral',
+            });
+        }
+    }
+
+    // Get user vouchers
+    static async getUserVouchers(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const userId = String(req.params.userId);
+            const status = req.query.status as string | undefined;
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 100;
+
+            console.log('🎟️ Getting vouchers for userId:', userId, { status, page, limit });
+
+            if (!userId) {
+                res.status(400).json({ error: 'User ID is required' });
+                return;
+            }
+
+            const result = await UserModel.getUserById(userId);
+
+            if (!result || !result.profile) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
+
+            // Filter vouchers by status if provided
+            let vouchers = result.vouchers;
+            if (status) {
+                vouchers = vouchers.filter((v: any) => v.status === status);
+            }
+
+            // Implement pagination
+            const startIndex = (page - 1) * limit;
+            const endIndex = startIndex + limit;
+            const paginatedVouchers = vouchers.slice(startIndex, endIndex);
+
+            res.status(200).json({
+                vouchers: paginatedVouchers,
+                total: vouchers.length,
+                page,
+                limit
+            });
+
+        } catch (error) {
+            console.error('Error fetching vouchers:', error);
+            res.status(500).json({ error: 'Failed to fetch vouchers' });
+        }
+    }
 }
 
 export default UserController;

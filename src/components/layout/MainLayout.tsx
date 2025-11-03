@@ -32,9 +32,6 @@ export const MainLayout = () => {
   };
 
 
-  const { user, stats, updateUser } = useUser(userId || null);
-
-
   const handleNavigate = (view: string) => {
     const routeMap: Record<string, string> = {
       map: ROUTES.MAP,

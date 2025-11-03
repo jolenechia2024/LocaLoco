@@ -10,5 +10,8 @@ export const callbackURL = typeof window !== 'undefined'
     : 'http://localhost:5173/login';
 
 export const authClient = createAuthClient({
-    baseURL: baseURL
+    baseURL: baseURL,
+    fetchOptions: {
+        credentials: 'include'
+    }
 });

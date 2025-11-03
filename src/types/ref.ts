@@ -33,15 +33,33 @@ export async function login(payload: {
 }
 
 export async function getReferralInfo(userId: number | string) {
-  const res = await axios.get(`${API_BASE}/users/profile/${userId}`, {
+  // Fetch user profile (includes referralCode)
+  const profileRes = await axios.get(`${API_BASE}/users/profile/${userId}`, {
     withCredentials: true,
   });
-  // Return user data which includes referralCode
+  
+  // Fetch vouchers for this user to calculate total amount
+  const vouchersRes = await axios.get(`${API_BASE}/users/${userId}/vouchers`, {
+    params: { status: 'issued', limit: 1000 }, // Get all issued vouchers
+    withCredentials: true,
+  });
+  
+  const vouchers = vouchersRes.data.vouchers || [];
+  const totalAmount = vouchers.reduce((sum: number, v: any) => sum + (v.amount || 0), 0);
+  
+  // Count successful referrals (referrals where status is 'claimed')
+  // This data comes from the backend via a separate endpoint or from profile
+  const successfulReferrals = profileRes.data.successfulReferrals || 0;
+  
   return {
-    referralCode: res.data.referralCode,
-    userId: res.data.id,
-    name: res.data.name,
-    email: res.data.email,
+    referralCode: profileRes.data.referralCode || '',
+    userId: profileRes.data.id,
+    name: profileRes.data.name,
+    email: profileRes.data.email,
+    successfulReferrals,
+    vouchers: {
+      totalAmount
+    }
   };
 }
 

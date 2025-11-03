@@ -5,7 +5,11 @@ export default defineConfig({
     schema: './src/database/schema.ts',
     dialect: 'mysql',
     dbCredentials: {
-        url: String(process.env.DB_URL),
+        host: String(process.env.DB_HOST),
+        user: String(process.env.DB_USER),
+        password: String(process.env.DB_PASSWORD),
+        database: String(process.env.DB_NAME),
+        port: Number(process.env.DB_PORT),
     },
     verbose:true,
     strict:true

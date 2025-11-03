@@ -51,6 +51,9 @@ export const useUser = (userId: string | null) => {
           const errorText = await response.text();
           throw new Error(`Failed to fetch user profile: ${response.statusText}`);
         }
+        
+        const data = await response.json();
+        
         const profileData = data.profile || data;
         if (!profileData || !profileData.id) {
           throw new Error('Invalid API response: missing user id');

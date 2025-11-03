@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,12 +16,21 @@ interface ReferralCodeDialogProps {
   open: boolean;
   onSubmit: (referralCode: string) => void;
   onSkip: () => void;
+  initialCode?: string;
 }
 
-export function ReferralCodeDialog({ open, onSubmit, onSkip }: ReferralCodeDialogProps) {
-  const [referralCode, setReferralCode] = useState('');
+export function ReferralCodeDialog({ open, onSubmit, onSkip, initialCode = '' }: ReferralCodeDialogProps) {
+  const [referralCode, setReferralCode] = useState(initialCode);
 
-  console.log('🎁 ReferralCodeDialog render - open:', open);
+  console.log('🎁 ReferralCodeDialog render - open:', open, 'initialCode:', initialCode);
+  
+  // Update referralCode when initialCode changes (from URL ref parameter)
+  useEffect(() => {
+    if (initialCode) {
+      setReferralCode(initialCode);
+      console.log('🔗 Auto-filled referral code from URL:', initialCode);
+    }
+  }, [initialCode]);
 
   const handleSubmit = () => {
     if (referralCode.trim()) {
@@ -71,19 +80,18 @@ export function ReferralCodeDialog({ open, onSubmit, onSkip }: ReferralCodeDialo
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="sm:justify-center gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={onSkip}
-            className="w-full sm:w-auto"
           >
             Skip for now
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
-            className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90"
           >
             {referralCode.trim() ? 'Apply Code' : 'Continue'}
           </Button>

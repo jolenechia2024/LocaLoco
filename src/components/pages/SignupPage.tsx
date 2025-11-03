@@ -115,6 +115,16 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   // 🔹 REFERRAL: Dialog state
   const [showReferralDialog, setShowReferralDialog] = useState(false);
   const [newUserId, setNewUserId] = useState<string | null>(null);
+  const [prefillReferralCode, setPrefillReferralCode] = useState<string>('');
+
+  // 🔹 REFERRAL: Auto-fill from URL query param ?ref=XXXX
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get('ref');
+    if (ref) {
+      setPrefillReferralCode(ref.toUpperCase());
+      console.log('🔗 Referral link detected, will auto-fill code:', ref.toUpperCase());
+    }
+  }, []);
 
   const totalSteps = hasBusiness ? 6 : 1;
   const currentBusiness = businesses[currentBusinessIndex];
@@ -150,13 +160,13 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
     }
     
     setShowReferralDialog(false);
-    setTimeout(() => navigate('/map'), 100);
+    setTimeout(() => navigate('/map'), 300); // Longer delay to ensure session is synced
   };
 
   // 🔹 REFERRAL: Handle dialog skip
   const handleReferralSkip = () => {
     setShowReferralDialog(false);
-    setTimeout(() => navigate('/map'), 100);
+    setTimeout(() => navigate('/map'), 300); // Longer delay to ensure session is synced
   };
 
   const handleBusinessChange = (field: string, value: any) => {
@@ -381,8 +391,8 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
       const { data: userData, error: userError } = await authClient.signUp.email({
         email: formData.email,
         password: formData.password,
-        name: `${formData.firstName} ${formData.lastName}`,
-        callbackURL: baseURL
+        name: `${formData.firstName} ${formData.lastName}`
+        // No callbackURL - stay on signup page to show referral dialog
       });
 
       if (userError) {
@@ -394,14 +404,15 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
       console.log('📧 Registered user email:', userData?.user?.email);
 
       // If autoSignIn didn't work, manually sign in
+      let finalUserData = userData;
       if (!userData?.session) {
         console.log('⚠️ No session after signup, manually signing in...');
 
         // IMPORTANT: Manually sign in after signup to ensure session is created
         const { data: signInData, error: signInError } = await authClient.signIn.email({
           email: formData.email,
-          password: formData.password,
-          callbackURL: baseURL
+          password: formData.password
+          // No callbackURL - stay on signup page to show referral dialog
         });
 
         if (signInError) {
@@ -410,11 +421,12 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         }
 
         console.log('✅ Signed in manually:', signInData);
+        finalUserData = signInData; // Use signInData instead of userData
       }
 
-      // Get userId and accessToken from the signup/signin response
-      const userId = userData?.user?.id;
-      const accessToken = userData?.session?.token;
+      // Get userId and accessToken from the final response
+      const userId = finalUserData?.user?.id;
+      const accessToken = finalUserData?.token || finalUserData?.session?.token;
 
       if (!userId || !accessToken) {
         throw new Error('No session created after signup. Please try logging in manually.');
@@ -495,10 +507,14 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         isAuthenticated: store.isAuthenticated
       });
 
-      // 🔹 REFERRAL: Show referral code dialog after successful signup
+      // Give store time to persist to localStorage
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 🔹 REFERRAL: Show dialog to ask for referral code
+      console.log('🎊 Setting up referral dialog with userId:', userId);
       setNewUserId(userId);
       setShowReferralDialog(true);
-      
+      console.log('🎊 showReferralDialog set to true');
       // Navigation happens after dialog is closed (see handleReferralSubmit/Skip)
       
       
@@ -1227,6 +1243,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         open={showReferralDialog}
         onSubmit={handleReferralSubmit}
         onSkip={handleReferralSkip}
+        initialCode={prefillReferralCode}
       />
     </div>
   );

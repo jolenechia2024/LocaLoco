@@ -178,16 +178,10 @@ export function ProfilePage({
         {/* Referral Panel Section */}
         <div className="mb-8">
           <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor }}>
-            {Number.isFinite(Number(user.id)) ? (
-              <ReferralPanel
-                userId={Number(user.id)}
-                appBaseUrl={window.location.origin}
-              />
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                Referral panel unavailable: user id is not numeric.
-              </div>
-            )}
+            <ReferralPanel
+              userId={user.id}
+              appBaseUrl={window.location.origin}
+            />
           </Card>
         </div>
 

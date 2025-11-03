@@ -1,6 +1,8 @@
 // routes.tsx
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
+import { useAuthStore } from './store/authStore';
 
 // Layout components
 import { MainLayout } from './components/layout/MainLayout';
@@ -28,6 +30,15 @@ import { useNavigate } from "react-router-dom";
 
 export const WelcomePage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+  
+  // Redirect logged-in users to map
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate(ROUTES.MAP);
+    }
+  }, [isAuthenticated, navigate]);
+  
   return (
     <WelcomeModal
       open={true}
@@ -49,9 +60,11 @@ export const AppRoutes = () => {
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
       <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
 
+      {/* Welcome Page - Landing/Home */}
+      <Route path={ROUTES.HOME} element={<WelcomePage />} />
+      
       {/* Public Routes with Layout - Guests can browse */}
       <Route element={<MainLayout />}>
-        <Route path={ROUTES.HOME} element={<MapDiscoveryPage />} />
         <Route path={ROUTES.MAP} element={<MapDiscoveryPage />} />
         <Route path={ROUTES.BUSINESSES} element={<BusinessListPage />} />
         <Route path={ROUTES.BUSINESS} element={<BusinessDetailPage />} />
