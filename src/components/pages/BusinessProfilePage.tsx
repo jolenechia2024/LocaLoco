@@ -255,7 +255,10 @@ export function BusinessProfilePage({
               <h2 className="mb-4">Business Wallpaper</h2>
               <div className="rounded-lg overflow-hidden">
               <img 
-                src={`https://localoco.blob.core.windows.net/images/${businessOwner.wallpaper}`}
+                src={businessOwner.wallpaper.includes('localoco.blob.core.windows.net')
+                  ? businessOwner.wallpaper  // Already a full URL
+                  : `https://localoco.blob.core.windows.net/images/${businessOwner.wallpaper}`  // Just a filename
+                }
                 alt={`${businessOwner.businessName} wallpaper`}
                 className="w-full h-64 object-cover"
               />
