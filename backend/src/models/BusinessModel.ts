@@ -1,6 +1,6 @@
 import { Business, HourEntry, DayOfWeek, BusinessPaymentOption, PriceTier, FilterOptions, BusinessToBeUpdated } from "../types/Business.js";
 import db from '../database/db.js'
-import { businesses, businessReviews, forumPosts, forumPostsReplies } from '../database/schema.js';
+import { user, businesses, businessReviews, forumPosts, forumPostsReplies } from '../database/schema.js';
 import { businessPaymentOptions } from '../database/schema.js';
 import { businessOpeningHours } from '../database/schema.js';
 import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
@@ -322,8 +322,11 @@ class BusinessModel {
                 priceTier: business.priceTier,
                 offersDelivery: business.offersDelivery ? 1 : 0,
                 offersPickup: business.offersPickup ? 1 : 0,
+
+
             } as typeof businesses.$inferInsert)
 
+            await db.update(user).set({hasBusiness:true}).where(eq(user.id, business.ownerID));
 
                 
             // ✅ Insert payment options into separate table
@@ -352,10 +355,13 @@ class BusinessModel {
                     )
                 );
             }
+            
         }
         catch (err: any) {
             console.error(`Error registering business: ${err}`)
             throw err;
+
+        
         }
     }
 
@@ -473,7 +479,40 @@ class BusinessModel {
 
     public static async deleteBusiness(uen: string): Promise<void> {
         try {
-            await db.delete(businesses).where(eq(businesses.uen, uen))
+            // 1. Find the owner of the business being deleted
+        const businessInfo = await db.select({ ownerID: businesses.ownerID })
+            .from(businesses)
+            .where(eq(businesses.uen, uen))
+            .limit(1);
+
+
+            // 2. Isolate the potentially undefined element into a variable
+            const firstBusiness = businessInfo[0];
+
+            // 3. Add a guard clause to check THIS NEW variable
+            if (!firstBusiness) {
+                console.log(`Business with UEN ${uen} not found. No action taken.`);
+                return; // Exit if no business was found
+            }
+
+            // 4. Safely access the property on the verified variable
+            const ownerId = firstBusiness.ownerID;
+
+            await db.delete(businesses).where(eq(businesses.uen, uen));
+            await db.delete(businessPaymentOptions).where(eq(businessPaymentOptions.uen, uen));
+            await db.delete(businessOpeningHours).where(eq(businessOpeningHours.uen, uen));
+
+            const remainingBusinesses = await db.select({ uen: businesses.uen })
+                .from(businesses)
+                .where(eq(businesses.ownerID, ownerId))
+                .limit(1);
+
+            if (remainingBusinesses.length === 0) {
+                await db.update(user)
+                    .set({ hasBusiness: false })
+                    .where(eq(user.id, ownerId));
+            }
+
         }
         catch (err: any) {
             console.error(`Error deleting business: ${err}`)

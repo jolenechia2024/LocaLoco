@@ -42,8 +42,7 @@ export function BusinessProfilePage({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const navigate = useNavigate();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
-  const userId = useAuthStore((state) => state.userId); // ✅ Added
-  const { user, updateUser } = useUser(userId); // ✅ Added
+  const { user, updateUser } = useUser(); // ✅ Added
 
   // ✅ Use prop if provided, otherwise use hook
   const businessOwner = propBusinessOwner || (user as BusinessOwner);

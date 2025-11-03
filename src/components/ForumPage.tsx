@@ -19,8 +19,7 @@ interface ForumPageProps {
 
 export function ForumPage({ onBack}: ForumPageProps) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
-  const userId = useAuthStore((state) => state.userId);
-  const { user } = useUser(userId);
+  const { user, loading } = useUser(); 
   const { discussions, isLoading, error, createDiscussion, createReply, likeDiscussion, likeReply } = useForumPosts(user?.email);
   
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';

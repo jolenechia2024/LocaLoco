@@ -335,6 +335,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password
+
       };
   
       
@@ -444,22 +445,16 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         toast.success('All businesses registered successfully!');
       }
       
-  
-      const store = useAuthStore.getState();
-      store.login(userId, 'user', accessToken);
+      // ✅ Call the new triggerRefetch action.
+      useAuthStore.getState().triggerRefetch();
+      
+      console.log("Profile re-fetch triggered.");
 
-      console.log('🎯 Auth store updated with:', {
-        userId,
-        role: 'user',
-        token: accessToken,
-        isAuthenticated: store.isAuthenticated
-      });
 
       setTimeout(() => {
         navigate('/map');
       }, 100);
-      
-      
+    
 
       // // STEP 3: Login and redirect
       // if (onSignup) {

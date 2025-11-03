@@ -8,12 +8,14 @@ export interface AuthState {
   role: UserRole | null;
   userId: string | null;
   token: string | null;
+  refetchCounter: number; // Add a counter to trigger re-fetches
 }
 
 export interface AuthActions {
   login: (userId: string, role: UserRole, token?: string) => void;
   logout: () => void;
   setRole: (role: UserRole) => void;
+  triggerRefetch: () => void; // Add the action to trigger a re-fetch
 }
 
 export type AuthStore = AuthState & AuthActions;
@@ -23,6 +25,7 @@ const initialState: AuthState = {
   role: null,
   userId: null,
   token: null,
+  refetchCounter: 0, // Initialize the counter
 };
 
 export const useAuthStore = create<AuthStore>()(
@@ -46,9 +49,15 @@ export const useAuthStore = create<AuthStore>()(
       setRole: (role) => {
         set({ role });
       },
+
+      // This action increments the counter, causing subscribed hooks to re-run
+      triggerRefetch: () => {
+        set((state) => ({ refetchCounter: state.refetchCounter + 1 }));
+      },
     }),
     {
       name: 'auth-storage', // localStorage key
+      // The refetchCounter does not need to be persisted to localStorage
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         role: state.role,

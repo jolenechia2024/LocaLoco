@@ -35,9 +35,8 @@ export function WriteReviewPage({
   const navigate = useNavigate();
   const { businessId } = useParams();
   const { businesses } = useBusinesses();
-  const userId = useAuthStore((state) => state.userId);
   const role = useAuthStore((state) => state.role);
-  const { user } = useUser(userId);
+  const { user, loading } = useUser(); 
   const { submitReview, isSubmitting } = useReviews(); // Don't pass businessId here for submission
 
   // ✅ Helper: Get user display name safely
