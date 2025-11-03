@@ -24,20 +24,19 @@ export const useUser = (userId: string | null) => {
       return;
     }
 
-    const fetchUserProfile = async (signal: AbortSignal) => {
+    const fetchUserProfile = async () => {
       setLoading(true);
       setError(null);
 
       try {
         console.log('🌐 Fetching user profile for userId:', userId);
-
+        
         const response = await fetch(`${API_BASE_URL}/api/users/profile/${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          signal: signal, // Pass abort signal to fetch
         });
 
         console.log('📡 Response status:', response.status, response.ok);
@@ -67,9 +66,8 @@ export const useUser = (userId: string | null) => {
           role: 'user',
           name: profileData.name || 'User',
           email: profileData.email || 'user@email.com',
-          avatarUrl: profileData.image || undefined,
-          memberSince: profileData.createdAt
-            ? profileData.createdAt.split('T')[0]
+          memberSince: profileData.createdAt 
+            ? profileData.createdAt.split('T')[0] 
             : new Date().toISOString().split('T')[0],
           bio: profileData.bio || '',
           location: profileData.location || 'Singapore',
@@ -86,28 +84,25 @@ export const useUser = (userId: string | null) => {
         });
 
       } catch (err) {
-        // Ignore abort errors (happens during logout/unmount)
-        if (err instanceof Error && err.name === 'AbortError') {
-          console.log('🛑 Fetch aborted (user logged out or component unmounted)');
-          return;
-        }
-
         console.error('❌ Error fetching user profile:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
-        setUser(null); // Clear user on error instead of creating fallback
+
+        // ✅ Fallback: Create default user on error
+        setUser({
+          id: userId,
+          role: 'user',
+          name: 'User',
+          email: 'user@email.com',
+          memberSince: new Date().toISOString().split('T')[0],
+          bio: '',
+          location: 'Singapore',
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    // Add abort controller to cancel fetch on unmount/logout
-    const controller = new AbortController();
-    fetchUserProfile(controller.signal);
-
-    // Cleanup function to abort fetch if component unmounts or userId changes
-    return () => {
-      controller.abort();
-    };
+    fetchUserProfile();
   }, [userId]);
 
   const updateUser = useCallback(
@@ -121,16 +116,18 @@ export const useUser = (userId: string | null) => {
           ? (updatedUser as BusinessOwner).businessName 
           : (updatedUser as User).name;
 
-        const response = await fetch(`${API_BASE_URL}/api/user/update-profile`, {
-          method: 'POST',
+        const response = await fetch(`${API_BASE_URL}/api/user/profile/update`, {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
           body: JSON.stringify({
             userId: updatedUser.id,
-            name: userName,
-            image: 'image' in updatedUser ? updatedUser.image : undefined,
+            updates: {
+              name: userName,
+              image: 'image' in updatedUser ? updatedUser.image : undefined,
+            },
           }),
         });
 

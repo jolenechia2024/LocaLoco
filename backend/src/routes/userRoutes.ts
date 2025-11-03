@@ -6,9 +6,6 @@ const userRouter = Router();
 // Get user profile by ID (GET request with userId as URL parameter)
 userRouter.get('/api/users/profile/:userId', UserController.getProfile.bind(UserController));
 
-// Get user's auth provider (Google, email/password, etc.)
-userRouter.get('/api/users/auth-provider/:userId', UserController.getAuthProvider.bind(UserController));
-
 // Update user profile
 userRouter.post('/api/user/update-profile', UserController.updateProfile.bind(UserController));
 

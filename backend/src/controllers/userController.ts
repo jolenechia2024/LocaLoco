@@ -32,15 +32,10 @@ class UserController {
     // Update user profile
     static async updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            console.log('🔵 updateProfile endpoint hit');
-            console.log('🔵 Request body:', JSON.stringify(req.body, null, 2));
 
             const { userId, name, email, imageUrl, bio, hasBusiness } = req.body;
 
-            console.log('🔵 Extracted values:', { userId, name, email, imageUrl: imageUrl?.length, bio, hasBusiness });
-
             if (!userId) {
-                console.log('❌ Missing userId');
                 res.status(400).json({ error: 'User ID is required' });
                 process.exit(1)
             }
@@ -52,51 +47,13 @@ class UserController {
             if (imageUrl !== undefined) updates.imageUrl = imageUrl;
             if (bio !== undefined) updates.bio = bio;
             if (hasBusiness !== undefined) updates.hasBusiness = hasBusiness;
-            updates.updatedAt = new Date()
+            updates.updatedAt = new Date().toISOString()
 
-            console.log('🔵 Updates object:', JSON.stringify(updates, null, 2));
-
-            console.log('🔵 Calling UserModel.updateProfile with userId:', userId);
             const updatedUser = await UserModel.updateProfile(userId, updates);
-            console.log('🔵 Result from UserModel.updateProfile:', JSON.stringify(updatedUser, null, 2));
-
-            if (!updatedUser) {
-                console.log('❌ User not found after update');
-                res.status(404).json({ error: 'User not found after update' });
-                return;
-            }
-
-            console.log('✅ Profile updated successfully, sending response');
             res.status(200).json(updatedUser)
-        } catch (error: any) {
-            if (error.message === 'User not found') {
-                console.log('❌ Error: User not found');
-                res.status(404).json({ error: 'User not found' });
-            } else {
-                console.error('❌ Error updating profile:', error);
-                res.status(500).json({ error: 'Failed to update profile' });
-            }
-        }
-    }
-
-    // Get user's auth provider (check if they use Google, email/password, etc.)
-    static async getAuthProvider(req: Request, res: Response, next: NextFunction): Promise<void> {
-        try {
-            const userId = String(req.params.userId);
-            console.log('🔍 Checking auth provider for userId:', userId);
-
-            if (!userId) {
-                res.status(400).json({ error: 'User ID is required' });
-                return;
-            }
-
-            const provider = await UserModel.getAuthProvider(userId);
-
-            res.status(200).json({ provider });
-
-        } catch (error) {
-            console.error('Error checking auth provider:', error);
-            res.status(500).json({ error: 'Failed to check auth provider' });
+        } 
+        catch (error: any) {
+            console.error(`Error updating user details: ${error}`)
         }
     }
 
