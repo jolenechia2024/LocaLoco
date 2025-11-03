@@ -7,6 +7,7 @@ export interface User {
   memberSince?: string;
   bio?: string;
   location?: string;
+  hasBusiness: boolean; // Add this property
 }
 
 export interface UserStats {

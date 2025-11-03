@@ -1,8 +1,6 @@
 import { Business, HourEntry, DayOfWeek, BusinessPaymentOption } from "../types/Business.js";
 import db from '../database/db.js'
-
-// for drizzle
-import { businesses } from '../database/schema.js';
+import { businesses, businessReviews, forumPosts, forumPostsReplies, user } from '../database/schema.js';
 import { businessPaymentOptions } from '../database/schema.js';
 import { businessOpeningHours } from '../database/schema.js';
 import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
@@ -304,6 +302,10 @@ class BusinessModel {
 
     public static async registerBusiness (business: Business) {
         try {
+
+            // update the user table to reflect that the user is now a business owner
+            await db.update(user).set({hasBusiness: true}).where(eq(user.id, business.ownerID))
+
             // ✅ Insert only into businesses table as database schema defines
             await db.insert(businesses).values({
                 ownerID: business.ownerID,
@@ -354,6 +356,9 @@ class BusinessModel {
                     )
                 );
             }
+
+            // update the user table to reflect that the user is now a business owner
+            // await db.update(user).set({hasBusiness: true}).where(eq(user.id, business.ownerID))
         }
         catch (err: any) {
             console.error(`Error registering business: ${err}`)

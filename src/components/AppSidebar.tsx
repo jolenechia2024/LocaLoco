@@ -40,6 +40,7 @@ import { Button } from './ui/button';
 import { useThemeStore } from '../store/themeStore';
 
 
+
 interface AppSidebarProps {
   onNavigate: (view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers') => void;
   onLogout: () => void;
@@ -52,7 +53,6 @@ interface AppSidebarProps {
   onThemeToggle?: () => void;
   isAuthenticated?: boolean;
 }
-
 
 export function AppSidebar({
   onNavigate,
@@ -72,6 +72,9 @@ export function AppSidebar({
   const [isMobile, setIsMobile] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const role = useAuthStore((state) => state.role);
+  const setRole = useAuthStore(state => state.setRole);
+
+  
   
   // Detect screen size
   useEffect(() => {
@@ -79,13 +82,8 @@ export function AppSidebar({
       setIsMobile(window.innerWidth < 768);
     };
     
-    // Check on mount
     checkMobile();
-    
-    // Add listener for window resize
     window.addEventListener('resize', checkMobile);
-    
-    // Cleanup
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
@@ -96,7 +94,6 @@ export function AppSidebar({
   const hoverBgColor = isDarkMode ? 'hover:bg-[#404040]' : 'hover:bg-gray-100';
   const avatarBgColor = isDarkMode ? 'bg-gray-600' : 'bg-gray-300';
 
-
   const allMenuItems = [
     { icon: Home, label: 'Home', view: 'map' as const },
     { icon: Box, label: 'Explore', view: 'list' as const },
@@ -105,7 +102,6 @@ export function AppSidebar({
     { icon: Layers, label: 'Forum', view: 'forum' as const, requiresAuth: true },
   ];
 
-
   const mainMenuItems = allMenuItems.filter(item => {
     if (item.userOnly && role !== 'user') {
       return false;
@@ -113,13 +109,11 @@ export function AppSidebar({
     return true;
   });
 
-
   const bottomMenuItems = [
     { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
     { icon: isDarkMode ? Sun : Moon, label: 'Theme', view: null, isThemeToggle: true },
     { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
   ];
-
 
   const handleMenuClick = (
     view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | null,
@@ -137,7 +131,6 @@ export function AppSidebar({
     }
   };
 
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -146,8 +139,6 @@ export function AppSidebar({
       .toUpperCase();
   };
 
-
-  // Combine all menu items for mobile view
   const allBottomNavItems = [
     ...mainMenuItems.filter(item => item.view !== 'vouchers'), // Remove vouchers from mobile
     { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
@@ -160,7 +151,7 @@ export function AppSidebar({
 
   return (
     <>
-      {/* Desktop Sidebar - only render on desktop */}
+      {/* Desktop Sidebar */}
       {!isMobile && (
         <div
           className="fixed left-0 top-0 h-screen transition-all duration-300 ease-in-out z-40"
@@ -187,6 +178,26 @@ export function AppSidebar({
               )}
             </div>
           </div>
+
+          {/* ✅ Account Toggle Section - Only show if user has multiple accounts */}
+          {hasMultipleAccounts && onAccountToggle && (
+            <div className={`px-3 py-3 border-b ${borderColor}`}>
+              <button
+                onClick={onAccountToggle}
+                className={`w-full rounded-lg p-3 flex items-center gap-3 ${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'} transition-colors`}
+              >
+                <RefreshCw className="w-5 h-5 flex-shrink-0" />
+                {isExpanded && (
+                  <div className="flex-1 text-left">
+                    <span className="text-sm whitespace-nowrap">Switch to</span>
+                    <span className="text-sm font-semibold ml-1 text-[#FFA1A3]">
+                      {role === 'user' ? 'Business' : 'User'}
+                    </span>
+                  </div>
+                )}
+              </button>
+            </div>
+          )}
 
           <nav className="flex-1 px-3 py-2 space-y-1">
             {mainMenuItems.map((item) => {
@@ -325,6 +336,20 @@ export function AppSidebar({
                         <User className="w-4 h-4 mr-2" />
                         <span>View Profile</span>
                       </DropdownMenuItem>
+                      {/* ✅ Add switch account option in dropdown */}
+                      {hasMultipleAccounts && onAccountToggle && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setIsDropdownOpen(false);
+                            onAccountToggle();
+                          }}
+                          className={`${textColor} ${hoverBgColor} cursor-pointer`}
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2 text-[#FFA1A3]" />
+                          <span>Switch to {role === 'user' ? 'Business' : 'User'}</span>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.preventDefault();
@@ -346,7 +371,7 @@ export function AppSidebar({
         </div>
       )}
 
-      {/* Mobile Bottom Navigation - only render on mobile */}
+      {/* Mobile Bottom Navigation */}
       {isMobile && (
         <div
           className="fixed bottom-0 left-0 right-0 z-40 border-t safe-area-inset-bottom"
@@ -373,7 +398,7 @@ export function AppSidebar({
               {allBottomNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.view;
-                const isThemeToggle = 'isThemeToggle' in item && item.isThemeToggle;
+                const isThemeToggle = 'isThemeToggle' in item ? (item as any).isThemeToggle : undefined;
                 const hasNotification = 'hasNotification' in item && item.hasNotification;
                 const isAvatar = 'isAvatar' in item && item.isAvatar;
                 const isLoginButton = 'isLoginButton' in item && item.isLoginButton;
@@ -418,6 +443,17 @@ export function AppSidebar({
                   </button>
                 );
               })}
+              {/* ✅ Add mobile account toggle button */}
+              {hasMultipleAccounts && onAccountToggle && (
+                <button
+                  onClick={onAccountToggle}
+                  className={`inline-flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors ${secondaryTextColor} active:bg-gray-100 ${isDarkMode ? 'active:bg-gray-700' : ''}`}
+                  style={{ minWidth: '64px', flexShrink: 0 }}
+                >
+                  <RefreshCw className="w-5 h-5 flex-shrink-0 text-[#FFA1A3]" />
+                  <span className="text-xs mt-1 whitespace-nowrap">Switch</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -463,3 +499,5 @@ export function AppSidebar({
     </>
   );
 }
+
+

@@ -4,12 +4,16 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useUser } from '../../hooks/useUser';
 import { ROUTES } from '../../constants/routes';
+import { toast } from 'sonner'; // ✅ For notifications
+import { useAuthStore } from '../../store/authStore'; // ✅ Import auth store
+import { useState } from 'react';
 
 export const MainLayout = () => {
-  const { logout, userId } = useAuth();
+  const { logout, userId, role } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const { setRole } = useAuthStore(); // ✅ Get setRole action
 
   const { user, stats, updateUser } = useUser(userId || null);
   const isAuthenticated = !!userId; // Check if user is logged in
@@ -26,6 +30,10 @@ export const MainLayout = () => {
     if (path === ROUTES.VOUCHERS) return 'vouchers';
     return 'list';
   };
+
+
+  const { user, stats, updateUser } = useUser(userId || null);
+
 
   const handleNavigate = (view: string) => {
     const routeMap: Record<string, string> = {

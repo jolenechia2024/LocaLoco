@@ -601,7 +601,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
               <Checkbox
                 id="hasBusiness"
                 checked={hasBusiness}
-                onCheckedChange={handleBusinessToggle}
+                onCheckedChange={value => setHasBusiness(!!value)}
                 className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 style={{ 
                   borderColor: isDarkMode ? '#ffffff' : '#000000',

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { User, UserStats } from '../types/user';
 import { BusinessOwner } from '../data/mockBusinessOwnerData';
 
-const API_BASE_URL = 'http://localhost:3000'; // Adjust to your backend port
+const API_BASE_URL = 'http://localhost:3000';
 
 export const useUser = (userId: string | null) => {
   const [user, setUser] = useState<User | null>(null);
@@ -15,21 +15,17 @@ export const useUser = (userId: string | null) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-<<<<<<< HEAD
-=======
-    console.log('🔍 useUser - userId:', userId);
-
->>>>>>> bc4734c (1. Fixed the linking up username with creating forum posts/replies)
     if (!userId) {
       setUser(null);
       setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
       return;
     }
+    let isMounted = true;
+    let timeoutId: number | undefined = undefined;
 
     const fetchUserProfile = async (signal: AbortSignal) => {
       setLoading(true);
       setError(null);
-
       try {
         console.log('🌐 Fetching user profile for userId:', userId);
 
@@ -43,13 +39,13 @@ export const useUser = (userId: string | null) => {
         });
 
         if (!response.ok) {
+          const errorText = await response.text();
           throw new Error(`Failed to fetch user profile: ${response.statusText}`);
         }
-
-        const data = await response.json();
-        console.log('✅ User profile fetched:', data);
-
-        // Map the API response to your User type
+        const profileData = data.profile || data;
+        if (!profileData || !profileData.id) {
+          throw new Error('Invalid API response: missing user id');
+        }
         const userData: User = {
           id: data.profile.id,
           role: 'user',
@@ -61,17 +57,16 @@ export const useUser = (userId: string | null) => {
             : new Date().toISOString().split('T')[0],
           bio: profileData.bio || '',
           location: profileData.location || 'Singapore',
+          hasBusiness: profileData.hasBusiness || false, // ✅ Map the value here
         };
-
-        console.log('✅ Mapped user data:', userData);
-        setUser(userData);
-
-        // Set stats based on vouchers count
-        setStats({
-          vouchersCount: data.vouchers?.length || 0,
-          reviewsCount: 0, // You may need another API call for reviews
-          loyaltyPoints: 0, // Add if you have loyalty points logic
-        });
+        if (isMounted) {
+          setUser(userData);
+          setStats({
+            vouchersCount: data.vouchers?.length || 0,
+            reviewsCount: data.reviews?.length || 0,
+            loyaltyPoints: profileData.loyaltyPoints || 0,
+          });
+        }
       } catch (err) {
         // Ignore abort errors (happens during logout/unmount)
         if (err instanceof Error && err.name === 'AbortError') {
@@ -83,7 +78,7 @@ export const useUser = (userId: string | null) => {
         setError(err instanceof Error ? err.message : 'Unknown error');
         setUser(null); // Clear user on error instead of creating fallback
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
@@ -99,13 +94,10 @@ export const useUser = (userId: string | null) => {
 
   const updateUser = useCallback(
     async (updatedUser: User | BusinessOwner) => {
-      console.log('🔄 updateUser called:', updatedUser);
-
       try {
-        // ✅ Determine user type
         const isBusinessOwner = 'businessName' in updatedUser;
-        const userName = isBusinessOwner 
-          ? (updatedUser as BusinessOwner).businessName 
+        const userName = isBusinessOwner
+          ? (updatedUser as BusinessOwner).businessName
           : (updatedUser as User).name;
 
         const response = await fetch(`${API_BASE_URL}/api/user/update-profile`, {
@@ -120,24 +112,17 @@ export const useUser = (userId: string | null) => {
             image: 'image' in updatedUser ? updatedUser.image : undefined,
           }),
         });
-
-      if (!response.ok) {
-        throw new Error('Failed to update user profile');
+        if (!response.ok) {
+          throw new Error('Failed to update user profile');
+        }
+        const data = await response.json();
+        setUser({ ...updatedUser });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Update failed');
       }
-
-      const data = await response.json();
-      console.log('✅ Profile updated:', data);
-
-      setUser(() => {
-        const newUser = { ...updatedUser };
-        console.log('✅ State updated with:', newUser);
-        return newUser;
-      });
-    } catch (err) {
-      console.error('❌ Error updating user:', err);
-      setError(err instanceof Error ? err.message : 'Update failed');
-    }
-  }, [userId]);
+    },
+    []
+  );
 
   return { user, stats, updateUser, loading, error };
 };
