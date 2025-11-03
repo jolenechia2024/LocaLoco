@@ -16,14 +16,8 @@ import {
 } from '../ui/select';
 import { useThemeStore } from '../../store/themeStore';
 import { toast } from 'sonner';
-import { createAuthClient } from "better-auth/client";
+import { authClient } from '../../lib/authClient';
 import { useAuthStore } from '../../store/authStore';
-
-// Client setup
-const baseURL = 'http://localhost:3000';
-const authClient = createAuthClient({
-  baseURL: baseURL
-});
 
 
 interface SignupPageProps {
@@ -342,50 +336,21 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         email: formData.email,
         password: formData.password,
         name: `${formData.firstName} ${formData.lastName}`,
-        callbackURL: baseURL
+        // Don't use callbackURL - let it stay on the frontend
       });
 
       if (userError) {
         throw new Error('User registration failed: ' + userError.message);
       }
 
-      console.log('✅ User registered:', userData);
-      console.log('📋 Registered user ID:', userData?.user?.id);
-      console.log('📧 Registered user email:', userData?.user?.email);
-
-      // If autoSignIn didn't work, manually sign in
-      if (!userData?.session) {
-        console.log('⚠️ No session after signup, manually signing in...');
-
-        // IMPORTANT: Manually sign in after signup to ensure session is created
-        const { data: signInData, error: signInError } = await authClient.signIn.email({
-          email: formData.email,
-          password: formData.password,
-          callbackURL: baseURL
-        });
-
-        if (signInError) {
-          console.error('❌ Sign in error:', signInError);
-          throw new Error('Sign in after registration failed: ' + signInError.message);
-        }
-
-        console.log('✅ Signed in manually:', signInData);
+      if (!userData?.user?.id) {
+        throw new Error('Registration failed. Please try again.');
       }
 
-      // Get userId and accessToken from the signup/signin response
-      const userId = userData?.user?.id;
-      const accessToken = userData?.session?.token;
+      console.log('✅ User registered:', userData.user.id);
+      toast.success('Account created successfully!');
 
-      if (!userId || !accessToken) {
-        throw new Error('No session created after signup. Please try logging in manually.');
-      }
-
-      console.log('✅ Final session userId:', userId);
-      console.log('✅ Final session token:', accessToken);
-
-      toast.success('Account created and logged in!');
-  
-      // STEP 2: NOW register all businesses concurrently
+      // STEP 2: Register businesses if any
       if (hasBusiness) {
         // Upload all wallpapers concurrently
         const businessRegistrations = await Promise.all(
@@ -397,7 +362,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
             }
 
             return {
-              ownerID: userId, // Link business to user
+              ownerID: userData.user.id, // Link business to user
               uen: business.uen,
               businessName: business.businessName,
               businessCategory: business.businessCategory,
@@ -423,7 +388,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         // Send all business registrations CONCURRENTLY
         const results = await Promise.allSettled(
           businessRegistrations.map(payload =>
-            fetch('/api/register-business', {
+            fetch('http://localhost:3000/api/register-business', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
@@ -441,32 +406,12 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
           );
         }
   
-        toast.success('All businesses registered successfully!');
+        toast.success('All businesses registered!');
       }
-      
-  
-      const store = useAuthStore.getState();
-      store.login(userId, 'user', accessToken);
 
-      console.log('🎯 Auth store updated with:', {
-        userId,
-        role: 'user',
-        token: accessToken,
-        isAuthenticated: store.isAuthenticated
-      });
-
-      setTimeout(() => {
-        navigate('/map');
-      }, 100);
-      
-      
-
-      // // STEP 3: Login and redirect
-      // if (onSignup) {
-      //   // onSignup({ ...formData, businesses, userId }, 'user');
-      // } else {
-      //   navigate('/map');
-      // }
+      // Redirect to login - session will be automatically detected there
+      toast.success('Redirecting to your account...');
+      setTimeout(() => navigate('/login'), 500);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       setError('Error signing up: ' + errorMessage);

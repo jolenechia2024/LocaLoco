@@ -1,9 +1,10 @@
 //localStorage.removeItem('user-points-storage');
 //location.reload(); -> to reload the voucher points coz now its saved
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useUser } from '../hooks/useUser';
 import { 
   ArrowLeft, 
   DollarSign, 
@@ -36,16 +37,21 @@ interface VouchersPageProps {
   initialTab?: 'available' | 'my-vouchers';
 }
 
-export function VouchersPage({ 
+export function VouchersPage({
   initialTab = 'available',
 }: VouchersPageProps) {
   const navigate = useNavigate();
-  const role = useAuthStore((state) => state.role); // ✅ Get user role
-  const currentPoints = useUserPointsStore((state) => state.currentPoints);
+  const role = useAuthStore((state) => state.role);
+  const userId = useAuthStore((state) => state.userId);
+  const { stats } = useUser(userId);
+  const currentPoints = stats.loyaltyPoints;
+  const setZustandPoints = useUserPointsStore((state) => state.setPoints);
   const deductPoints = useUserPointsStore((state) => state.deductPoints);
   const isDarkMode = useThemeStore(state => state.isDarkMode);
-  
-  console.log('Current points:', currentPoints);
+
+  useEffect(() => {
+    setZustandPoints(currentPoints);
+  }, [currentPoints, setZustandPoints]);
 
   const [activeTab, setActiveTab] = useState(initialTab);
   const [redeemedVouchers, setRedeemedVouchers] = useState<RedeemedVoucher[]>(mockRedeemedVouchers);

@@ -3,7 +3,7 @@ import { Review } from '../types/business';
 
 interface SubmitReviewData {
   userEmail: string;
-  businessUen: string;
+  businessUEN: string; // Changed to match backend parameter name
   title?: string;
   body: string;
   rating: number;
@@ -77,7 +77,13 @@ export const useReviews = (businessId?: string) => {
       if (!response.ok) throw new Error('Failed to fetch reviews');
 
       const backendReviews: BackendReview[] = await response.json();
-      return backendReviews.map(review => transformBackendReview(review, businessUen));
+
+      // Sort reviews by createdAt date, latest first
+      const sortedReviews = backendReviews.sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      return sortedReviews.map(review => transformBackendReview(review, businessUen));
     } catch (error: any) {
       console.error('Fetch reviews error:', error);
       setError(error.message || 'Failed to fetch reviews');

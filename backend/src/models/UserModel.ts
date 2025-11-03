@@ -1,6 +1,6 @@
 import { User, UpdateProfileData } from '../types/User.js';
 import db from '../database/db.js'
-import { referrals, user, vouchers, account } from '../database/schema.js';
+import { referrals, user, userPoints, vouchers, account } from '../database/schema.js';
 import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
 import { date } from 'better-auth';
 
@@ -18,9 +18,17 @@ class UserModel {
             const profile = await db.select().from(user).where(eq(user.id, userId))
             const availableVouchers = await db.select().from(vouchers).where(eq(vouchers.userId, userId))
 
+            // Fetch user points if profile exists
+            let points = 0;
+            if (profile[0]) {
+                const availablePoints = await db.select().from(userPoints).where(eq(userPoints.userEmail, profile[0].email))
+                points = availablePoints[0]?.points || 0;
+            }
+
             return {
                 profile: profile[0] || null,
-                vouchers: availableVouchers
+                vouchers: availableVouchers,
+                points: points
             }
         }
         catch (error) {

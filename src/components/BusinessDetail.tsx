@@ -38,7 +38,7 @@ export function BusinessDetail({
   const [shareMessage, setShareMessage] = useState('');
 
   const textColor = isDarkMode ? '#ffffff' : '#000000';
-  const cardBgColor = isDarkMode ? '#2a2a2a' : '#ffffff';
+  const cardBgColor = isDarkMode ? '#262626' : '#ffffff';
   const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
 
   useEffect(() => {
