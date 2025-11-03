@@ -24,4 +24,3 @@ export interface Voucher {
     usedDate?: string;
     businessUsedAt?: string;
   }
-  

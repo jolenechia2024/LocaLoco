@@ -1,6 +1,10 @@
+// 📍 src/hooks/useUser.ts
+
 import { useState, useEffect, useCallback } from 'react';
 import { User, UserStats } from '../types/user';
 import { BusinessOwner } from '../data/mockBusinessOwnerData';
+// 💡 1. IMPORT THE VOUCHER TYPE
+import { RedeemedVoucher } from '../types/vouchers';
 
 const API_BASE_URL = 'http://localhost:3000';
 
@@ -11,6 +15,9 @@ export const useUser = (userId: string | null) => {
     reviewsCount: 0,
     loyaltyPoints: 0,
   });
+  // 💡 2. ADD NEW STATE FOR VOUCHER LIST
+  const [vouchers, setVouchers] = useState<RedeemedVoucher[]>([]);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,6 +25,8 @@ export const useUser = (userId: string | null) => {
     if (!userId) {
       setUser(null);
       setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+      // 💡 3. CLEAR VOUCHERS ON LOGOUT
+      setVouchers([]); 
       return;
     }
     let isMounted = true;
@@ -35,7 +44,7 @@ export const useUser = (userId: string | null) => {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          signal: signal, // Pass abort signal to fetch
+          signal: signal,
         });
 
         if (!response.ok) {
@@ -46,6 +55,8 @@ export const useUser = (userId: string | null) => {
         if (!profileData || !profileData.id) {
           throw new Error('Invalid API response: missing user id');
         }
+
+        // --- Data Mapping (Unchanged) ---
         const userData: User = {
           id: data.profile.id,
           role: 'user',
@@ -57,9 +68,14 @@ export const useUser = (userId: string | null) => {
             : new Date().toISOString().split('T')[0],
           bio: profileData.bio || '',
           location: profileData.location || 'Singapore',
-          hasBusiness: profileData.hasBusiness || false, // ✅ Map the value here
+          hasBusiness: profileData.hasBusiness || false,
         };
+        // ---------------------------------
+        
         if (isMounted) {
+          // 💡 4. SET THE VOUCHERS LIST
+          setVouchers(data.vouchers || []); 
+
           setUser(userData);
           setStats({
             vouchersCount: data.vouchers?.length || 0,
@@ -93,6 +109,7 @@ export const useUser = (userId: string | null) => {
   }, [userId]);
 
   const updateUser = useCallback(
+    // ... (updateUser function is unchanged) ...
     async (updatedUser: User | BusinessOwner) => {
       try {
         const isBusinessOwner = 'businessName' in updatedUser;
@@ -124,5 +141,6 @@ export const useUser = (userId: string | null) => {
     []
   );
 
-  return { user, stats, updateUser, loading, error };
+  // 💡 6. RETURN THE VOUCHER LIST
+  return { user, stats, vouchers, updateUser, loading, error };
 };
