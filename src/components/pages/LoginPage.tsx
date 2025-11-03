@@ -250,14 +250,28 @@ export function LoginPage() {
               </button>
             </div>
 
+            {/* Sign Up Link */}
+            <div className="text-center pt-2">
+              <span className="text-sm" style={{ color: mutedTextColor }}>
+                New to us?{' '}
+              </span>
+              <button
+                type="button"
+                className="text-sm font-medium text-primary hover:underline"
+                onClick={() => navigate('/signup')}
+              >
+                Sign up here
+              </button>
+            </div>
+
             {/* Back Button */}
-            <div className="text-center pt-4">
+            <div className="text-center pt-2">
               <button
                 type="button"
                 className="text-sm text-muted-foreground hover:text-foreground"
                 onClick={handleBack}
               >
-                Back to welcome screen
+                Back to home
               </button>
             </div>
           </div>

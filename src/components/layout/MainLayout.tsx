@@ -12,10 +12,11 @@ export const MainLayout = () => {
   const navigate = useNavigate();
 
   const { user, stats, updateUser } = useUser(userId || null);
+  const isAuthenticated = !!userId; // Check if user is logged in
 
   const getCurrentView = () => {
     const path = location.pathname;
-    if (path === ROUTES.MAP) return 'map';
+    if (path === ROUTES.MAP || path === ROUTES.HOME) return 'map';
     if (path === ROUTES.BUSINESSES) return 'list';
     if (path === ROUTES.BOOKMARKS) return 'bookmarks';
     if (path === ROUTES.PROFILE) return 'profile';
@@ -31,7 +32,7 @@ export const MainLayout = () => {
       map: ROUTES.MAP,
       list: ROUTES.BUSINESSES,
       bookmarks: ROUTES.BOOKMARKS,
-      profile: user && 'businessName' in user ? ROUTES.BUSINESS_PROFILE : ROUTES.PROFILE, // ✅ Check if BusinessOwner
+      profile: user && 'businessName' in user ? ROUTES.BUSINESS_PROFILE : ROUTES.PROFILE,
       forum: ROUTES.FORUM,
       notifications: ROUTES.NOTIFICATIONS,
       settings: ROUTES.SETTINGS,
@@ -43,23 +44,25 @@ export const MainLayout = () => {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" 
-           style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f9fafb' }}>
-        <div style={{ color: isDarkMode ? '#fff' : '#000' }}>Loading user data...</div>
-      </div>
-    );
-  }
-
-  // ✅ Helper function to safely get user info
+  // ✅ Helper function to safely get user info (with guest fallback)
   const getUserInfo = () => {
+    if (!user) {
+      // Guest user - return dummy data
+      return {
+        name: 'Guest',
+        email: 'guest@localoco.com',
+        avatarUrl: undefined,
+        isGuest: true,
+      };
+    }
+
     if ('businessName' in user) {
       // It's a BusinessOwner
       return {
         name: user.businessName,
         email: user.businessEmail,
         avatarUrl: user.wallpaper,
+        isGuest: false,
       };
     } else {
       // It's a regular User
@@ -67,6 +70,7 @@ export const MainLayout = () => {
         name: user.name,
         email: user.email,
         avatarUrl: user.avatarUrl,
+        isGuest: false,
       };
     }
   };
@@ -79,13 +83,14 @@ export const MainLayout = () => {
         onNavigate={handleNavigate}
         onLogout={logout}
         currentView={getCurrentView()}
-        userName={userInfo.name} // ✅ Use helper
-        userEmail={userInfo.email} // ✅ Use helper
-        avatarUrl={userInfo.avatarUrl} // ✅ Use helper
+        userName={userInfo.name}
+        userEmail={userInfo.email}
+        avatarUrl={userInfo.avatarUrl}
         onThemeToggle={toggleTheme}
+        isAuthenticated={isAuthenticated} // ✅ Pass auth status
       />
       <div className="main-content md:ml-20 h-screen overflow-y-auto pb-20 md:pb-0">
-        <Outlet context={{ user, stats, updateUser }} />
+        <Outlet context={{ user, stats, updateUser, isAuthenticated }} />
       </div>
     </>
   );
