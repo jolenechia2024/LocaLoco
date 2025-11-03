@@ -7,7 +7,6 @@ import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { GoogleMap, Marker, InfoWindow, useLoadScript } from '@react-google-maps/api';
-import { useBusinessStore } from '../store/businessStore';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 
@@ -16,13 +15,22 @@ const defaultCenter = { lat: 1.3521, lng: 103.8198 }; // Singapore fallback
 export function MapDiscoveryPage() {
   const navigate = useNavigate();
   const mapRef = useRef<google.maps.Map | null>(null);
-  const businesses = useBusinessStore((state) => state.businesses);
-  const setSelectedBusiness = useBusinessStore((state) => state.setSelectedBusiness);
+
   const logout = useAuthStore((state) => state.logout);
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
 
-  const safeBusinesses: Business[] = Array.isArray(businesses) ? businesses : [];
+  const [businessesWithCoords, setBusinessesWithCoords] = useState<(Business & { lat?: number; lng?: number })[]>([]);
+  const [selectedPin, setSelectedPin] = useState<Business | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [showUserInfo, setShowUserInfo] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
 
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: 'AIzaSyCn-aVVBxUbCBYihIeKHePKcTq7O4KfMlY',
+  });
+
+  // --- Styles ---
   const pageBg = isDarkMode ? '#3a3a3a' : '#f9fafb';
   const panelBg = isDarkMode ? '#2a2a2a' : '#ffffff';
   const railBg = isDarkMode ? '#3a3a3a' : '#f9fafb';
@@ -31,18 +39,7 @@ export function MapDiscoveryPage() {
   const textMuted = isDarkMode ? 'text-gray-400' : 'text-gray-600';
   const inputText = isDarkMode ? 'text-white placeholder:text-gray-400' : 'text-black placeholder:text-gray-500';
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPin, setSelectedPin] = useState<Business | null>(null);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [businessesWithCoords, setBusinessesWithCoords] = useState<(Business & { lat?: number; lng?: number })[]>([]);
-  const [showUserInfo, setShowUserInfo] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: 'AIzaSyCn-aVVBxUbCBYihIeKHePKcTq7O4KfMlY',
-  });
-
-  // Get user location
+  // --- Get user location ---
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -52,55 +49,80 @@ export function MapDiscoveryPage() {
     }
   }, []);
 
-  // Screen resize detection
+  // --- Detect screen resize ---
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Geocode businesses
+  // --- Fetch businesses from backend ---
   useEffect(() => {
-    if (!isLoaded || !safeBusinesses.length) return;
-    const geocoder = new (window as any).google.maps.Geocoder();
+    if (!isLoaded) return;
 
-    const geocodeAll = async () => {
-      const results: (Business & { lat?: number; lng?: number })[] = [];
+    const fetchBusinesses = async () => {
+      try {
+        const response = await fetch('/api/businesses');
+        const data: Business[] = await response.json();
 
-      await Promise.all(
-        safeBusinesses.map(async (b) => {
-          const address = (b as any).address || '';
-          if (!address) return results.push(b as any);
+        console.log('📦 Fetched businesses from DB:', data);
 
-          const res: any = await new Promise((resolve) => {
-            geocoder.geocode({ address }, (geoResults: any, status: any) => {
-              if (status === 'OK' && geoResults[0]) {
-                const loc = geoResults[0].geometry.location;
-                resolve({ lat: loc.lat(), lng: loc.lng() });
-              } else {
-                resolve(null);
-              }
+        const geocoder = new (window as any).google.maps.Geocoder();
+
+        const results: (Business & { lat?: number; lng?: number })[] = [];
+
+        await Promise.all(
+          data.map(async (b) => {
+            const lat = b.latitude ? Number(b.latitude) : undefined;
+            const lng = b.longitude ? Number(b.longitude) : undefined;
+
+            if (lat != null && lng != null) {
+              results.push({ ...b, lat, lng });
+              return;
+            }
+
+            if (!b.address) {
+              results.push(b);
+              return;
+            }
+
+            const res: any = await new Promise((resolve) => {
+              geocoder.geocode({ address: b.address }, (geoResults: any, status: any) => {
+                if (status === 'OK' && geoResults[0]) {
+                  const loc = geoResults[0].geometry.location;
+                  resolve({ lat: loc.lat(), lng: loc.lng() });
+                } else {
+                  console.warn(`Geocode failed for ${b.businessName}:`, status);
+                  resolve(null);
+                }
+              });
             });
-          });
 
-          if (res) results.push({ ...(b as any), lat: res.lat, lng: res.lng });
-          else results.push(b as any);
-        })
-      );
+            if (res) {
+              console.log(`🗺️ Geocoded ${b.businessName}:`, res);
+              results.push({ ...b, lat: res.lat, lng: res.lng });
+            } else {
+              results.push(b);
+            }
+          })
+        );
 
-      setBusinessesWithCoords(results);
+        setBusinessesWithCoords(results);
+      } catch (err) {
+        console.error('❌ Failed to fetch businesses:', err);
+      }
     };
 
-    geocodeAll();
-  }, [isLoaded, safeBusinesses]);
+    fetchBusinesses();
+  }, [isLoaded]);
 
-  // Filtered businesses
+  // --- Filtered businesses ---
   const filtered = (searchTerm
     ? businessesWithCoords.filter((b) => {
         const q = searchTerm.toLowerCase();
         return (
-          b.name.toLowerCase().includes(q) ||
-          (b.category ?? '').toLowerCase().includes(q) ||
+          b.businessName.toLowerCase().includes(q) ||
+          (b.businessCategory ?? '').toLowerCase().includes(q) ||
           (b.address ?? '').toLowerCase().includes(q) ||
           (b.description ?? '').toLowerCase().includes(q)
         );
@@ -108,21 +130,20 @@ export function MapDiscoveryPage() {
     : businessesWithCoords
   ).slice(0, 50);
 
-  // Nearest businesses
+  // --- Nearest businesses ---
   const nearestUENs = new Set<string>();
   if (userLocation && businessesWithCoords.length > 0) {
     const withCoords = businessesWithCoords.filter((b) => b.lat !== undefined && b.lng !== undefined);
     const distances = withCoords.map((b) => ({
-      uen: (b as any).uen ?? b.uen ?? b.name,
+      uen: b.uen,
       distance: haversineDistance(userLocation.lat, userLocation.lng, b.lat!, b.lng!),
     }));
     distances.sort((a, b) => a.distance - b.distance);
     distances.slice(0, 5).forEach((b) => nearestUENs.add(b.uen));
   }
 
-  const handleBusinessClick = (business: Business) => {
-    setSelectedBusiness(business);
-    navigate(`/business/${business.uen}`);
+  const handleBusinessClick = (b: Business & { lat?: number; lng?: number }) => {
+    navigate(`/business/${b.uen}`);
   };
 
   const handleLogout = () => {
@@ -145,7 +166,7 @@ export function MapDiscoveryPage() {
 
   return (
     <div className="h-screen w-full flex flex-col" style={{ backgroundColor: pageBg }}>
-      {/* MAP SECTION */}
+      {/* --- MAP SECTION --- */}
       <div className="relative flex-1 flex justify-center items-center p-4">
         <div className={`w-full h-full rounded-lg shadow-lg border ${borderTone}`} style={{ overflow: 'hidden' }}>
           <GoogleMap
@@ -154,7 +175,7 @@ export function MapDiscoveryPage() {
             center={userLocation ?? defaultCenter}
             onLoad={(map) => (mapRef.current = map)}
           >
-            {/* LEGEND */}
+            {/* --- LEGEND --- */}
             <div
               className={`absolute z-10 p-3 rounded-lg shadow-lg`}
               style={{ backgroundColor: panelBg, top: '55px', left: '10px' }}
@@ -175,14 +196,15 @@ export function MapDiscoveryPage() {
               </div>
             </div>
 
-            {/* Center on user */}
+            {/* --- CENTER ON USER BUTTON --- */}
             {userLocation && (
               <div style={{ position: 'absolute', top: '55px', right: '10px', zIndex: 10 }}>
                 <button
                   onClick={() => {
                     if (mapRef.current && userLocation) {
                       mapRef.current.panTo(userLocation);
-                      mapRef.current.setZoom(16);
+                      mapRef.current.setZoom(17);
+                      setShowUserInfo(true);
                     }
                   }}
                   className="p-2 rounded-full bg-white shadow-lg hover:bg-gray-100"
@@ -193,7 +215,7 @@ export function MapDiscoveryPage() {
               </div>
             )}
 
-            {/* User marker */}
+            {/* --- USER MARKER --- */}
             {userLocation && (
               <>
                 <Marker
@@ -209,23 +231,29 @@ export function MapDiscoveryPage() {
               </>
             )}
 
-            {/* Business markers */}
+            {/* --- BUSINESS MARKERS --- */}
             {businessesWithCoords.map((b) => {
               if (b.lat === undefined || b.lng === undefined) return null;
-              const uen = (b as any).uen ?? b.uen ?? b.name;
-              const isSelected = selectedPin && ((selectedPin.uen ?? selectedPin.name) === uen);
-              const isNearest = nearestUENs.has(uen);
+              const isSelected = selectedPin?.uen === b.uen;
+              const isNearest = nearestUENs.has(b.uen);
 
               const baseColor = isNearest
                 ? 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
                 : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
               const iconUrl = isSelected ? 'http://maps.google.com/mapfiles/ms/icons/pink-dot.png' : baseColor;
 
-              return <Marker key={String(uen)} position={{ lat: b.lat, lng: b.lng }} onClick={() => setSelectedPin(b)} icon={{ url: iconUrl }} />;
+              return (
+                <Marker
+                  key={b.uen}
+                  position={{ lat: b.lat, lng: b.lng }}
+                  onClick={() => setSelectedPin(b)}
+                  icon={{ url: iconUrl }}
+                />
+              );
             })}
           </GoogleMap>
 
-          {/* Selected-pin mini card */}
+          {/* --- SELECTED PIN MINI CARD --- */}
           {selectedPin && (
             <div className="absolute bottom-6 left-6 z-10 max-w-sm">
               <Card className={`p-4 ${borderTone}`} style={{ backgroundColor: panelBg }}>
@@ -235,7 +263,7 @@ export function MapDiscoveryPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-3">
-                      <h3 className={`text-lg font-semibold ${textMain}`}>{selectedPin.name}</h3>
+                      <h3 className={`text-lg font-semibold ${textMain}`}>{selectedPin.businessName}</h3>
                       <Button
                         size="icon"
                         variant="outline"
@@ -246,8 +274,7 @@ export function MapDiscoveryPage() {
                       </Button>
                     </div>
                     <div className={`mt-1 text-sm ${textMuted}`}>
-                      {selectedPin.category}
-                      {selectedPin.priceRange ? ` · ${selectedPin.priceRange}` : ''}
+                      {selectedPin.businessCategory}
                     </div>
                     {selectedPin.address && <div className={`mt-1 text-xs ${textMuted}`}>{selectedPin.address}</div>}
                     {userLocation && selectedPin.lat && selectedPin.lng && (
@@ -268,7 +295,7 @@ export function MapDiscoveryPage() {
         </div>
       </div>
 
-      {/* LOWER PANEL */}
+      {/* --- LOWER PANEL --- */}
       <div className={`shrink-0 border-t ${borderTone}`} style={{ backgroundColor: railBg, height: '52vh' }}>
         <div className="max-w-none mx-auto h-full flex flex-col gap-3 px-4 pt-4 pb-4">
           <div>
@@ -286,26 +313,26 @@ export function MapDiscoveryPage() {
             <div className={`mt-2 text-xs ${textMuted}`}>
               {searchTerm.trim()
                 ? `Found ${filtered.length} result${filtered.length !== 1 ? 's' : ''}`
-                : `${safeBusinesses.length} businesses nearby`}
+                : `${businessesWithCoords.length} businesses nearby`}
             </div>
           </div>
 
-          {/* Business cards */}
+          {/* BUSINESS CARDS */}
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((b, index) => (
-                <Card key={b.uen || `business-${index}`} className={`p-4 hover:shadow ${borderTone}`} style={{ backgroundColor: panelBg }}>
+              {filtered.map((b) => (
+                <Card key={b.uen} className={`p-4 hover:shadow ${borderTone}`} style={{ backgroundColor: panelBg }}>
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-primary/10 rounded-md">
                       <Store className="w-4 h-4 text-primary" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <h3 className={`text-base font-semibold ${textMain}`}>{b.name}</h3>
-                        {b.category && <Badge variant="secondary">{b.category}</Badge>}
+                        <h3 className={`text-base font-semibold ${textMain}`}>{b.businessName}</h3>
+                        {b.businessCategory && <Badge variant="secondary">{b.businessCategory}</Badge>}
                       </div>
                       <div className={`mt-1 text-sm ${textMuted}`}>
-                        {(b.priceRange ? `${b.priceRange} · ` : '') + (b.address ?? '')}
+                        {b.address ?? ''}
                       </div>
                       <div className="mt-3 flex items-center gap-2">
                         <Button onClick={() => handleBusinessClick(b)} className="bg-primary hover:bg-primary/90 text-white">
@@ -328,7 +355,7 @@ export function MapDiscoveryPage() {
   );
 }
 
-// Helper function
+// --- Helper function ---
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const toRad = (v: number) => (v * Math.PI) / 180;
   const R = 6371;
