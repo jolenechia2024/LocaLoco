@@ -41,6 +41,14 @@ export function MapPlaceholder({ business }: MapPlaceholderProps) {
     fetchCoordinates();
   }, [address]);
 
+  // Generate the map URL with a marker using the correct format
+  const getMapUrl = () => {
+    if (!coords) return '';
+    
+    // Use the place mode with the business address for better pin placement
+    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyCn-aVVBxUbCBYihIeKHePKcTq7O4KfMlY&q=${encodeURIComponent(address)}&zoom=15&maptype=roadmap`;
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -64,16 +72,14 @@ export function MapPlaceholder({ business }: MapPlaceholderProps) {
             coords && (
               <div className="rounded-lg overflow-hidden shadow-sm">
                 <iframe
-                  title="Business Location"
+                  title={`Location of ${business.name}`}
                   width="100%"
                   height="300"
                   style={{ border: 0 }}
                   loading="lazy"
                   allowFullScreen
-                  // Embed map with pin marker and business name label
-                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyCn-aVVBxUbCBYihIeKHePKcTq7O4KfMlY&q=${encodeURIComponent(
-                    business.name
-                  )}+@${coords.lat},${coords.lng}&zoom=15`}
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={getMapUrl()}
                 />
               </div>
             )
