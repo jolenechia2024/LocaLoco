@@ -26,7 +26,7 @@ class ReviewModel {
     // READ
     public static async getBusinessReviews(uen:string) {
         try {
-            const reviews = await db.select().from(businessReviews).where(eq(businessReviews.businessUen, uen))
+            const reviews = await db.select().from(businessReviews).where(eq(businessReviews.uen, uen))
             return reviews
         } 
         catch (err) {
