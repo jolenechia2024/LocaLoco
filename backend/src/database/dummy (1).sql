@@ -3,6 +3,88 @@ DROP DATABASE IF EXISTS wad2_project;
 CREATE DATABASE wad2_project;
 USE wad2_project;
 
+<<<<<<< HEAD:backend/src/database/dummy (1).sql
+=======
+-- //////////////////////////// CREATE TRIGGERS ////////////////////////////
+
+DELIMITER $$
+CREATE TRIGGER trg_user_set_referral_code
+BEFORE INSERT ON user
+FOR EACH ROW
+BEGIN
+    SET NEW.referral_code = UPPER(REPLACE(UUID(), '-', ''));
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_add_points_forum_post
+AFTER INSERT ON forum_posts
+FOR EACH ROW
+BEGIN
+    INSERT INTO user_points (user_email, points)
+    VALUES (NEW.user_email, 5)
+    ON DUPLICATE KEY UPDATE points = points + 5;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_add_points_business_review
+AFTER INSERT ON business_reviews
+FOR EACH ROW
+BEGIN
+    INSERT INTO user_points (user_email, points)
+    VALUES (NEW.user_email, 5)
+    ON DUPLICATE KEY UPDATE points = points + 5;
+END$$
+DELIMITER ;
+select * from user;
+DELIMITER $$
+CREATE TRIGGER trg_add_points_forum_reply
+AFTER INSERT ON forum_posts_replies
+FOR EACH ROW
+BEGIN
+    INSERT INTO user_points (user_email, points)
+    VALUES (NEW.user_email, 2)
+    ON DUPLICATE KEY UPDATE points = points + 2;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_subtract_points_forum_post
+AFTER DELETE ON forum_posts
+FOR EACH ROW
+BEGIN
+    UPDATE user_points
+    SET points = GREATEST(0, points - 5)
+    WHERE user_email = OLD.user_email;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_subtract_points_business_review
+AFTER DELETE ON business_reviews
+FOR EACH ROW
+BEGIN
+    UPDATE user_points
+    SET points = GREATEST(0, points - 5)
+    WHERE user_email = OLD.user_email;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_subtract_points_forum_reply
+AFTER DELETE ON forum_posts_replies
+FOR EACH ROW
+BEGIN
+    UPDATE user_points
+    SET points = GREATEST(0, points - 2)
+    WHERE user_email = OLD.user_email;
+END$$
+DELIMITER ;
+
+-- //////////////////////////// INSERT DATA ////////////////////////////
+
+>>>>>>> origin/main:backend/src/database/dummy.sql
 INSERT INTO user (id, name, email, email_verified, image, has_business) VALUES
 ('user-id-001', 'Alice Smith', 'user1@example.com', true, 'https://example.com/img/alice.png', true),
 ('user-id-002', 'Bob Johnson', 'user2@example.com', true, 'https://example.com/img/bob.png', false),
