@@ -450,3 +450,64 @@ VALUES
  'Bring your furry friends for a festive grooming session and a free Christmas photo!',
  'https://www.pawfectgrooming.sg/images/xmas_photo_booth.jpg', 
  '2024-12-01 10:00:00', '2024-12-01 10:00:00');
+
+ UPDATE businesses
+SET latitude = 1.3008221, 
+    longitude = 103.8394779
+WHERE uen = '202301234A' ;
+UPDATE businesses
+SET latitude = 1.3001991,
+    longitude = 103.8552015
+WHERE uen = (
+  SELECT uen
+  FROM (SELECT uen FROM businesses WHERE business_name = 'Java Junction Cafe') AS temp
+);
+UPDATE businesses
+SET latitude = 1.2960222,
+    longitude = 103.8518854
+WHERE uen = (
+  SELECT uen
+  FROM (SELECT uen FROM businesses WHERE business_name = 'Chapter & Verse Books') AS temp
+);
+UPDATE businesses
+SET latitude = 1.288669,
+    longitude = 103.8193687
+WHERE uen = (
+  SELECT uen
+  FROM (SELECT uen FROM businesses WHERE business_name = 'Mama’s Kitchen') AS temp
+);
+UPDATE businesses
+SET latitude = 1.3039288, 
+    longitude = 103.8319492
+WHERE uen = (
+  SELECT uen
+  FROM (SELECT uen FROM businesses WHERE business_name = 'Elegance & Co') AS temp
+);
+UPDATE businesses
+SET latitude = 1.3350679, 
+    longitude = 103.965166
+WHERE uen = (
+  SELECT uen
+  FROM (SELECT uen FROM businesses WHERE business_name = 'GreenScape Solutions') AS temp
+);
+UPDATE businesses
+SET latitude = 1.3007065,
+    longitude = 103.8591356
+WHERE uen = (
+  SELECT uen
+  FROM (SELECT uen FROM businesses WHERE business_name = 'Artisan Alley Crafts') AS temp
+);
+UPDATE businesses
+SET latitude = 1.3023149, 
+    longitude = 103.8578091
+WHERE uen = (
+  SELECT uen
+  FROM (SELECT uen FROM businesses WHERE business_name = 'Chic Street Boutique') AS temp
+);
+UPDATE businesses
+SET latitude = 1.3023149, 
+    longitude = 103.8578091
+WHERE uen = (
+  SELECT uen
+  FROM (SELECT uen FROM businesses WHERE business_name = 'Pawfect Grooming') AS temp
+);
