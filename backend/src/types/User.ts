@@ -18,5 +18,6 @@ export interface UpdateProfileData {
     imageUrl?:string,
     bio?: string,
     hasBusiness?:boolean,
-    updatedAt:string
+    updatedAt:string,
+    image?: string
 }
