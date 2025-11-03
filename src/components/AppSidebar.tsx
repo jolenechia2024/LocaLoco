@@ -202,7 +202,7 @@ export function AppSidebar({
                     isActive
                       ? 'bg-[#FFA1A3]/20 text-[#FFA1A3]'
                       : isDisabled
-                      ? `${secondaryTextColor} opacity-30 cursor-not-allowed`
+                      ? `opacity-25 cursor-not-allowed ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`
                       : `${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'}`
                   }`}
                 >
@@ -226,7 +226,7 @@ export function AppSidebar({
                   onClick={() => handleMenuClick(item.view, item.isThemeToggle, 'requiresAuth' in item ? item.requiresAuth : false)}
                   className={`w-full rounded-lg p-3 flex items-center gap-3 transition-colors relative ${
                     isDisabled
-                      ? `${secondaryTextColor} opacity-30 cursor-not-allowed`
+                      ? `opacity-25 cursor-not-allowed ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`
                       : `${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'}`
                   }`}
                 >
@@ -392,8 +392,10 @@ export function AppSidebar({
                     className={`inline-flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors relative ${
                       isActive
                         ? 'bg-[#FFA1A3]/20 text-[#FFA1A3]'
+                        : isDisabled
+                        ? `opacity-25 cursor-not-allowed ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`
                         : `${secondaryTextColor} active:bg-gray-100 ${isDarkMode ? 'active:bg-gray-700' : ''}`
-                    } ${isDisabled ? 'opacity-30 cursor-not-allowed' : ''}`}
+                    }`}
                     style={{ minWidth: '64px', flexShrink: 0 }}
                   >
                     {isAvatar ? (
