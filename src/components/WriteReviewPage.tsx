@@ -33,7 +33,7 @@ export function WriteReviewPage({
 }: WriteReviewPageProps = {}) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
   const navigate = useNavigate();
-  const { businessId } = useParams();
+  const { id: businessId } = useParams(); // Route param is 'id', rename to businessId
   const { businesses } = useBusinesses();
   const role = useAuthStore((state) => state.role);
   const { user, loading } = useUser(); 
@@ -145,15 +145,20 @@ export function WriteReviewPage({
 
     // Submit to backend
     try {
-      await submitReview({
+      const result = await submitReview({
         userEmail: user.email,
-        businessUen: business.id, // business.id is the UEN
+        businessUEN: business.uen, // Changed to match backend parameter name
         title: 'Customer Review', // Optional title
         body: comment,
         rating: rating,
       });
 
-      toast.success('Review submitted successfully!');
+      console.log('Review submission response:', result);
+      if (result?.pointsEarned) {
+        toast.success(`Review submitted successfully! 🎉 +${result.pointsEarned} points earned!`);
+      } else {
+        toast.success('Review submitted successfully!');
+      }
       handleBack();
     } catch (error) {
       toast.error('Failed to submit review. Please try again.');
@@ -223,7 +228,7 @@ export function WriteReviewPage({
       <Card className="overflow-hidden border" style={{ backgroundColor: cardBg, borderColor: userBoxBorder }}>
         <div className="flex gap-6 items-center p-6">
           <ImageWithFallback
-            src={business.image}
+            src={`https://localoco.blob.core.windows.net/images/${business.image}`}
             alt={business.name}
             className="w-48 h-48 object-cover rounded-xl"
           />

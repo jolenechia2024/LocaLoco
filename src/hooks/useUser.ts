@@ -71,7 +71,7 @@ export const useUser = () => {
         setStats({
           vouchersCount: data.vouchers?.length || 0,
           reviewsCount: data.reviews?.length || 0,
-          loyaltyPoints: profileData.loyaltyPoints || 0,
+          loyaltyPoints: data.points || 0,
         });
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {

@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { Bookmark as BookmarkIcon } from "lucide-react";
 import { useBookmarks } from "../hooks/useBookmarks";
+import { useBusinesses } from "../hooks/useBusinesses";
 import { useTheme } from "../hooks/useTheme";
 import { BusinessCard } from "./BusinessCard";
 import { Button } from "./ui/button";
@@ -9,6 +10,7 @@ import { Button } from "./ui/button";
 export const BookmarksPage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
+  const { isLoading } = useBusinesses(); // Ensure businesses are loaded
   const { bookmarkedBusinesses, toggleBookmark } = useBookmarks();
 
   return (
@@ -26,7 +28,11 @@ export const BookmarksPage = () => {
           </h1>
           <p className="text-muted-foreground">Your saved businesses</p>
         </div>
-        {bookmarkedBusinesses.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading your bookmarks...</p>
+          </div>
+        ) : bookmarkedBusinesses.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {bookmarkedBusinesses.map((business) => (
               <BusinessCard

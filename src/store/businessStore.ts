@@ -22,6 +22,7 @@ export interface BusinessState {
 export interface BusinessActions {
   setBusinesses: (businesses: Business[]) => void;
   setSelectedBusiness: (business: Business | null) => void;
+  setBookmarks: (bookmarks: BookmarkedBusiness[]) => void;
   toggleBookmark: (businessId: string) => void;
   isBookmarked: (businessId: string) => boolean;
   setFilters: (filters: Partial<BusinessFilters>) => void;
@@ -59,6 +60,12 @@ export const useBusinessStore = create<BusinessStore>((set, get) => ({
     updateCount++;
     console.log(`🏪 [${updateCount}] BusinessStore.setSelectedBusiness:`, business?.uen);
     set({ selectedBusiness: business });
+  },
+
+  setBookmarks: (bookmarks) => {
+    updateCount++;
+    console.log(`🔖 [${updateCount}] BusinessStore.setBookmarks:`, bookmarks.length);
+    set({ bookmarkedBusinesses: bookmarks });
   },
 
   toggleBookmark: (businessId) => {

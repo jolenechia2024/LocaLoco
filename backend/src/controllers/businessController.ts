@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import BusinessModel from '../models/BusinessModel.js';
+import UserModel from '../models/UserModel.js';
 
 class businessController {
 
@@ -99,6 +100,15 @@ class businessController {
 
         try {
             await BusinessModel.registerBusiness(business)
+            console.log('✅ Business registered, now updating user hasBusiness flag for:', business.ownerID);
+
+            // Update user's hasBusiness flag
+            await UserModel.updateProfile(business.ownerID, {
+                hasBusiness: true,
+                updatedAt: new Date()
+            });
+
+            console.log('✅ User hasBusiness flag updated successfully');
             res.status(200).json({ success: true, message: 'business registered' });
         }
         catch (err:any) {

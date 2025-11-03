@@ -31,8 +31,9 @@ class FeatureController {
 
         try {
             await ReviewModel.newReview(review);
-            res.status(200).json({ 
-                message: "Review added!" 
+            res.status(200).json({
+                message: "Review added!",
+                pointsEarned: 5
             });
         } 
         catch (error) {
@@ -176,8 +177,9 @@ class FeatureController {
 
         try {
             await ForumModel.newForumPost(post);
-            res.status(200).json({ 
-                message: "Post added!" 
+            res.status(200).json({
+                message: "Post added!",
+                pointsEarned: 5
             });
         } 
         catch (error) {
@@ -199,7 +201,8 @@ class FeatureController {
         try {
             await ForumModel.newForumPostReply(postReply);
             res.status(200).json({
-                message: "Post reply added!"
+                message: "Post reply added!",
+                pointsEarned: 2
             });
         }
         catch (error) {

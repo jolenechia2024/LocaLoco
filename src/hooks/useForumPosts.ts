@@ -3,6 +3,7 @@ import { useForumStore } from './useForumStore';
 import { transformBackendToForumDiscussion } from '../utils/forumUtils';
 import { ForumDiscussion, ForumReply } from '../types/forum';
 import { fetchBusinessUenByName } from '../utils/businessNameUtils';
+import { toast } from 'sonner';
 
 // Backend types (matching your API response from http://localhost:3000/api/forum-posts)
 interface BackendForumPost {
@@ -108,7 +109,7 @@ export const useForumPosts = (userEmail?: string) => {
 
       console.log('Creating discussion with data:', postData);
 
-      const response = await fetch(`${API_BASE_URL}/forum-posts`, {
+      const response = await fetch(`${API_BASE_URL}/submit-post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(postData),
@@ -118,6 +119,14 @@ export const useForumPosts = (userEmail?: string) => {
         const errorText = await response.text();
         console.error('Server error response:', errorText);
         throw new Error('Failed to create discussion');
+      }
+
+      const result = await response.json();
+      console.log('Forum post response:', result);
+      if (result.pointsEarned) {
+        toast.success(`Discussion posted! 🎉 +${result.pointsEarned} points earned!`);
+      } else {
+        toast.success('Discussion posted!');
       }
 
       // Silently refresh in background to get proper IDs from server
@@ -151,13 +160,21 @@ export const useForumPosts = (userEmail?: string) => {
 
       console.log('Creating reply with data:', replyData);
 
-      const response = await fetch(`${API_BASE_URL}/forum-replies`, {
+      const response = await fetch(`${API_BASE_URL}/submit-post-reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(replyData),
       });
 
       if (!response.ok) throw new Error('Failed to create reply');
+
+      const result = await response.json();
+      console.log('Forum reply response:', result);
+      if (result.pointsEarned) {
+        toast.success(`Reply posted! 🎉 +${result.pointsEarned} points earned!`);
+      } else {
+        toast.success('Reply posted!');
+      }
 
       // Silently refresh in background to get proper IDs from server
       silentRefresh();

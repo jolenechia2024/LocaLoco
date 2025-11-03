@@ -207,6 +207,14 @@ export const verification = mysqlTable("verification", {
     .notNull(),
 });
 
+export const userPoints = mysqlTable("user_points", {
+  userEmail: varchar("user_email", { length: 255 }).notNull().references(() => user.email, { onDelete: "cascade", onUpdate: "cascade" }),
+  points: int().default(0).notNull(),
+},
+(table) => [
+  primaryKey({ columns: [table.userEmail], name: "user_points_user_email"}),
+]);
+
 export type Business = InferSelectModel<typeof businesses>;
 export type BusinessPaymentOption = InferSelectModel<typeof businessPaymentOptions>;
 export type BusinessOpeningHour = InferSelectModel<typeof businessOpeningHours>;

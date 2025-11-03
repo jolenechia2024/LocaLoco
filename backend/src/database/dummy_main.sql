@@ -1,7 +1,86 @@
--- create db and use
+-- //////////////////////////// CREATE DB AND USE ////////////////////////////
 DROP DATABASE IF EXISTS wad2_project;
 CREATE DATABASE wad2_project;
 USE wad2_project;
+
+-- //////////////////////////// CREATE TRIGGERS ////////////////////////////
+
+DELIMITER $$
+CREATE TRIGGER trg_user_set_referral_code
+BEFORE INSERT ON user
+FOR EACH ROW
+BEGIN
+    SET NEW.referral_code = UPPER(REPLACE(UUID(), '-', ''));
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_add_points_forum_post
+AFTER INSERT ON forum_posts
+FOR EACH ROW
+BEGIN
+    INSERT INTO user_points (user_email, points)
+    VALUES (NEW.user_email, 5)
+    ON DUPLICATE KEY UPDATE points = points + 5;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_add_points_business_review
+AFTER INSERT ON business_reviews
+FOR EACH ROW
+BEGIN
+    INSERT INTO user_points (user_email, points)
+    VALUES (NEW.user_email, 5)
+    ON DUPLICATE KEY UPDATE points = points + 5;
+END$$
+DELIMITER ;
+select * from user;
+DELIMITER $$
+CREATE TRIGGER trg_add_points_forum_reply
+AFTER INSERT ON forum_posts_replies
+FOR EACH ROW
+BEGIN
+    INSERT INTO user_points (user_email, points)
+    VALUES (NEW.user_email, 2)
+    ON DUPLICATE KEY UPDATE points = points + 2;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_subtract_points_forum_post
+AFTER DELETE ON forum_posts
+FOR EACH ROW
+BEGIN
+    UPDATE user_points
+    SET points = GREATEST(0, points - 5)
+    WHERE user_email = OLD.user_email;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_subtract_points_business_review
+AFTER DELETE ON business_reviews
+FOR EACH ROW
+BEGIN
+    UPDATE user_points
+    SET points = GREATEST(0, points - 5)
+    WHERE user_email = OLD.user_email;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trg_subtract_points_forum_reply
+AFTER DELETE ON forum_posts_replies
+FOR EACH ROW
+BEGIN
+    UPDATE user_points
+    SET points = GREATEST(0, points - 2)
+    WHERE user_email = OLD.user_email;
+END$$
+DELIMITER ;
+
+-- //////////////////////////// INSERT DATA ////////////////////////////
 
 INSERT INTO user (id, name, email, email_verified, image, has_business) VALUES
 ('user-id-001', 'Alice Smith', 'user1@example.com', true, 'https://example.com/img/alice.png', true),
@@ -35,7 +114,6 @@ INSERT INTO user (id, name, email, email_verified, image, has_business) VALUES
 ('user-id-029', 'Chloe Wilson', 'user29@example.com', true, NULL, false),
 ('user-id-030', 'Dan Moore', 'user30@example.com', false, NULL, false);
 
-
 -- businesses data
 INSERT INTO businesses 
 (owner_id, uen, business_name, business_category, description, address, open247, email, phone_number, website_link, social_media_link, wallpaper, date_of_creation, price_tier, offers_delivery, offers_pickup)
@@ -50,9 +128,6 @@ VALUES
 ('user-id-005', '202308234H', 'Chic Street Boutique', 'retail', 'Trendy fashion and accessories for the modern woman', '145 Arab Street, Singapore 199827', FALSE, 'shop@chicstreet.sg', '+65 6901 2345', 'https://www.chicstreet.sg', 'https://instagram.com/chicstreetsg', 'Chic_Street_Boutique.jpg', '2023-08-14', 'medium', TRUE, TRUE),
 ('user-id-006', '202309567I', 'Elegance & Co', 'retail', 'Premium designer fashion and luxury accessories for discerning customers', '2 Orchard Turn, ION Orchard, Singapore 238801', FALSE, 'concierge@eleganceco.sg', '+65 6012 3456', 'https://www.eleganceco.sg', 'https://instagram.com/elegancecosg', 'Elegance_&_Co.jpg', '2023-09-01', 'high', FALSE, TRUE),
 ('user-id-001', '202310890J', 'Mama\'s Kitchen', 'fnb', 'Home-style comfort food with authentic local flavors in a warm family setting', '678 Tiong Bahru Road, Singapore 158789', FALSE, 'reservations@mamaskitchen.sg', '+65 6123 4567', 'https://www.mamaskitchen.sg', 'https://facebook.com/mamaskitchensg', 'Mama\'s_Kitchen.jpg', '2023-10-12', 'low', TRUE, TRUE),
-
-
-
 ('user-id-002', '202312456L', 'Pawfect Grooming', 'services', 'Professional pet grooming services with gentle care for your furry friends', '234 Serangoon Road, Singapore 218078', FALSE, 'book@pawfectgrooming.sg', '+65 6345 6789', 'https://www.pawfectgrooming.sg', 'https://instagram.com/pawfectsg', 'Pawfect_Grooming.jpeg', '2023-12-05', 'medium', FALSE, TRUE);
 
 -- Payment options
@@ -130,8 +205,6 @@ INSERT INTO business_opening_hours (uen, day_of_week, open_time, close_time) VAL
 ('202307901G', 'Saturday', '10:00:00', '22:00:00'),
 ('202307901G', 'Sunday', '11:00:00', '20:00:00'),
 
-
-
 -- Chic Street Boutique
 ('202308234H', 'Monday', '11:00:00', '20:00:00'),
 ('202308234H', 'Tuesday', '11:00:00', '20:00:00'),
@@ -184,9 +257,6 @@ INSERT INTO business_reviews (user_email, business_uen, rating, body, like_count
 ('user9@example.com', '202302456B', 5, 'Best fade I''ve had in Tanjong Pagar. The place is clean, professional, and they take their time. Highly recommend.', 14, '2025-10-23 16:45:00'),
 ('user10@example.com', '202302456B', 4, 'Good, reliable spot for a gentleman''s cut. A bit pricey, but the quality and service are consistent.', 6, '2025-10-24 12:00:00'),
 
-
-
-
 -- Reviews for 'Java Junction Cafe' (202303789C)
 ('user11@example.com', '202303789C', 5, 'My favourite cozy corner in Bugis. The flat white is consistently excellent, and there are plenty of power sockets to work.', 25, '2025-10-20 10:10:00'),
 ('user12@example.com', '202303789C', 4, 'Nice latte art and friendly baristas. Their cheesecake is surprisingly good! A great place to relax.', 11, '2025-10-21 15:00:00'),
@@ -215,9 +285,6 @@ INSERT INTO business_reviews (user_email, business_uen, rating, body, like_count
 ('user29@example.com', '202306678F', 4, 'Did a wonderful job landscaping my condo balcony. They were tidy and respectful. It was expensive, but the quality is undeniable.', 6, '2025-10-23 16:00:00'),
 ('user30@example.com', '202306678F', 4, 'Good design advice, and they were patient with all my changes. The final result is beautiful.', 4, '2025-10-24 11:45:00'),
 
-
-
-
 -- Reviews for 'Chapter & Verse Books' (202307901G)
 ('user1@example.com', '202307901G', 5, 'My absolute favorite bookstore. The curation is impeccable, with a great mix of bestsellers and obscure indie titles.', 28, '2025-10-20 16:00:00'),
 ('user2@example.com', '202307901G', 5, 'The staff here actually read books! Their recommendations are always spot on. A true gem for book lovers.', 17, '2025-10-21 13:20:00'),
@@ -245,9 +312,6 @@ INSERT INTO business_reviews (user_email, business_uen, rating, body, like_count
 ('user18@example.com', '202310890J', 4, 'A fantastic spot for local food. It gets very busy during lunch, so be prepared to queue. The Cendol is amazing.', 12, '2025-10-22 13:00:00'),
 ('user19@example.com', '202310890J', 3, 'Food was a bit too oily and salty for my personal taste, but I can see why people love the strong flavors.', 3, '2025-10-23 20:00:00'),
 ('user20@example.com', '202310890J', 5, 'The portions are generous and the service is fast and friendly. A real gem in Tiong Bahru.', 18, '2025-10-24 12:45:00'),
-
-
-
 
 -- Reviews for 'Pawfect Grooming' (202312456L)
 ('user21@example.com', '202312456L', 5, 'The groomers are so patient and gentle. My dog is usually very anxious, but he came back happy and looking great!', 21, '2025-10-20 09:45:00'),
@@ -292,8 +356,6 @@ VALUES
 (3, 'user19@example.com', 'They said it was due to low attendance, but I think it’ll come back soon.', 4, '2025-10-25 12:00:00'),
 (3, 'user17@example.com', 'Email them! They’re usually responsive to feedback.', 1, '2025-10-25 12:15:00'),
 
-
-
 -- Replies to Mama’s Kitchen post
 (4, 'user16@example.com', '100% worth it. Go before 11:30 and you’ll skip the line.', 7, '2025-10-25 12:20:00'),
 (4, 'user19@example.com', 'Try their Cendol next time — it’s elite.', 3, '2025-10-25 12:30:00'),
@@ -317,3 +379,163 @@ VALUES
 (10, 'user26@example.com', 'Love brands like The Daily Loaf and Artisan Alley — quality local stuff.', 4, '2025-10-25 19:10:00'),
 (10, 'user30@example.com', '+1 for Artisan Alley! Picked up cool handmade gifts there.', 2, '2025-10-25 19:20:00');
 
+INSERT INTO business_announcements 
+(business_uen, title, content, image_url, created_at, updated_at)
+VALUES
+-- The Daily Loaf Bakery
+('202301234A', 'New Croissant Series Launch!', 
+ 'We’re introducing a buttery new range of croissants — from almond to matcha. Come try them fresh out of the oven this weekend!',
+ 'https://www.dailyloaf.sg/images/croissant_series.jpg', 
+ '2024-01-10 09:30:00', '2024-01-10 09:30:00'),
+
+-- Gents Grooming Parlor
+('202302456B', 'Movember Special: Free Beard Trim', 
+ 'In support of Movember, get a complimentary beard trim with any haircut this November!',
+ 'https://www.gentsgrooming.sg/images/movember_special.jpg', 
+ '2024-11-01 10:00:00', '2024-11-01 10:00:00'),
+
+-- Java Junction Cafe
+('202303789C', 'Pumpkin Spice Latte Returns!', 
+ 'It’s back! Our autumn favorite — the Pumpkin Spice Latte — available for a limited time only!',
+ 'https://www.javajunction.sg/images/psl_promo.jpg', 
+ '2024-09-15 08:00:00', '2024-09-15 08:00:00'),
+
+-- FitCore Studio
+('202304012D', 'New Year, New You Challenge', 
+ 'Kick off the new year strong! Join our 6-week fitness challenge with exclusive FitCore merch for top performers.',
+ 'https://www.fitcorestudio.sg/images/new_year_challenge.jpg', 
+ '2025-01-01 07:00:00', '2025-01-01 07:00:00'),
+
+-- Artisan Alley Crafts
+('202305345E', 'Holiday Craft Fair 2024', 
+ 'Join us at our annual Holiday Craft Fair featuring over 50 local artists and live workshops.',
+ 'https://www.artisanalley.sg/images/holiday_fair.jpg', 
+ '2024-12-05 11:00:00', '2024-12-05 11:00:00'),
+
+-- GreenScape Solutions
+('202306678F', 'EcoGarden Launch: Sustainable Landscaping Solutions', 
+ 'We’re proud to launch EcoGarden — our newest range of sustainable landscaping packages designed for greener living.',
+ 'https://www.greenscape.sg/images/ecogarden_launch.jpg', 
+ '2024-06-10 09:00:00', '2024-06-10 09:00:00'),
+
+-- Chapter & Verse Books
+('202307901G', 'Author Meet & Greet: Tan Wei Ming', 
+ 'Join us this Saturday for an intimate reading and Q&A session with local author Tan Wei Ming, featuring his new book *Whispers of the City*.',
+ 'https://www.chapterverse.sg/images/author_event.jpg', 
+ '2024-07-20 15:00:00', '2024-07-20 15:00:00'),
+
+-- Chic Street Boutique
+('202308234H', 'Summer Collection 2024 Drop', 
+ 'Our breezy Summer 2024 Collection is here — vibrant colors, comfy fabrics, and limited pieces only!',
+ 'https://www.chicstreet.sg/images/summer_collection.jpg', 
+ '2024-06-01 10:00:00', '2024-06-01 10:00:00'),
+
+-- Elegance & Co
+('202309567I', 'Private Sale for VIP Members', 
+ 'Exclusive invitation for our VIP members: enjoy up to 40% off select luxury pieces this weekend only.',
+ 'https://www.eleganceco.sg/images/vip_sale.jpg', 
+ '2024-11-10 12:00:00', '2024-11-10 12:00:00'),
+
+-- Mama’s Kitchen
+('202310890J', 'Grand Reopening After Renovation', 
+ 'We’re back with a brand new look! Join us for our reopening event and enjoy 10% off all menu items this week.',
+ 'https://www.mamaskitchen.sg/images/reopening.jpg', 
+ '2024-03-05 11:30:00', '2024-03-05 11:30:00'),
+
+-- Pawfect Grooming
+('202312456L', 'Pawfect Christmas Photo Booth!', 
+ 'Bring your furry friends for a festive grooming session and a free Christmas photo!',
+ 'https://www.pawfectgrooming.sg/images/xmas_photo_booth.jpg', 
+ '2024-12-01 10:00:00', '2024-12-01 10:00:00');
+ 
+ -- ========================================
+-- REFERRALS & VOUCHERS DUMMY DATA
+-- ========================================
+
+-- First, we must UPDATE a few users to have known, simple referral codes
+-- so we can realistically simulate someone using them.
+-- The trigger only runs on INSERT, so we do this manually for existing data.
+
+UPDATE user SET referral_code = 'ALICE123' WHERE id = 'user-id-001';
+UPDATE user SET referral_code = 'EMILY456' WHERE id = 'user-id-005';
+UPDATE user SET referral_code = 'JACK789' WHERE id = 'user-id-010';
+
+-- ----------------------------------------
+-- SIMULATION 1: Alice (user-id-001) refers Bob (user-id-002)
+-- Status: Bob (referred) has ALREADY USED his voucher.
+-- ----------------------------------------
+
+-- 1. Create the referral record (This will have ref_id = 1)
+INSERT INTO referrals (referrer_id, referred_id, referral_code, status, referred_at)
+VALUES ('user-id-001', 'user-id-002', 'ALICE123', 'claimed', '2025-10-15 10:00:00');
+
+-- 2. Update Bob (referred) to link to Alice (referrer)
+UPDATE user SET referred_by_user_id = 'user-id-001' WHERE id = 'user-id-002';
+
+-- 3. Issue vouchers (ref_id = 1)
+-- Voucher for referred (Bob, user-id-002) - marked as 'used'
+INSERT INTO vouchers (user_id, ref_id, amount, status, issued_at, expires_at)
+VALUES ('user-id-002', 1, 5, 'used', '2025-10-15 10:00:00', '2025-11-15 10:00:00');
+-- Voucher for referrer (Alice, user-id-001) - still 'issued'
+INSERT INTO vouchers (user_id, ref_id, amount, status, issued_at, expires_at)
+VALUES ('user-id-001', 1, 5, 'issued', '2025-10-15 10:00:00', '2025-11-15 10:00:00');
+
+-- ----------------------------------------
+-- SIMULATION 2: Alice (user-id-001) refers Charlie (user-id-003)
+-- Status: Both vouchers are active and 'issued'.
+-- ----------------------------------------
+
+-- 1. Create the referral record (This will have ref_id = 2)
+INSERT INTO referrals (referrer_id, referred_id, referral_code, status, referred_at)
+VALUES ('user-id-001', 'user-id-003', 'ALICE123', 'claimed', '2025-10-20 11:00:00');
+
+-- 2. Update Charlie (referred) to link to Alice (referrer)
+UPDATE user SET referred_by_user_id = 'user-id-001' WHERE id = 'user-id-003';
+
+-- 3. Issue vouchers (ref_id = 2)
+-- Voucher for referred (Charlie, user-id-003)
+INSERT INTO vouchers (user_id, ref_id, amount, status, issued_at, expires_at)
+VALUES ('user-id-003', 2, 5, 'issued', '2025-10-20 11:00:00', '2025-11-20 11:00:00');
+-- Voucher for referrer (Alice, user-id-001)
+INSERT INTO vouchers (user_id, ref_id, amount, status, issued_at, expires_at)
+VALUES ('user-id-001', 2, 5, 'issued', '2025-10-20 11:00:00', '2025-11-20 11:00:00');
+
+-- ----------------------------------------
+-- SIMULATION 3: Emily (user-id-005) refers Grace (user-id-007)
+-- Status: Both vouchers are active and 'issued' (very recent).
+-- ----------------------------------------
+
+-- 1. Create the referral record (This will have ref_id = 3)
+INSERT INTO referrals (referrer_id, referred_id, referral_code, status, referred_at)
+VALUES ('user-id-005', 'user-id-007', 'EMILY456', 'claimed', '2025-11-01 14:30:00');
+
+-- 2. Update Grace (referred) to link to Emily (referrer)
+UPDATE user SET referred_by_user_id = 'user-id-005' WHERE id = 'user-id-007';
+
+-- 3. Issue vouchers (ref_id = 3)
+-- Voucher for referred (Grace, user-id-007)
+INSERT INTO vouchers (user_id, ref_id, amount, status, issued_at, expires_at)
+VALUES ('user-id-007', 3, 5, 'issued', '2025-11-01 14:30:00', '2025-12-01 14:30:00');
+-- Voucher for referrer (Emily, user-id-005)
+INSERT INTO vouchers (user_id, ref_id, amount, status, issued_at, expires_at)
+VALUES ('user-id-005', 3, 5, 'issued', '2025-11-01 14:30:00', '2025-12-01 14:30:00');
+
+-- ----------------------------------------
+-- SIMULATION 4: Jack (user-id-010) refers Kate (user-id-011)
+-- Status: Vouchers were issued > 1 month ago and are now 'expired'.
+-- ----------------------------------------
+
+-- 1. Create the referral record (This will have ref_id = 4)
+INSERT INTO referrals (referrer_id, referred_id, referral_code, status, referred_at)
+VALUES ('user-id-010', 'user-id-011', 'JACK789', 'claimed', '2025-09-01 09:00:00');
+
+-- 2. Update Kate (referred) to link to Jack (referrer)
+UPDATE user SET referred_by_user_id = 'user-id-010' WHERE id = 'user-id-011';
+
+-- 3. Issue vouchers (ref_id = 4) - marked as 'expired'
+-- Voucher for referred (Kate, user-id-011)
+INSERT INTO vouchers (user_id, ref_id, amount, status, issued_at, expires_at)
+VALUES ('user-id-011', 4, 5, 'expired', '2025-09-01 09:00:00', '2025-10-01 09:00:00');
+-- Voucher for referrer (Jack, user-id-010)
+INSERT INTO vouchers (user_id, ref_id, amount, status, issued_at, expires_at)
+VALUES ('user-id-010', 4, 5, 'expired', '2025-09-01 09:00:00', '2025-10-01 09:00:00');
