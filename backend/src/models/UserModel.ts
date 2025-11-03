@@ -1,35 +1,45 @@
 import { User, UpdateProfileData } from '../types/User.js';
 import db from '../database/db.js'
-import { referrals, user, vouchers } from '../database/schema.js';
+import { referrals, user, userPoints, vouchers } from '../database/schema.js';
 import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
 import { date } from 'better-auth';
 
 class UserModel {
-
+    
     /**
      * Retrieves a user record from the database by its unique ID.
-     *
+     * 
+     * Searches the `user` table for a record that matches the provided `userId`. 
+     * Returns the first matching user object if found, or `null` if no such user exists.
+     * 
      * @param {string} userId - The unique identifier of the user.
      * @returns {Promise<User | null>} The `User` object corresponding to the ID, or `null` if not found.
      */
-    public static async getUserById(userId: string) {
+    public static async getProfile(userId: string) {
         try {
-            console.log('🔍 getUserById called with userId:', userId);
-            const result = await db.select().from(user).where(eq(user.id, userId)).limit(1);
-            console.log('📊 Query result:', result);
-            return result[0] || null;
-        } catch (error) {
-            console.error('❌ Error fetching user:', error);
+            const profile = await db.select().from(user).where(eq(user.id, userId))
+            const availableVouchers = await db.select().from(vouchers).where(eq(vouchers.userId, userId))
+            const availablePoints = await db.select().from(userPoints).where(eq(userPoints.userEmail, profile[0]!.email))
+            
+            return {
+                profile: profile[0],
+                vouchers: availableVouchers,
+                points: availablePoints[0]!.points
+            }
+        } 
+        catch (error) {
+            console.error(`Error fetching user: ${userId}`);
             throw error;
         }
     }
 
     /**
      * Updates the profile information of a user in the database.
-     *
-     * Accepts partial updates for the user's `name`, `email`, and `image`.
-     * Only the fields provided in `updates` are modified, leaving other fields unchanged.
-     *
+     * 
+     * Accepts partial updates for the user's `name`, `email`, and `image`. 
+     * Only the fields provided in `updates` are modified, leaving other fields unchanged. 
+     * After updating, fetches and returns the fully updated user object.
+     * 
      * @param {string} userId - The unique identifier of the user to update.
      * @param {UpdateProfileData} updates - Object containing the profile fields to update.
      * @returns {Promise<User>} The updated `User` object reflecting the changes.
@@ -39,18 +49,20 @@ class UserModel {
             // Update only the fields that are provided
             const updateData: any = {};
             if (updates.name !== undefined) updateData.name = updates.name;
-            if (updates.image !== undefined) updateData.image = updates.image;
             if (updates.email !== undefined) updateData.email = updates.email;
+            if (updates.imageUrl !== undefined) updateData.imageUrl = updates.imageUrl;
+            if (updates.bio !== undefined) updateData.bio = updates.bio;
+            if (updates.hasBusiness !== undefined) updateData.hasBusiness = updates.hasBusiness;
+            updateData.updatedAt = updates.updatedAt
 
             // Perform the update
-            await db.update(user)
-                .set(updateData)
-                .where(eq(user.id, userId));
+            await db.update(user).set(updateData).where(eq(user.id, userId));
 
-            // Fetch and return the updated user
-            const updatedUser = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+            // Return the updated user
+            const updatedUser = await db.select().from(user).where(eq(user.id, userId))
             return updatedUser[0];
-        } catch (error) {
+        } 
+        catch (error) {
             console.error('Error updating profile:', error);
             throw error;
         }
@@ -97,7 +109,7 @@ class UserModel {
 
             // Check if user (referredId) has already been referred
             const referredUserCheck = await db.select({ 
-                    referredByUserID: user.referredByUserID 
+                    referredByUserID: user.referredByUserId 
                 }).from(user).where(eq(user.id, referredId));
 
             if (referredUserCheck[0]?.referredByUserID) {
@@ -114,8 +126,8 @@ class UserModel {
                 
                 // Insert the referral record
                 const referralInsertResult = await tx.insert(referrals).values({
-                    referrerUserId: referrerUser.id,
-                    referredUserId: referredId,
+                    referrerId: referrerUser.id,
+                    referredId: referredId,
                     referralCode,
                     status: "claimed",
                     referredAt: now.toISOString() // Use 'now' for consistency
@@ -145,7 +157,7 @@ class UserModel {
 
                 // update the new user referredByUserID column
                 await tx.update(user).set({
-                    referredByUserID: referrerUser.id,
+                    referredByUserId: referrerUser.id,
                 }).where(eq(user.id, referredId))
 
                 return true;
