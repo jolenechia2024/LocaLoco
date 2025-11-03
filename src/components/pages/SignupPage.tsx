@@ -1344,13 +1344,27 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
               )}
             </div>
 
-            <div className="text-center pt-4">
+            {/* Login Link */}
+            <div className="text-center pt-4 border-t">
+              <span className="text-sm text-muted-foreground">
+                Already have an account?{' '}
+              </span>
+              <button
+                type="button"
+                className="text-sm font-medium text-primary hover:underline"
+                onClick={() => navigate('/login')}
+              >
+                Sign in here
+              </button>
+            </div>
+
+            <div className="text-center pt-2">
               <button
                 type="button"
                 className="text-sm text-muted-foreground hover:text-foreground"
                 onClick={handleBack}
               >
-                ← Back to welcome screen
+                Back to home
               </button>
             </div>
           </form>
