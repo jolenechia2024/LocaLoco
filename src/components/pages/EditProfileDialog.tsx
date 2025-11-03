@@ -79,7 +79,8 @@ export function EditProfileDialog({
           userId: user.id,
           name: formData.name,
           email: formData.email,
-          image: formData.avatarUrl || null,
+          imageUrl: formData.avatarUrl || null,
+          bio: formData.bio || '',
         }),
       });
 
@@ -93,8 +94,10 @@ export function EditProfileDialog({
       // Update local user object with new data
       const updatedUser = {
         ...user,
-        name: result.user.name,
-        avatarUrl: result.user.image,
+        name: result.name,
+        email: result.email,
+        avatarUrl: result.image,
+        bio: result.bio || '',
       };
 
       onSave(updatedUser);
@@ -130,19 +133,34 @@ export function EditProfileDialog({
     setUploading(true);
 
     try {
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setPreviewUrl(base64String);
-        setFormData((prev) => ({ ...prev, avatarUrl: base64String }));
-        setUploading(false);
-      };
-      reader.onerror = () => {
-        alert('Error reading file');
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
+      // Step 1: Get upload URL from backend
+      const urlResponse = await fetch(`http://localhost:3000/api/url-generator?filename=${encodeURIComponent(file.name)}`);
+      if (!urlResponse.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+      const { uploadUrl, blobName } = await urlResponse.json();
+
+      // Step 2: Upload file to Azure Blob Storage
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'x-ms-blob-type': 'BlockBlob',
+          'Content-Type': file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image to storage');
+      }
+
+      // Step 3: Construct the permanent blob URL (without SAS token)
+      const blobUrl = uploadUrl.split('?')[0]; // Remove SAS token from URL
+
+      // Step 4: Set preview and update form data
+      setPreviewUrl(blobUrl);
+      setFormData((prev) => ({ ...prev, avatarUrl: blobUrl }));
+      setUploading(false);
     } catch (error) {
       console.error('Error uploading image:', error);
       alert('Failed to upload image');

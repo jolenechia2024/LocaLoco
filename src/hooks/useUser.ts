@@ -53,13 +53,17 @@ export const useUser = (userId: string | null) => {
         const userData: User = {
           id: data.profile.id,
           role: 'user',
-          name: data.profile.name,
-          email: data.profile.email,
-          memberSince: data.profile.createdAt?.split('T')[0] || '',
-          bio: '', // Add if your schema has this
-          location: '', // Add if your schema has this
+          name: profileData.name || 'User',
+          email: profileData.email || 'user@email.com',
+          avatarUrl: profileData.image || undefined,
+          memberSince: profileData.createdAt
+            ? profileData.createdAt.split('T')[0]
+            : new Date().toISOString().split('T')[0],
+          bio: profileData.bio || '',
+          location: profileData.location || 'Singapore',
         };
 
+        console.log('✅ Mapped user data:', userData);
         setUser(userData);
 
         // Set stats based on vouchers count
