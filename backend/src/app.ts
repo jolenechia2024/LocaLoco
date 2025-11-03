@@ -14,6 +14,14 @@ import auth from './lib/auth.js';
 
 const app: Application = express();
 
+// Add this BEFORE your other routes and middleware
+app.use((req, res, next) => {
+  if (req.path === '/.well-known/appspecific/com.chrome.devtools.json') {
+      return res.status(204).end();
+  }
+  next();
+});
+
 // Middleware
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'

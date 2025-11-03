@@ -57,7 +57,7 @@
       outDir: 'dist',
     },
     server: {
-      port: 5173,
+      port: 3000,
       open: true,
       proxy: {
         '/api': {

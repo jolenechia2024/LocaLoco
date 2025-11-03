@@ -147,16 +147,16 @@ export function AppSidebar({
 
 
   // Combine all menu items for mobile view
+  const authNavItem = isAuthenticated
+  ? { icon: null, label: 'Profile', view: 'profile' as const, isAvatar: true }
+  : { icon: LogIn, label: 'Login', view: null, isLoginButton: true };
+
   const allBottomNavItems = [
-    ...mainMenuItems.filter(item => item.view !== 'vouchers'), // Remove vouchers from mobile
+    ...mainMenuItems.filter(item => item.view !== 'vouchers'),
     { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
-    ...(isAuthenticated
-      ? [{ icon: null, label: 'Profile', view: 'profile' as const, isAvatar: true }]
-      : [{ icon: LogIn, label: 'Login', view: null as const, isLoginButton: true }]
-    ),
+    authNavItem,
     { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
   ];
-
   return (
     <>
       {/* Desktop Sidebar - only render on desktop */}
@@ -372,7 +372,7 @@ export function AppSidebar({
               {allBottomNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.view;
-                const isThemeToggle = 'isThemeToggle' in item && item.isThemeToggle;
+                const isThemeToggle = ('isThemeToggle' in item && item.isThemeToggle) as boolean | undefined;
                 const hasNotification = 'hasNotification' in item && item.hasNotification;
                 const isAvatar = 'isAvatar' in item && item.isAvatar;
                 const isLoginButton = 'isLoginButton' in item && item.isLoginButton;

@@ -30,6 +30,7 @@ export const BusinessListPage = () => {
   const [showEventsPopup, setShowEventsPopup] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
+  
   // Show events popup on mount
   useEffect(() => {
     const timer = setTimeout(() => setShowEventsPopup(true), 1000);

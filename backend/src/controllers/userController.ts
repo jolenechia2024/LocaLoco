@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import UserModel from "../models/UserModel.js";
 
+
 class UserController {
 
     // Get user profile by ID from URL parameter
@@ -15,6 +16,8 @@ class UserController {
             }
 
             const user = await UserModel.getUserById(userId);
+            const provider = await UserModel.getAuthProvider(userId);
+
 
             if (!user) {
                 res.status(404).json({ error: 'User not found' });

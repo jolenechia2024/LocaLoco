@@ -18,6 +18,8 @@ interface Announcement {
 interface EventsPopupProps {
   open: boolean;
   onClose: () => void;
+  events: Event[]; // ✅ Add this line
+
 }
 
 export function EventsPopup({ open, onClose }: EventsPopupProps) {
