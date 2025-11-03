@@ -67,8 +67,9 @@ export const useUser = (userId: string | null) => {
           role: 'user',
           name: profileData.name || 'User',
           email: profileData.email || 'user@email.com',
-          memberSince: profileData.createdAt 
-            ? profileData.createdAt.split('T')[0] 
+          avatarUrl: profileData.image || undefined,
+          memberSince: profileData.createdAt
+            ? profileData.createdAt.split('T')[0]
             : new Date().toISOString().split('T')[0],
           bio: profileData.bio || '',
           location: profileData.location || 'Singapore',
