@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../../types/user';
 import {
   Dialog,
@@ -36,7 +36,33 @@ export function EditProfileDialog({
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isGoogleUser, setIsGoogleUser] = useState<boolean>(false);
+  const [checkingProvider, setCheckingProvider] = useState<boolean>(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if user signed in with Google
+  useEffect(() => {
+    const checkAuthProvider = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/users/auth-provider/${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          // If user has a Google account linked, they're a Google user
+          setIsGoogleUser(data.provider === 'google');
+        }
+      } catch (error) {
+        console.error('Error checking auth provider:', error);
+        // Default to false (allow email editing) if check fails
+        setIsGoogleUser(false);
+      } finally {
+        setCheckingProvider(false);
+      }
+    };
+
+    if (open) {
+      checkAuthProvider();
+    }
+  }, [user.id, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,14 +70,15 @@ export function EditProfileDialog({
     setSaving(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/users/profile', {
-        method: 'PUT',
+      const response = await fetch('http://localhost:3000/api/user/update-profile', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: user.id,
           name: formData.name,
+          email: formData.email,
           image: formData.avatarUrl || null,
         }),
       });
@@ -234,12 +261,23 @@ export function EditProfileDialog({
                 id="email"
                 type="email"
                 value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="your.email@example.com"
-                disabled
+                disabled={checkingProvider || isGoogleUser}
               />
-              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Email cannot be changed
-              </p>
+              {checkingProvider ? (
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Checking account type...
+                </p>
+              ) : isGoogleUser ? (
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Email cannot be changed for Google accounts
+                </p>
+              ) : (
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  You can update your email address
+                </p>
+              )}
             </div>
 
             <div className="grid gap-2">

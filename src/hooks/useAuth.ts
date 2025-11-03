@@ -1,5 +1,5 @@
 // hooks/useAuth.ts
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { ROUTES } from '../constants/routes';
@@ -8,7 +8,36 @@ import { authClient, callbackURL } from '../lib/authClient';
 
 export const useAuth = () => {
   const navigate = useNavigate();
-  const store = useAuthStore();
+
+  // Extract only the specific values and functions we need from the store
+  const storeUserId = useAuthStore((state) => state.userId);
+  const storeAccessToken = useAuthStore((state) => state.accessToken);
+  const storeRole = useAuthStore((state) => state.role);
+  const storeIsAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const storeLogin = useAuthStore((state) => state.login);
+  const storeLogout = useAuthStore((state) => state.logout);
+
+  // Use reactive session hook
+  const { data: session, isPending } = authClient.useSession();
+
+  // Sync session with local store whenever session changes
+  useEffect(() => {
+    if (!isPending && session?.user && session?.session) {
+      const userId = session.user.id;
+      const accessToken = session.session.token;
+      const currentRole = storeRole || 'user'; // Keep existing role or default to 'user'
+
+      // Only update if not already synced
+      if (storeUserId !== userId || storeAccessToken !== accessToken) {
+        console.log('🔄 Syncing session to store:', userId);
+        storeLogin(userId, currentRole, accessToken);
+      }
+    } else if (!isPending && !session?.user && storeIsAuthenticated) {
+      // Session expired or user logged out on backend
+      console.log('🔄 Session expired, clearing store');
+      storeLogout();
+    }
+  }, [session, isPending, storeUserId, storeAccessToken, storeRole, storeIsAuthenticated, storeLogin, storeLogout]);
 
   const login = useCallback(
     async (email: string, password: string, role: UserRole) => {
@@ -27,20 +56,13 @@ export const useAuth = () => {
           };
         }
 
-        // Check if we have a valid session
-        const session = await authClient.getSession();
-
-        if (session?.data?.session) {
-          const user = session.data.user;
-          const userId = user?.id || 'unknown';
-          const accessToken = session.data.session.token;
-
-          // Update store with real data
-          store.login(userId, role, accessToken);
-
-          // Navigate to map
+        // Session will be automatically synced via useEffect above
+        // Just update the role in store
+        if (data?.user) {
+          const userId = data.user.id;
+          const accessToken = data.session?.token || '';
+          storeLogin(userId, role, accessToken);
           navigate(ROUTES.MAP);
-
           return { success: true };
         } else {
           return {
@@ -55,7 +77,7 @@ export const useAuth = () => {
         };
       }
     },
-    [store, navigate]
+    [storeLogin, navigate]
   );
 
   const signup = useCallback(
@@ -76,18 +98,13 @@ export const useAuth = () => {
           };
         }
 
-        // Check if we have a valid session
-        const session = await authClient.getSession();
-
-        if (session?.data?.session) {
-          const user = session.data.user;
-          const userId = user?.id || 'unknown';
-          const accessToken = session.data.session.token;
-
-          // Update store with real data
-          store.login(userId, role, accessToken);
+        // Session will be automatically synced via useEffect above
+        // Just update the role in store
+        if (data?.user) {
+          const userId = data.user.id;
+          const accessToken = data.session?.token || '';
+          storeLogin(userId, role, accessToken);
           navigate(ROUTES.MAP);
-
           return { success: true };
         } else {
           // Signup successful but no auto-login, redirect to login
@@ -103,7 +120,7 @@ export const useAuth = () => {
         };
       }
     },
-    [store, navigate]
+    [storeLogin, navigate]
   );
 
   const logout = useCallback(async () => {
@@ -116,18 +133,20 @@ export const useAuth = () => {
       console.error('❌ Logout error:', error);
     } finally {
       // Always clear local store
-      store.logout();
+      storeLogout();
       console.log('✅ Local store cleared');
 
       // Redirect to home/login
       navigate(ROUTES.HOME);
     }
-  }, [store, navigate]);
+  }, [storeLogout, navigate]);
 
   return {
-    isAuthenticated: store.isAuthenticated,
-    role: store.role,
-    userId: store.userId,
+    isAuthenticated: storeIsAuthenticated,
+    role: storeRole,
+    userId: storeUserId,
+    session: session,
+    isPending: isPending,
     login,
     signup,
     logout,

@@ -1,6 +1,6 @@
 import { User, UpdateProfileData } from '../types/User.js';
 import db from '../database/db.js'
-import { referrals, user, vouchers } from '../database/schema.js';
+import { referrals, user, vouchers, account } from '../database/schema.js';
 import { and, or, ilike, eq, inArray, gte, sql, asc, desc } from 'drizzle-orm';
 import { date } from 'better-auth';
 
@@ -36,22 +36,32 @@ class UserModel {
      */
     public static async updateProfile(userId: string, updates: UpdateProfileData) {
         try {
+            console.log('🟢 UserModel.updateProfile called');
+            console.log('🟢 userId:', userId);
+            console.log('🟢 updates:', JSON.stringify(updates, null, 2));
+
             // Update only the fields that are provided
             const updateData: any = {};
             if (updates.name !== undefined) updateData.name = updates.name;
             if (updates.image !== undefined) updateData.image = updates.image;
             if (updates.email !== undefined) updateData.email = updates.email;
 
+            console.log('🟢 updateData to be written to DB:', JSON.stringify(updateData, null, 2));
+
             // Perform the update
-            await db.update(user)
+            const updateResult = await db.update(user)
                 .set(updateData)
                 .where(eq(user.id, userId));
 
+            console.log('🟢 Database update result:', JSON.stringify(updateResult, null, 2));
+
             // Fetch and return the updated user
             const updatedUser = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+            console.log('🟢 Fetched updated user from DB:', JSON.stringify(updatedUser, null, 2));
+
             return updatedUser[0];
         } catch (error) {
-            console.error('Error updating profile:', error);
+            console.error('❌ Error updating profile in UserModel:', error);
             throw error;
         }
     }
@@ -156,7 +166,39 @@ class UserModel {
         catch (error) {
 
             console.error('Error handling referral:', error);
-            throw error; 
+            throw error;
+        }
+    }
+
+    /**
+     * Gets the authentication provider for a user (e.g., 'google', 'email', null).
+     *
+     * @param {string} userId - The unique identifier of the user.
+     * @returns {Promise<string | null>} The provider ID ('google', 'facebook', etc.) or null for email/password users.
+     */
+    public static async getAuthProvider(userId: string): Promise<string | null> {
+        try {
+            console.log('🔍 Checking account table for userId:', userId);
+
+            // Check if user has any OAuth account linked (Google, Facebook, etc.)
+            const accounts = await db
+                .select()
+                .from(account)
+                .where(eq(account.userId, userId))
+                .limit(1);
+
+            console.log('📊 Account query result:', accounts);
+
+            if (accounts.length > 0 && accounts[0]) {
+                // User has an OAuth account, return the provider
+                return accounts[0].providerId || null;
+            }
+
+            // No OAuth account found, user signed up with email/password
+            return null;
+        } catch (error) {
+            console.error('❌ Error checking auth provider:', error);
+            throw error;
         }
     }
 }
