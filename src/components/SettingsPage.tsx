@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Settings, User, Bell, Lock, Globe, Moon, Sun, ChevronRight, Trash2 } from 'lucide-react';
+import { Settings, User, Bell, Lock, Globe, Moon, Sun, ChevronRight, Trash2, LogOut } from 'lucide-react';
 import { Card } from './ui/card';
 import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
+import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import {
   Select,
   SelectContent,
@@ -33,9 +35,17 @@ interface SettingsPageProps {
 export function SettingsPage({ onBack}: SettingsPageProps) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
   const toggleTheme = useThemeStore(state => state.toggleTheme);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const onThemeToggle = (checked: boolean) => {
     toggleTheme(); // toggle theme in store
+  };
+
+  const handleSignOut = () => {
+    logout();
+    toast.success('Signed out successfully');
+    navigate('/');
   };
   const [notifications, setNotifications] = useState({
     email: true,
@@ -253,19 +263,34 @@ export function SettingsPage({ onBack}: SettingsPageProps) {
             </div>
           </Card>
 
+          {/* Account Actions */}
+          <Card className="p-3" style={{ backgroundColor: cardBg, color: textColor }}>
+            <h3 className="text-lg mb-2" style={{ color: textColor }}>Account Actions</h3>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                onClick={handleSignOut}
+                className={`w-full justify-between h-9 ${isDarkMode ? 'bg-[#FFA1A3]/10 text-[#FFA1A3] border-[#FFA1A3]/30 hover:bg-[#FFA1A3]/20' : 'text-[#FFA1A3] border-[#FFA1A3]/30 hover:bg-[#FFA1A3]/10'}`}
+              >
+                Sign Out
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          </Card>
+
           {/* Danger Zone */}
           <Card className="p-3 border-destructive" style={{ backgroundColor: cardBg, color: textColor }}>
             <h3 className="text-destructive text-lg mb-2">Danger Zone</h3>
             <div className="space-y-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleClearCache}
                 className={`w-full justify-between h-9 ${isDarkMode ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20' : 'text-foreground'}`}
               >
                 Clear Cache
                 <ChevronRight className="w-4 h-4" />
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => setShowDeleteDialog(true)}
                 className={`w-full justify-between h-9 border-destructive hover:bg-destructive hover:text-white ${isDarkMode ? 'bg-destructive/10 text-destructive' : 'text-destructive'}`}
