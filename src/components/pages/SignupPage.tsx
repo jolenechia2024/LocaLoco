@@ -509,14 +509,56 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         name: `${formData.firstName} ${formData.lastName}`,
         callbackURL: baseURL
       });
-      
+
       if (userError) {
         throw new Error('User registration failed: ' + userError.message);
       }
-      
-      const userId = userData.user.id; // ✅ Extract userId
-  
-      toast.success('User account created!');
+
+      console.log('✅ User registered:', userData);
+      console.log('📋 Registered user ID:', userData?.user?.id);
+      console.log('📧 Registered user email:', userData?.user?.email);
+
+      // Check if autoSignIn worked immediately after signup
+      let session = await authClient.getSession();
+      console.log('🔍 Session immediately after signup:', session);
+
+      if (!session?.data?.session) {
+        console.log('⚠️ No session after signup, manually signing in...');
+
+        // IMPORTANT: Manually sign in after signup to ensure session is created
+        const { data: signInData, error: signInError } = await authClient.signIn.email({
+          email: formData.email,
+          password: formData.password,
+          callbackURL: baseURL
+        });
+
+        if (signInError) {
+          console.error('❌ Sign in error:', signInError);
+          throw new Error('Sign in after registration failed: ' + signInError.message);
+        }
+
+        console.log('✅ Signed in manually:', signInData);
+
+        // Get the session after manual sign-in
+        session = await authClient.getSession();
+        console.log('🔍 Session after manual sign-in:', session);
+      }
+
+      if (!session?.data?.session) {
+        throw new Error('No session created after signup. Please try logging in manually.');
+      }
+
+      console.log('🔍 Full session data:', JSON.stringify(session.data, null, 2));
+
+      const userId = session.data.user.id;
+      const accessToken = session.data.session.token;
+
+      console.log('✅ Final session userId:', userId);
+      console.log('✅ Final session token:', accessToken);
+      console.log('✅ Session object keys:', Object.keys(session.data.session));
+      console.log('✅ Does userId match registered user?', userId === userData?.user?.id);
+
+      toast.success('Account created and logged in!');
   
       // STEP 2: NOW register all businesses concurrently
       if (hasBusiness) {
@@ -581,7 +623,14 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
       }
   
       const store = useAuthStore.getState();
-      store.login(userId, 'user', 'better-auth-token');
+      store.login(userId, 'user', accessToken);
+
+      console.log('🎯 Auth store updated with:', {
+        userId,
+        role: 'user',
+        token: accessToken,
+        isAuthenticated: store.isAuthenticated
+      });
 
       setTimeout(() => {
         navigate('/map');

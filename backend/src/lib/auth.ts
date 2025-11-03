@@ -1,62 +1,56 @@
-import { betterAuth, boolean } from "better-auth";
+// backend/lib/auth.ts
+import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import db from "../database/db.js";
 import { user, session, account, verification } from "../database/schema.js";
-import sendEmail from "./mailer.js";
+import dotenv from 'dotenv';
+
 
 const auth = betterAuth({
     database: drizzleAdapter(db, {
-        provider: "mysql", 
+        provider: "mysql",
         schema: { user, session, account, verification }
     }),
-    baseURL: 'http://localhost:3000',
-    secret: String(process.env.BETTER_AUTH_SECRET),
     user: {
         additionalFields: {
             hasBusiness: {
                 type: "boolean",
-                input: false
+                input: false,
+                defaultValue: false
+            },
+            firstName: {
+                type: "string",
+                input: true
+            },
+            lastName: {
+                type: "string",
+                input: true
             },
             referralCode: {
                 type: 'string',
-                input: false
+                input: false,
+                required: false
             },
             referredByUserID: {
-                type:'string',
-                input:false
-            },
-            bio: {
                 type: 'string',
-                input: false
+                input: false,
+                required: false
             }
         }
     },
-    emailAndPassword: { 
-        enabled: true, 
-        autoSignIn: true,
-        sendResetPassword: async ({ user, url }, _request) => {
-            await sendEmail(
-                user.email,
-                'Reset your password',
-                `Click the link to reset your password: ${url}`
-            )
-        }
-    }, 
-    emailVerification: {
-        sendVerificationEmail: async ({ user, url, token }, _request) => {
-            await sendEmail(
-                user.email,
-                'Verify your email address',
-                `Click the link to verify your email: ${url}`
-            )
+    advanced: {
+        crossSubDomainCookies: {
+            enabled: true,
         },
-        sendOnSignUp: true,
-        
+    },
+    emailAndPassword: {
+        enabled: true,
+        autoSignIn: true
     },
     trustedOrigins: [
         "http://localhost:3000", // for testing
         "http://localhost:5173", // for dev
-        "https://localoco.azurewebsites.net" // for staging and prod 
+        "https://localoco.azurewebsites.net" // for staging and prod
     ],
     socialProviders: {
         google: {
@@ -86,4 +80,5 @@ const auth = betterAuth({
     }
 })
 
-export default auth
+
+export default auth;

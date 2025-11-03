@@ -1,27 +1,9 @@
 // hooks/useUser.ts
 import { useState, useEffect, useCallback } from 'react';
 import { User, UserStats } from '../types/user';
-import { BusinessOwner, MOCK_BUSINESS_OWNERS } from '../data/mockBusinessOwnerData';
+import { BusinessOwner } from '../data/mockBusinessOwnerData';
 
-const MOCK_USERS: Record<string, User> = {
-  'user-1': {
-    id: 'user-1',
-    role: 'user',
-    name: 'John Tan',
-    email: 'john.tan@email.com',
-    memberSince: '2024-01-15',
-    bio: 'Food enthusiast and local business supporter',
-    location: 'Singapore',
-  },
-};
-
-const MOCK_STATS: Record<string, UserStats> = {
-  'user-1': {
-    vouchersCount: 5,
-    reviewsCount: 12,
-    loyaltyPoints: 3500,
-  },
-};
+const API_BASE_URL = 'http://localhost:3000'; 
 
 export const useUser = (userId: string | null) => {
   const [user, setUser] = useState<User | BusinessOwner | null>(null);
@@ -30,62 +12,142 @@ export const useUser = (userId: string | null) => {
     reviewsCount: 0,
     loyaltyPoints: 0,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('🔍 useUser - userId:', userId);
-    
+
     if (!userId) {
       setUser(null);
       setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
       return;
     }
-    
-    // ✅ Check if it's a business user
-    if (userId.startsWith('business-')) {
-      const businessData = MOCK_BUSINESS_OWNERS[userId];
-      setUser(businessData || null);
-    } else {
-      // ✅ Try to find user in MOCK_USERS
-      let userData = MOCK_USERS[userId];
-      
-      // ✅ If not found, create a default user (for new signups)
-      if (!userData) {
-        userData = {
+
+    const fetchUserProfile = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        console.log('🌐 Fetching user profile for userId:', userId);
+        
+        const response = await fetch(`${API_BASE_URL}/api/users/profile/${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        console.log('📡 Response status:', response.status, response.ok);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ API Error:', errorText);
+          throw new Error(`Failed to fetch user profile: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Raw API response:', data);
+
+        // ✅ Handle both response structures:
+        // 1. Direct user object: { id, name, email, ... }
+        // 2. Wrapped object: { profile: { id, name, email, ... }, vouchers: [...] }
+        const profileData = data.profile || data;
+
+        if (!profileData || !profileData.id) {
+          console.error('❌ API response invalid:', data);
+          throw new Error('Invalid API response: missing user id');
+        }
+
+        // ✅ Map API response to User type
+        const userData: User = {
+          id: profileData.id,
+          role: 'user',
+          name: profileData.name || 'User',
+          email: profileData.email || 'user@email.com',
+          memberSince: profileData.createdAt 
+            ? profileData.createdAt.split('T')[0] 
+            : new Date().toISOString().split('T')[0],
+          bio: profileData.bio || '',
+          location: profileData.location || 'Singapore',
+        };
+
+        console.log('✅ Mapped user data:', userData);
+        setUser(userData);
+
+        // ✅ Set stats from response (or defaults for new users)
+        setStats({
+          vouchersCount: data.vouchers?.length || 0,
+          reviewsCount: data.reviews?.length || 0,
+          loyaltyPoints: profileData.loyaltyPoints || 0,
+        });
+
+      } catch (err) {
+        console.error('❌ Error fetching user profile:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
+
+        // ✅ Fallback: Create default user on error
+        setUser({
           id: userId,
           role: 'user',
-          name: 'New User',
+          name: 'User',
           email: 'user@email.com',
           memberSince: new Date().toISOString().split('T')[0],
           bio: '',
           location: 'Singapore',
-        };
-        // Store it in mock data
-        MOCK_USERS[userId] = userData;
+        });
+      } finally {
+        setLoading(false);
       }
-      
-      setUser(userData);
-    }
-    
-    setStats(MOCK_STATS[userId] || { vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+    };
+
+    fetchUserProfile();
   }, [userId]);
 
-  const updateUser = useCallback((updatedUser: User | BusinessOwner) => {
-    console.log('🔄 updateUser called:', updatedUser);
-    
-    if ('businessName' in updatedUser) {
-      MOCK_BUSINESS_OWNERS[updatedUser.id] = updatedUser as BusinessOwner;
-    } else {
-      MOCK_USERS[updatedUser.id] = updatedUser as User;
-    }
-    
-    if (updatedUser.id === userId) {
-      setUser(() => {
-        const newUser = { ...updatedUser };
-        console.log('✅ State updated with:', newUser);
-        return newUser;
-      });
-    }
-  }, [userId]);
+  const updateUser = useCallback(
+    async (updatedUser: User | BusinessOwner) => {
+      console.log('🔄 updateUser called:', updatedUser);
 
-  return { user, stats, updateUser };
+      try {
+        // ✅ Determine user type
+        const isBusinessOwner = 'businessName' in updatedUser;
+        const userName = isBusinessOwner 
+          ? (updatedUser as BusinessOwner).businessName 
+          : (updatedUser as User).name;
+
+        const response = await fetch(`${API_BASE_URL}/api/user/profile/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            userId: updatedUser.id,
+            updates: {
+              name: userName,
+              image: 'image' in updatedUser ? updatedUser.image : undefined,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update user profile');
+        }
+
+        const data = await response.json();
+        console.log('✅ Profile updated:', data);
+
+        // ✅ Update local state
+        setUser({ ...updatedUser });
+        
+      } catch (err) {
+        console.error('❌ Error updating user:', err);
+        setError(err instanceof Error ? err.message : 'Update failed');
+      }
+    },
+    []
+  );
+
+  return { user, stats, updateUser, loading, error };
 };

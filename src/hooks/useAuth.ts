@@ -3,12 +3,8 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { ROUTES } from '../constants/routes';
-import { UserRole } from '../types/auth'; // Your existing type
-
-// Mock validation - replace with real API later
-const mockValidate = (email: string, password: string) => {
-  return email && password.length >= 6;
-};
+import { UserRole } from '../types/auth';
+import { authClient, callbackURL } from '../lib/authClient';
 
 export const useAuth = () => {
   const navigate = useNavigate();
@@ -17,18 +13,41 @@ export const useAuth = () => {
   const login = useCallback(
     async (email: string, password: string, role: UserRole) => {
       try {
-        // Simulate API call
-        if (!mockValidate(email, password)) {
-          throw new Error('Invalid credentials');
+        // Call better-auth API
+        const { data, error } = await authClient.signIn.email({
+          email,
+          password,
+          callbackURL: callbackURL
+        });
+
+        if (error) {
+          return {
+            success: false,
+            error: error.message || 'Invalid credentials',
+          };
         }
 
-        // Update store
-        store.login(`${role}-1`, role, 'mock-token-123');
-        
-        // Navigate to map
-        navigate(ROUTES.MAP);
-        
-        return { success: true };
+        // Check if we have a valid session
+        const session = await authClient.getSession();
+
+        if (session?.data?.session) {
+          const user = session.data.user;
+          const userId = user?.id || 'unknown';
+          const accessToken = session.data.session.token;
+
+          // Update store with real data
+          store.login(userId, role, accessToken);
+
+          // Navigate to map
+          navigate(ROUTES.MAP);
+
+          return { success: true };
+        } else {
+          return {
+            success: false,
+            error: 'No session created',
+          };
+        }
       } catch (error) {
         return {
           success: false,
@@ -40,15 +59,43 @@ export const useAuth = () => {
   );
 
   const signup = useCallback(
-    async (data: any, role: UserRole) => {
+    async (email: string, password: string, name: string, role: UserRole) => {
       try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        
-        store.login(`${role}-1`, role, 'mock-token-123');
-        navigate(ROUTES.MAP);
-        
-        return { success: true };
+        // Call better-auth API
+        const { data, error } = await authClient.signUp.email({
+          email,
+          password,
+          name,
+          callbackURL: callbackURL
+        });
+
+        if (error) {
+          return {
+            success: false,
+            error: error.message || 'Signup failed',
+          };
+        }
+
+        // Check if we have a valid session
+        const session = await authClient.getSession();
+
+        if (session?.data?.session) {
+          const user = session.data.user;
+          const userId = user?.id || 'unknown';
+          const accessToken = session.data.session.token;
+
+          // Update store with real data
+          store.login(userId, role, accessToken);
+          navigate(ROUTES.MAP);
+
+          return { success: true };
+        } else {
+          // Signup successful but no auto-login, redirect to login
+          return {
+            success: true,
+            message: 'Signup successful! Please log in.',
+          };
+        }
       } catch (error) {
         return {
           success: false,
@@ -59,9 +106,22 @@ export const useAuth = () => {
     [store, navigate]
   );
 
-  const logout = useCallback(() => {
-    store.logout();
-    navigate(ROUTES.HOME);
+  const logout = useCallback(async () => {
+    try {
+      console.log('🚪 Logging out...');
+      // Call better-auth logout
+      await authClient.signOut();
+      console.log('✅ Backend session cleared');
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+    } finally {
+      // Always clear local store
+      store.logout();
+      console.log('✅ Local store cleared');
+
+      // Redirect to home/login
+      navigate(ROUTES.HOME);
+    }
   }, [store, navigate]);
 
   return {

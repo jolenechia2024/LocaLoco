@@ -3,15 +3,26 @@ import UserModel from "../models/UserModel.js";
 
 class UserController {
 
-    // // Get user profile
+    // Get user profile by ID from URL parameter
     static async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const userId = String(req.body.userId) 
-            console.log(userId)
-            
-            const profile = await UserModel.getProfile(userId);
-            res.status(200).json(profile);
-            
+            const userId = String(req.params.userId);
+            console.log('🔍 Getting profile for userId:', userId);
+
+            if (!userId) {
+                res.status(400).json({ error: 'User ID is required' });
+                return;
+            }
+
+            const user = await UserModel.getUserById(userId);
+
+            if (!user) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
+
+            res.status(200).json(user);
+
         } catch (error) {
             console.error('Error fetching profile:', error);
             res.status(500).json({ error: 'Failed to fetch profile' });

@@ -25,7 +25,7 @@ interface BackendForumPost {
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
-export const useForumPosts = () => {
+export const useForumPosts = (userEmail?: string) => {
   const discussions = useForumStore((state) => state.discussions);
   const isLoading = useForumStore((state) => state.isLoading);
   const error = useForumStore((state) => state.error);
@@ -75,6 +75,12 @@ export const useForumPosts = () => {
 
   // Create new discussion
   const createDiscussion = useCallback(async (discussion: ForumDiscussion) => {
+    // Check if user email is available
+    if (!userEmail) {
+      console.error('Cannot create discussion: User email not available');
+      throw new Error('User email not available. Please refresh and try again.');
+    }
+
     // Optimistically add to UI immediately
     addDiscussion(discussion);
 
@@ -94,7 +100,7 @@ export const useForumPosts = () => {
       }
 
       const postData = {
-        userEmail: 'user1@example.com', // Use a valid user email from database
+        userEmail: userEmail, // Use actual logged-in user email
         businessUen: businessUen, // Link to business if found, otherwise null
         title: discussion.title,
         body: discussion.content,
@@ -123,22 +129,32 @@ export const useForumPosts = () => {
       await fetchForumPosts();
       throw error;
     }
-  }, [addDiscussion, silentRefresh, fetchForumPosts, setError]);
+  }, [userEmail, addDiscussion, silentRefresh, fetchForumPosts, setError]);
 
   // Create new reply
   const createReply = useCallback(async (discussionId: string, reply: ForumReply) => {
+    // Check if user email is available
+    if (!userEmail) {
+      console.error('Cannot create reply: User email not available');
+      throw new Error('User email not available. Please refresh and try again.');
+    }
+
     // Optimistically add reply to UI immediately
     addReply(discussionId, reply);
 
     try {
+      const replyData = {
+        postId: parseInt(discussionId),
+        userEmail: userEmail, // Use actual logged-in user email
+        body: reply.content,
+      };
+
+      console.log('Creating reply with data:', replyData);
+
       const response = await fetch(`${API_BASE_URL}/forum-replies`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          postId: parseInt(discussionId),
-          userEmail: 'user1@example.com', // Use a valid user email from database
-          body: reply.content,
-        }),
+        body: JSON.stringify(replyData),
       });
 
       if (!response.ok) throw new Error('Failed to create reply');
@@ -151,7 +167,7 @@ export const useForumPosts = () => {
       await fetchForumPosts();
       throw error;
     }
-  }, [addReply, silentRefresh, fetchForumPosts, setError]);
+  }, [userEmail, addReply, silentRefresh, fetchForumPosts, setError]);
 
   // Like a discussion
   const likeDiscussion = useCallback(async (discussionId: string) => {
