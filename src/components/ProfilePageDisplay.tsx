@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useUser } from '../hooks/useUser';
 import { useTheme } from '../hooks/useTheme';
+import { useBusinessByUen } from '../hooks/useBusinessByUen';
+import { useAuthStore } from '../store/authStore';
 import { ProfilePage } from './pages/ProfilePage';
 import { BusinessProfilePage } from './pages/BusinessProfilePage';
 import { ROUTES } from '../constants/routes';
@@ -20,8 +22,16 @@ export function ProfilePageDisplay() {
   const { setPoints } = useUserPointsStore(); // ✅ Correct
   const [bookmarkedBusinesses] = useState<Business[]>(MOCK_BOOKMARKED_BUSINESSES);
 
-  // Call useUser hook unconditionally
+  // Get business mode state
+  const businessMode = useAuthStore((state) => state.businessMode);
+
+  // Call useUser hook unconditionally for user data
   const { user, stats, updateUser } = useUser(userId);
+
+  // Fetch business data when in business mode
+  const { business, loading: businessLoading } = useBusinessByUen(
+    businessMode.isBusinessMode ? businessMode.currentBusinessUen : null
+  );
 
   // ✅ DEBUG LOGS
   console.log('════════════════════════════════════');
@@ -59,32 +69,50 @@ export function ProfilePageDisplay() {
     );
   }
 
-  // ✅ Check if user is a business owner using role from useAuth AND type guard
-  if (role === 'business' && 'businessName' in user) {
-    console.log('🏢 Rendering BusinessProfilePage');
-    console.log('🏢 Business data being passed:', user);
-    
+  // ✅ Check if in business mode - fetch and show business profile
+  if (role === 'business' && businessMode.isBusinessMode) {
+    console.log('🏢 Business mode active');
+    console.log('🏢 Current business UEN:', businessMode.currentBusinessUen);
+    console.log('🏢 Business data:', business);
+
+    // Show loading while fetching business data
+    if (businessLoading || !business) {
+      console.log('⏳ Loading business data...');
+      return (
+        <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f9fafb' }}>
+          <div style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>Loading business profile...</div>
+        </div>
+      );
+    }
+
+    // Convert business data to BusinessOwner format
+    const businessOwner: BusinessOwner = {
+      id: userId || '',
+      role: 'business_owner',
+      businessName: business.businessName,
+      address: business.address || '',
+      operatingDays: Object.keys(business.openingHours || {}),
+      businessEmail: business.email || '',
+      phone: business.phoneNumber || '',
+      website: business.websiteLink || '',
+      socialMedia: business.socialMediaLink || '',
+      wallpaper: business.wallpaper,
+      priceTier: (business.priceTier || '') as any,
+      offersDelivery: business.offersDelivery || false,
+      offersPickup: business.offersPickup || false,
+      paymentOptions: business.paymentOptions || [],
+      category: business.businessCategory || '',
+      description: business.description || '',
+    };
+
+    console.log('🏢 Rendering BusinessProfilePage with:', businessOwner);
+
     return (
       <BusinessProfilePage
-        businessOwner={user as BusinessOwner}
+        businessOwner={businessOwner}
         onBack={handleBack}
         onUpdateBusiness={updateUser}
       />
-    );
-  }
-
-  // ✅ Error case: role is business but data is wrong
-  if (role === 'business' && !('businessName' in user)) {
-    console.error('❌ ERROR: role is business but user data missing businessName!');
-    console.error('User data received:', user);
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: isDarkMode ? '#3a3a3a' : '#f9fafb' }}>
-        <div style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
-          <h2 className="text-xl mb-4">Profile Data Error</h2>
-          <p>Business profile data not loaded correctly.</p>
-          <pre className="mt-4 text-xs">{JSON.stringify({ userId, role, user }, null, 2)}</pre>
-        </div>
-      </div>
     );
   }
 
