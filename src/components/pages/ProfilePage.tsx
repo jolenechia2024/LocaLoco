@@ -69,9 +69,9 @@ export function ProfilePage({
   // ✅ Show loading state
   if (loading) {
     return (
-      <div 
-        className="min-h-screen md:pl-6 flex items-center justify-center" 
-        style={{ backgroundColor: bgColor }}
+      <div
+        className="min-h-screen md:pl-6 flex items-center justify-center"
+        style={{ backgroundColor: bgColor, transition: 'background-color 0.3s ease' }}
       >
         <div style={{ color: textColor }}>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4 mx-auto"></div>
@@ -84,11 +84,11 @@ export function ProfilePage({
   // ✅ Show error state
   if (error) {
     return (
-      <div 
-        className="min-h-screen md:pl-6 flex items-center justify-center" 
-        style={{ backgroundColor: bgColor }}
+      <div
+        className="min-h-screen md:pl-6 flex items-center justify-center"
+        style={{ backgroundColor: bgColor, transition: 'background-color 0.3s ease' }}
       >
-        <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor }}>
+        <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor, transition: 'background-color 0.3s ease, color 0.3s ease' }}>
           <p className="mb-4 text-red-500">Error: {error}</p>
           <Button onClick={onBack}>Go Back</Button>
         </Card>
@@ -99,11 +99,11 @@ export function ProfilePage({
   // ✅ Show no user state
   if (!user) {
     return (
-      <div 
-        className="min-h-screen md:pl-6 flex items-center justify-center" 
-        style={{ backgroundColor: bgColor }}
+      <div
+        className="min-h-screen md:pl-6 flex items-center justify-center"
+        style={{ backgroundColor: bgColor, transition: 'background-color 0.3s ease' }}
       >
-        <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor }}>
+        <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor, transition: 'background-color 0.3s ease, color 0.3s ease' }}>
           <p className="mb-4">User not found</p>
           <Button onClick={onBack}>Go Back</Button>
         </Card>
@@ -113,11 +113,11 @@ export function ProfilePage({
 
   // ✅ Render profile only when user data exists
   return (
-    <div className="min-h-screen md:pl-6" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-screen md:pl-6" style={{ backgroundColor: bgColor, transition: 'background-color 0.3s ease' }}>
       {/* Profile Content */}
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Profile Header Card */}
-        <Card className="p-8 mb-6" style={{ backgroundColor: cardBg, color: textColor }}>
+        <Card className="p-8 mb-6" style={{ backgroundColor: cardBg, color: textColor, transition: 'background-color 0.3s ease, color 0.3s ease' }}>
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Avatar with image or initials */}
             <Avatar className="w-24 h-24">
@@ -131,7 +131,7 @@ export function ProfilePage({
             </Avatar>
 
             <div className="flex-1">
-              <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex flex-col md:flex-row items-start md:justify-between gap-4 mb-4">
                 <div>
                   <h1 className="text-3xl mb-2">{user.name || 'User'}</h1>
                   <div className="flex flex-col gap-2 text-muted-foreground">
@@ -156,7 +156,7 @@ export function ProfilePage({
                 <Button
                   variant="outline"
                   onClick={() => setIsEditDialogOpen(true)}
-                  className={isDarkMode ? 'border-white/40 text-white hover:bg-white/10 hover:border-white/60' : 'border-gray-300 text-foreground hover:bg-gray-100'}
+                  className={`order-last md:order-none ${isDarkMode ? 'border-white/40 text-white hover:bg-white/10 hover:border-white/60' : 'border-gray-300 text-foreground hover:bg-gray-100'}`}
                 >
                   <Edit2 className="w-4 h-4 mr-2" />
                   Edit Profile
@@ -175,9 +175,9 @@ export function ProfilePage({
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card 
+          <Card
             className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
-            style={{ backgroundColor: cardBg, color: textColor }}
+            style={{ backgroundColor: cardBg, color: textColor, transition: 'background-color 0.3s ease, color 0.3s ease' }}
             onClick={onNavigateToVouchers}
           >
             <div className="flex items-center gap-4">
@@ -194,7 +194,7 @@ export function ProfilePage({
             </div>
           </Card>
 
-          <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor }}>
+          <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor, transition: 'background-color 0.3s ease, color 0.3s ease' }}>
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg" style={{ backgroundColor: isDarkMode ? '#78350f' : '#fef3c7' }}>
                 <Star className="w-6 h-6" style={{ color: isDarkMode ? '#fbbf24' : '#d97706' }} />
@@ -206,9 +206,9 @@ export function ProfilePage({
             </div>
           </Card>
 
-          <Card 
-            className="p-6 cursor-pointer hover:shadow-lg transition-shadow" 
-            style={{ backgroundColor: cardBg, color: textColor }}
+          <Card
+            className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
+            style={{ backgroundColor: cardBg, color: textColor, transition: 'background-color 0.3s ease, color 0.3s ease' }}
             onClick={onNavigateToVouchers}
           >
             <div className="flex items-center gap-4">
@@ -246,7 +246,7 @@ export function ProfilePage({
               ))}
             </div>
           ) : (
-            <Card className="p-12 text-center" style={{ backgroundColor: cardBg, color: textColor }}>
+            <Card className="p-12 text-center" style={{ backgroundColor: cardBg, color: textColor, transition: 'background-color 0.3s ease, color 0.3s ease' }}>
               <Bookmark className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="mb-2">No bookmarked businesses yet</h3>
               <p className="text-muted-foreground mb-4">

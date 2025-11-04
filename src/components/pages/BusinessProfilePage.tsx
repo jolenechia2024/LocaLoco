@@ -82,11 +82,11 @@ export function BusinessProfilePage({
   const bgColor = isDarkMode ? '#3a3a3a' : '#f9fafb';
 
   return (
-    <div className="min-h-screen md:pl-6" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-screen md:pl-6" style={{ backgroundColor: bgColor, transition: 'background-color 0.3s ease' }}>
       {/* Profile Content */}
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Profile Header Card */}
-        <Card className="p-8 mb-6" style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff', color: isDarkMode ? '#ffffff' : '#000000' }}>
+        <Card className="p-8 mb-6" style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff', color: isDarkMode ? '#ffffff' : '#000000', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <Avatar className="w-24 h-24 flex-shrink-0">
               <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
