@@ -12,11 +12,11 @@ export interface User {
 }
 
 export interface UpdateProfileData {
-    userId:string,
+    userId?:string,
     name?: string,
     email?:string,
     imageUrl?:string,
     bio?: string,
     hasBusiness?:boolean,
-    updatedAt:string
+    updatedAt: Date
 }

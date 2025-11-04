@@ -355,6 +355,8 @@ class BusinessModel {
         }
         catch (err: any) {
             console.error(`Error registering business: ${err}`)
+            console.error('MySQL Error Code:', err.errno);
+            console.error('MySQL Error Message:', err.sqlMessage);
             throw err;
         }
     }
