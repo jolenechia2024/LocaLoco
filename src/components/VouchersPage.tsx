@@ -49,7 +49,6 @@ export function VouchersPage({
   const role = useAuthStore((state) => state.role); // ✅ Get user role
   const userId = useAuthStore((state) => state.userId); // ✅ Get user ID
   const currentPoints = useUserPointsStore((state) => state.currentPoints);
-  const deductPoints = useUserPointsStore((state) => state.deductPoints);
   const isDarkMode = useThemeStore(state => state.isDarkMode);
   
   console.log('Current points:', currentPoints);
@@ -116,31 +115,11 @@ export function VouchersPage({
       return;
     }
 
-    // Create redemption date and expiry date
-    const redemptionDate = new Date();
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + voucher.expiryDays);
-
-    // Generate a voucher code
-    const code = `LL${voucher.id.toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-
-    const newRedeemedVoucher: RedeemedVoucher = {
-      id: `r${Date.now()}`,
-      voucherId: voucher.id,
-      voucher,
-      redemptionDate: redemptionDate.toISOString(),
-      expiryDate: expiryDate.toISOString(),
-      code,
-      isUsed: false,
-    };
-
-    setRedeemedVouchers([newRedeemedVoucher, ...redeemedVouchers]);
-    onRedeemVoucher(voucher.id, voucher.pointsCost);
-    setActiveTab('my-vouchers');
-    
-    console.log('Redeeming voucher and showing toast');
-    toast.success('Voucher redeemed!', {
-      description: `${voucher.title} has been added to your vouchers.`,
+    // Note: Loyalty points-based voucher redemption is not yet connected to backend
+    // This is for the "Available Vouchers" tab which uses mock data
+    // Real vouchers come from referrals and are shown in "My Vouchers" tab
+    toast.info('Feature coming soon!', {
+      description: 'Loyalty points-based vouchers are not yet connected to the backend.'
     });
   };
 

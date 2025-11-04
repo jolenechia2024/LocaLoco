@@ -13,7 +13,6 @@ interface BusinessCardProps {
   isBookmarked: boolean;
   onBookmarkToggle: (businessId: string) => void;
   onViewDetails: (business: Business) => void;
-  isDarkMode?: boolean;
 }
 
 export function BusinessCard({
@@ -21,7 +20,6 @@ export function BusinessCard({
   isBookmarked,
   onBookmarkToggle,
   onViewDetails,
-  isDarkMode = false,
 }: BusinessCardProps) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
   const [showShareMenu, setShowShareMenu] = useState(false);

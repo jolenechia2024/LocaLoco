@@ -28,13 +28,12 @@ export interface BackendBusiness {
 const categoryMap: Record<string, BusinessCategory> = {
   'all': 'all',
   'fnb': 'fnb',
-  'dietary-options': 'dietary-options',
   'retail': 'retail',
   'services': 'services',
   'entertainment': 'entertainment',
-  'health_wellness': 'health-wellness', // maps underscore to dash
-  'professional-services': 'professional-services',
-  'home-living': 'home-living',
+  'health_wellness': 'health_wellness',
+  'professional_services': 'professional_services',
+  'home_living': 'home_living',
 };
 
 // Map backend priceTier to frontend priceRange
@@ -50,7 +49,6 @@ const priceTierMap: Record<string, Business['priceRange']> = {
 export function transformBackendToBusiness(backend: BackendBusiness): Business {
   return {
     uen: backend.uen, // Add uen field
-    id: backend.uen,
     name: backend.businessName,
     category: categoryMap[backend.businessCategory] || 'services', // fallback category
     description: backend.description,

@@ -152,12 +152,12 @@ export function AppSidebar({
   const allBottomNavItems = [
     ...mainMenuItems.filter(item => item.view !== 'vouchers'), // Remove vouchers from mobile
     { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
-    ...(isAuthenticated
-      ? [{ icon: null, label: 'Profile', view: 'profile' as const, isAvatar: true }]
+    ...(isAuthenticated 
+      ? [{ icon: null, label: 'Profile', view: 'profile' as const, isAvatar: true }] 
       : [{ icon: LogIn, label: 'Login', view: null as const, isLoginButton: true }]
     ),
     { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
-    ...(isAuthenticated ? [{ icon: LogOut, label: 'Logout', view: null, isLogout: true }] : []),
+    ...(isAuthenticated ? [{ icon: LogOut, label: 'Logout', view: null as const, isLogout: true }] : []),
   ];
 
   return (
@@ -356,7 +356,7 @@ export function AppSidebar({
                           onClick={(e) => {
                             e.preventDefault();
                             setIsDropdownOpen(false);
-                            onAccountToggle();
+                            if (onAccountToggle) onAccountToggle();
                           }}
                           className={`${textColor} ${hoverBgColor} cursor-pointer`}
                         >

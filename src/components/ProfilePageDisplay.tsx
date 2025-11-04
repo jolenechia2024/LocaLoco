@@ -19,7 +19,7 @@ export function ProfilePageDisplay() {
   const navigate = useNavigate();
   const { userId, role } = useAuth();
   const { isDarkMode } = useTheme();
-  const { setPoints } = useUserPointsStore();
+  const { setCurrentPoints } = useUserPointsStore();
   const [bookmarkedBusinesses] = useState<Business[]>(MOCK_BOOKMARKED_BUSINESSES);
 
   // 1. CATCH the new 'vouchers' variable from the useUser hook
@@ -37,9 +37,9 @@ export function ProfilePageDisplay() {
   // Sync loyalty points with user points store
   useEffect(() => {
     if (stats?.loyaltyPoints !== undefined) {
-      setPoints(stats.loyaltyPoints);
+      setCurrentPoints(stats.loyaltyPoints);
     }
-  }, [stats?.loyaltyPoints, setPoints]);
+  }, [stats?.loyaltyPoints, setCurrentPoints]);
 
   // Navigation handlers
   const handleBack = () => navigate(ROUTES.BUSINESSES);

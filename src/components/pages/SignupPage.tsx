@@ -405,8 +405,8 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
 
       // If autoSignIn didn't work, manually sign in
       let finalUserData = userData;
-      if (!userData?.session) {
-        console.log('⚠️ No session after signup, manually signing in...');
+      if (!userData?.token) {
+        console.log('⚠️ No token after signup, manually signing in...');
 
         // IMPORTANT: Manually sign in after signup to ensure session is created
         const { data: signInData, error: signInError } = await authClient.signIn.email({
@@ -426,7 +426,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
 
       // Get userId and accessToken from the final response
       const userId = finalUserData?.user?.id;
-      const accessToken = finalUserData?.token || finalUserData?.session?.token;
+      const accessToken = finalUserData?.token;
 
       if (!userId || !accessToken) {
         throw new Error('No session created after signup. Please try logging in manually.');

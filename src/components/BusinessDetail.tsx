@@ -19,7 +19,6 @@ interface BusinessDetailProps {
   onBookmarkToggle: (businessId: string) => void;
   onBack: () => void;
   onWriteReview?: (business: Business) => void;
-  isDarkMode?: boolean;
 }
 
 export function BusinessDetail({
@@ -29,7 +28,6 @@ export function BusinessDetail({
   onBookmarkToggle,
   onBack,
   onWriteReview,
-  isDarkMode = true,
 }: BusinessDetailProps) {
   const isDarkMode = useThemeStore(state => state.isDarkMode);
 

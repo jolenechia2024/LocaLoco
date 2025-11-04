@@ -21,7 +21,7 @@ export default function App() {
     <BrowserRouter>
       <div className={isDarkMode ? 'dark' : ''}>
         <AppRoutes />
-        <Toaster isDarkMode={isDarkMode} />
+        <Toaster />
       </div>
     </BrowserRouter>
   );

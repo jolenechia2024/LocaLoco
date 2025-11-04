@@ -14,7 +14,6 @@ export const useUserPointsStore = create<UserPointsState>()(
     }),
     {
       name: 'user-points-storage', // localStorage key name
-      getStorage: () => localStorage, // (optional) by default uses localStorage
     }
   )
 );

@@ -84,7 +84,15 @@ export const AppRoutes = () => {
         <Route path={ROUTES.FORUM} element={<ForumPage/>} />
         <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />
         <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
-        <Route path={ROUTES.VOUCHERS} element={<VouchersPage />} />
+        <Route 
+          path={ROUTES.VOUCHERS} 
+          element={
+            <VouchersPage 
+              onBack={() => window.history.back()} 
+              onRedeemVoucher={() => {}} 
+            />
+          } 
+        />
         <Route path={ROUTES.REVIEW} element={<WriteReviewPage />} />
       </Route>
 

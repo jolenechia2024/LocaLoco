@@ -61,7 +61,7 @@ export const useUser = (userId: string | null) => {
 
         // --- Data Mapping (Unchanged) ---
         const userData: User = {
-          id: data.profile.id,
+          id: profileData?.id || '',
           role: 'user',
           name: profileData.name || 'User',
           email: profileData.email || 'user@email.com',

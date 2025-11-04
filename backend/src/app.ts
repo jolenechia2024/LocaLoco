@@ -91,6 +91,9 @@ const uploadsPath = path.resolve(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsPath));
 
 // frontend will call and wait for this first before running
+// Better-Auth handler (must be BEFORE other routes to avoid conflicts)
+app.use('/api/auth/*', toNodeHandler(auth));
+
 app.get('/health', async (req, res) => {
     res.status(200).json({
         "server_status": "ok"
@@ -101,7 +104,6 @@ app.use(businessRouter) // router for business functionality
 app.use(userRouter) // router for user functionality
 app.use(featureRouter) // router for small features
 app.use(imageUploadRouter) // router for the images
-app.use('/api/auth', toNodeHandler(auth)); // handler for better-auth
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));

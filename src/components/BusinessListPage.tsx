@@ -144,7 +144,6 @@ export const BusinessListPage = () => {
                     isBookmarked={isBookmarked(business.uen)}
                     onBookmarkToggle={toggleBookmark}
                     onViewDetails={handleViewDetails}
-                    isDarkMode={isDarkMode}
                   />
                 ))}
               </div>
@@ -180,7 +179,6 @@ export const BusinessListPage = () => {
                     isBookmarked={true}
                     onBookmarkToggle={toggleBookmark}
                     onViewDetails={handleViewDetails}
-                    isDarkMode={isDarkMode}
                   />
                 ))}
               </div>

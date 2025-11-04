@@ -58,7 +58,7 @@ export const useAuth = () => {
         // Just update the role in store
         if (data?.user) {
           const userId = data.user.id;
-          const accessToken = data.session?.token || '';
+          const accessToken = data.token || '';
           storeLogin(userId, role, accessToken);
           navigate(ROUTES.MAP);
           return { success: true };
@@ -100,7 +100,7 @@ export const useAuth = () => {
         // Just update the role in store
         if (data?.user) {
           const userId = data.user.id;
-          const accessToken = data.session?.token || '';
+          const accessToken = data.token || '';
           storeLogin(userId, role, accessToken);
           navigate(ROUTES.MAP);
           return { success: true };
