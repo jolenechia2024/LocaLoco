@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Bookmark as BookmarkIcon, Store } from "lucide-react";
@@ -13,7 +14,6 @@ import { FiltersPanel } from "./FiltersPanel";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Badge } from "./ui/badge";
-// import { mockEvents } from "../data/data";
 
 
 export const BusinessListPage = () => {
@@ -42,13 +42,12 @@ export const BusinessListPage = () => {
 
   return (
     <div
-      className="min-h-screen md:pl-6"
+      className="min-h-screen"
       style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
     >
       <EventsPopup
         open={showEventsPopup}
         onClose={() => setShowEventsPopup(false)}
-        events={mockEvents}
       />
 
       {showFilters && (
@@ -135,11 +134,11 @@ export const BusinessListPage = () => {
           <TabsContent value="all">
             {filteredBusinesses.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredBusinesses.map((business, index) => (
+                {filteredBusinesses.map((business) => (
                   <BusinessCard
-                    key={business.uen || `business-${index}`}
+                    key={business.id}
                     business={business}
-                    isBookmarked={isBookmarked(business.uen)}
+                    isBookmarked={isBookmarked(business.id)}
                     onBookmarkToggle={toggleBookmark}
                     onViewDetails={handleViewDetails}
                   />
@@ -170,9 +169,9 @@ export const BusinessListPage = () => {
           <TabsContent value="bookmarked">
             {bookmarkedBusinesses.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {bookmarkedBusinesses.map((business, index) => (
+                {bookmarkedBusinesses.map((business) => (
                   <BusinessCard
-                    key={business.uen || `bookmarked-${index}`}
+                    key={business.id}
                     business={business}
                     isBookmarked={true}
                     onBookmarkToggle={toggleBookmark}
