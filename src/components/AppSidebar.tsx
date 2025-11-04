@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useUserBusinesses } from '../hooks/useUserBusinesses';
+import { authClient } from '../lib/authClient';
 import {
   Home,
   Box,
@@ -15,7 +17,9 @@ import {
   Ticket,
   User,
   LogOut,
-  LogIn
+  LogIn,
+  Briefcase,
+  ChevronDown
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
@@ -38,6 +42,7 @@ import {
 } from './ui/dialog';
 import { Button } from './ui/button';
 import { useThemeStore } from '../store/themeStore';
+import { toast } from 'sonner';
 
 
 interface AppSidebarProps {
@@ -70,7 +75,25 @@ export function AppSidebar({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
+  const [transitionText, setTransitionText] = useState('');
+  const [transitionIcon, setTransitionIcon] = useState<'user' | 'business'>('user');
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const role = useAuthStore((state) => state.role);
+
+  // Business mode state
+  const businessMode = useAuthStore((state) => state.businessMode);
+  const enableBusinessMode = useAuthStore((state) => state.enableBusinessMode);
+  const disableBusinessMode = useAuthStore((state) => state.disableBusinessMode);
+  const switchBusiness = useAuthStore((state) => state.switchBusiness);
+
+  // Fetch user session to check has_business
+  const { data: session } = authClient.useSession();
+  const hasBusiness = session?.user?.hasBusiness || false;
+
+  // Fetch user's businesses
+  const { businesses, isLoading: businessesLoading } = useUserBusinesses();
   
   // Detect screen size
   useEffect(() => {
@@ -145,6 +168,87 @@ export function AppSidebar({
       .toUpperCase();
   };
 
+  const handleBusinessModeToggle = () => {
+    if (businessMode.isBusinessMode) {
+      // Switch back to user mode
+      setTransitionText('User Mode');
+      setTransitionIcon('user');
+      setShowTransition(true);
+
+      setTimeout(() => {
+        disableBusinessMode();
+        toast.success('Switched to User Mode', {
+          description: 'You are now viewing as a personal user',
+          duration: 3000,
+        });
+      }, 800);
+
+      // Start fade out
+      setTimeout(() => {
+        setIsFadingOut(true);
+      }, 1600);
+
+      // Remove element after fade out completes
+      setTimeout(() => {
+        setShowTransition(false);
+        setIsFadingOut(false);
+      }, 2200);
+    } else {
+      // Switch to business mode with the first business
+      if (businesses.length > 0) {
+        const firstBusiness = businesses[0];
+        setTransitionText(`Business Mode`);
+        setTransitionIcon('business');
+        setShowTransition(true);
+
+        setTimeout(() => {
+          enableBusinessMode(firstBusiness.uen, firstBusiness.businessName);
+          toast.success('Switched to Business Mode', {
+            description: `Now managing: ${firstBusiness.businessName}`,
+            duration: 3000,
+          });
+        }, 800);
+
+        // Start fade out
+        setTimeout(() => {
+          setIsFadingOut(true);
+        }, 1600);
+
+        // Remove element after fade out completes
+        setTimeout(() => {
+          setShowTransition(false);
+          setIsFadingOut(false);
+        }, 2200);
+      }
+    }
+  };
+
+  const handleBusinessSwitch = (uen: string, name: string) => {
+    setTransitionText(name); // Show the business name
+    setTransitionIcon('business');
+    setShowTransition(true);
+
+    setTimeout(() => {
+      switchBusiness(uen, name);
+      setShowBusinessDropdown(false);
+      toast.success('Business Switched', {
+        description: `Now managing: ${name}`,
+        duration: 3000,
+      });
+    }, 800);
+
+    // Start fade out
+    setTimeout(() => {
+      setIsFadingOut(true);
+    }, 1600);
+
+    // Remove element after fade out completes
+    setTimeout(() => {
+      setShowTransition(false);
+      setIsFadingOut(false);
+    }, 2200);
+  };
+
 
   // Combine all menu items for mobile view
   const authNavItem = isAuthenticated
@@ -166,7 +270,7 @@ export function AppSidebar({
           style={{ width: isExpanded ? '280px' : '80px', backgroundColor: bgColor }}
           onMouseEnter={() => setIsExpanded(true)}
           onMouseLeave={() => {
-            if (!isDropdownOpen) {
+            if (!isDropdownOpen && !showBusinessDropdown) {
               setIsExpanded(false);
             }
           }}
@@ -243,6 +347,81 @@ export function AppSidebar({
             })}
           </nav>
 
+          {/* Business Mode Toggle Section - Only visible if user has businesses */}
+          {isAuthenticated && hasBusiness && businesses.length > 0 && (
+            <nav className={`px-3 py-4 space-y-1 border-t ${borderColor}`}>
+              <button
+                onClick={handleBusinessModeToggle}
+                className={`w-full rounded-lg p-3 flex items-center gap-3 transition-all duration-300 relative ${
+                  businessMode.isBusinessMode
+                    ? 'bg-[#FFA1A3]/20 text-[#FFA1A3] shadow-lg shadow-[#FFA1A3]/30'
+                    : `${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'}`
+                }`}
+              >
+                <Briefcase className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
+                  businessMode.isBusinessMode ? 'scale-110' : ''
+                }`} />
+                {isExpanded && (
+                  <span className="text-sm whitespace-nowrap flex-1 text-left font-medium">
+                    {businessMode.isBusinessMode ? 'User Mode' : 'Business Mode'}
+                  </span>
+                )}
+                {businessMode.isBusinessMode && (
+                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#FFA1A3] rounded-full animate-pulse"></div>
+                )}
+              </button>
+
+              {/* Business Dropdown - Only visible when in business mode and user has multiple businesses */}
+              {businessMode.isBusinessMode && businesses.length > 1 && (
+                <DropdownMenu open={showBusinessDropdown} onOpenChange={setShowBusinessDropdown}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`w-full rounded-lg p-3 flex items-center gap-3 transition-colors ${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'}`}
+                    >
+                      <Store className="w-5 h-5 flex-shrink-0" />
+                      {isExpanded && (
+                        <>
+                          <span className="text-sm whitespace-nowrap flex-1 text-left truncate">
+                            {businessMode.currentBusinessName || 'Select Business'}
+                          </span>
+                          <ChevronDown className="w-4 h-4 flex-shrink-0" />
+                        </>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuContent
+                      align="end"
+                      side="right"
+                      sideOffset={8}
+                      className="w-56"
+                      style={{
+                        backgroundColor: bgColor,
+                        borderColor: isDarkMode ? '#404040' : '#e5e7eb',
+                        zIndex: 9999
+                      }}
+                    >
+                      <DropdownMenuLabel className={textColor}>My Businesses</DropdownMenuLabel>
+                      <DropdownMenuSeparator style={{ backgroundColor: isDarkMode ? '#404040' : '#e5e7eb' }} />
+                      {businesses.map((business) => (
+                        <DropdownMenuItem
+                          key={business.uen}
+                          onClick={() => handleBusinessSwitch(business.uen, business.businessName)}
+                          className={`${textColor} ${hoverBgColor} cursor-pointer ${
+                            businessMode.currentBusinessUen === business.uen ? 'bg-[#FFA1A3]/10' : ''
+                          }`}
+                        >
+                          <Store className="w-4 h-4 mr-2" />
+                          <span className="truncate">{business.businessName}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenuPortal>
+                </DropdownMenu>
+              )}
+            </nav>
+          )}
+
           {!isAuthenticated && (
             <div className={`p-3 border-t ${borderColor}`}>
               <button
@@ -256,31 +435,59 @@ export function AppSidebar({
           )}
 
           {isAuthenticated && (
-            <div className={`p-3 border-t ${borderColor}`}>
-              <div className={`w-full rounded-lg p-3 flex items-center gap-3 ${textColor} transition-colors relative`}>
+            <div className={`p-3 border-t ${borderColor} transition-all duration-300`}>
+              <div className={`w-full rounded-lg p-3 flex items-center gap-3 ${textColor} transition-all duration-300 relative ${
+                businessMode.isBusinessMode ? 'bg-[#FFA1A3]/10' : ''
+              }`}>
                 <button
                   onClick={() => handleMenuClick('profile')}
                   className={`flex items-center gap-3 ${hoverBgColor} transition-colors rounded-lg flex-1`}
                 >
                 <div className="relative flex-shrink-0">
-                  <Avatar className="w-10 h-10">
+                  <Avatar className={`w-10 h-10 transition-all duration-300 ${
+                    businessMode.isBusinessMode ? 'ring-2 ring-[#FFA1A3] ring-offset-2' : ''
+                  }`} style={{ ringOffsetColor: bgColor }}>
                     {avatarUrl ? (
-                      <AvatarImage src={avatarUrl} alt={userName} />
+                      <AvatarImage
+                        key={businessMode.isBusinessMode ? businessMode.currentBusinessUen : 'user'}
+                        src={avatarUrl}
+                        alt={businessMode.isBusinessMode ? businessMode.currentBusinessName || userName : userName}
+                        className="animate-in fade-in duration-300"
+                      />
                     ) : (
-                      <AvatarFallback className={`${avatarBgColor} ${textColor}`}>
-                        {getInitials(userName)}
+                      <AvatarFallback
+                        key={businessMode.isBusinessMode ? businessMode.currentBusinessUen : 'user'}
+                        className={`${avatarBgColor} ${textColor} transition-all duration-300 animate-in fade-in ${
+                          businessMode.isBusinessMode ? 'bg-[#FFA1A3] text-white' : ''
+                        }`}
+                      >
+                        {businessMode.isBusinessMode && businessMode.currentBusinessName
+                          ? getInitials(businessMode.currentBusinessName)
+                          : getInitials(userName)}
                       </AvatarFallback>
                     )}
                   </Avatar>
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2" style={{ borderColor: bgColor }}></div>
+                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 transition-colors duration-300 ${
+                    businessMode.isBusinessMode ? 'bg-[#FFA1A3]' : 'bg-green-500'
+                  }`} style={{ borderColor: bgColor }}></div>
                 </div>
                 {isExpanded && (
                   <div className="flex-1 text-left overflow-hidden">
-                    <p className={`text-sm ${textColor} whitespace-nowrap overflow-hidden text-ellipsis`}>
-                      {userName}
+                    <p
+                      key={`name-${businessMode.isBusinessMode ? businessMode.currentBusinessUen : 'user'}`}
+                      className={`text-sm ${textColor} whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300 animate-in slide-in-from-left ${
+                        businessMode.isBusinessMode ? 'text-[#FFA1A3] font-semibold' : ''
+                      }`}
+                    >
+                      {businessMode.isBusinessMode && businessMode.currentBusinessName
+                        ? businessMode.currentBusinessName
+                        : userName}
                     </p>
-                    <p className={`text-xs ${secondaryTextColor} whitespace-nowrap overflow-hidden text-ellipsis`}>
-                      {userEmail}
+                    <p
+                      key={`email-${businessMode.isBusinessMode ? 'business' : 'user'}`}
+                      className={`text-xs ${secondaryTextColor} whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300 animate-in slide-in-from-left delay-75`}
+                    >
+                      {businessMode.isBusinessMode ? 'Business Account' : userEmail}
                     </p>
                   </div>
                 )}
@@ -459,6 +666,155 @@ export function AppSidebar({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Full-screen transition animation */}
+      {showTransition && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            animation: isFadingOut ? 'fadeOut 0.6s ease-in-out forwards' : 'fadeIn 0.5s ease-in-out',
+          }}
+        >
+          {/* Animated slide from left */}
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(90deg, #FFA1A3 0%, #FF8A8C 50%, #FFA1A3 100%)',
+              opacity: 0.95,
+              animation: 'slideInFromLeft 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              transformOrigin: 'left',
+            }}
+          />
+
+          {/* Content */}
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 10,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '24px',
+              animation: 'scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s backwards',
+            }}
+          >
+            {/* Icon with rotation */}
+            <div
+              style={{
+                width: '96px',
+                height: '96px',
+                borderRadius: '50%',
+                background: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                animation: 'rotateIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s backwards',
+              }}
+            >
+              {transitionIcon === 'business' ? (
+                <Briefcase style={{ width: '48px', height: '48px', color: '#FFA1A3' }} />
+              ) : (
+                <User style={{ width: '48px', height: '48px', color: '#FFA1A3' }} />
+              )}
+            </div>
+
+            {/* Text */}
+            <div
+              style={{
+                textAlign: 'center',
+                animation: 'slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s backwards',
+              }}
+            >
+              <h2 style={{
+                fontSize: '36px',
+                fontWeight: 'bold',
+                color: 'white',
+                marginBottom: '8px',
+              }}>
+                {transitionText}
+              </h2>
+              <p style={{
+                color: 'white',
+                fontSize: '18px',
+                opacity: 0.9,
+              }}>
+                {transitionIcon === 'business'
+                  ? (transitionText.includes('Mode') ? 'Managing your business' : 'Switching business')
+                  : 'Personal account'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add keyframe animations */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+
+        @keyframes slideInFromLeft {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
+        }
+
+        @keyframes scaleIn {
+          from { transform: scale(0); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes rotateIn {
+          from { transform: rotate(-180deg) scale(0); opacity: 0; }
+          to { transform: rotate(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+          from { transform: translateY(30px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes waveSweep {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(100%); }
+        }
+
+        @keyframes popIn {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+          50% { transform: translate(-50%, -50%) scale(1.1); }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @keyframes spinPop {
+          0% { transform: rotate(-180deg) scale(0); opacity: 0; }
+          50% { transform: rotate(10deg) scale(1.1); }
+          100% { transform: rotate(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeSlideUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
     </>
   );
 }
