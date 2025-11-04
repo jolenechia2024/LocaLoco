@@ -18,13 +18,13 @@ G10 Group 3
 
 ## Group Members
 
-| Photo | Full Name | Role / Features Responsible For |
+| Full Name | Role / Features Responsible For |
 |:--:|:--|:--|
-| <img src="photos/member1.jpg" width="80"> | Suan Loong | Frontend Developer - Landing map UI, sidebar, advanced search overlay |
-| <img src="photos/member2.jpg" width="80"> | Jolene | Frontend Developer -   Business card & details components, explore page, bookmark UX, UI polish |
-| <img src="photos/member3.jpg" width="80"> | Charles | Backend Developer - BE lead: data feed, filter logic/endpoints, local storage, build & deploy |
-| <img src="photos/member4.jpg" width="80"> | Pamika Lim | UI/FE: assets & styles; Google mapsAPI/UI + distance/geolocate + forum, profile page, Onemaps API + postal code/address conversion  |
-| <img src="photos/member5.jpg" width="80"> | Lin Hui | Backend Developer -  login & validation; UEN verification (stretch), link verification (stretch) |
+| Suan Loong | Frontend Developer - Landing map UI, sidebar, advanced search overlay |
+| Jolene | Frontend Developer -   Business card & details components, explore page, bookmark UX, UI polish |
+| Charles | Backend Developer - BE lead: data feed, filter logic/endpoints, local storage, build & deploy |
+| Pamika Lim | UI/FE: assets & styles; Google mapsAPI/UI + distance/geolocate + forum, profile page, Onemaps API + postal code/address conversion  |
+| Lin Hui | Backend Developer -  login & validation; UEN verification (stretch), link verification (stretch) |
 
 > Place all headshot thumbnails in the `/photos` folder (JPEG or PNG).
 
