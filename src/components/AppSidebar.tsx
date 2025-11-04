@@ -19,7 +19,8 @@ import {
   LogOut,
   LogIn,
   Briefcase,
-  ChevronDown
+  ChevronDown,
+  Megaphone // 1. Imported Megaphone icon
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
@@ -44,9 +45,9 @@ import { Button } from './ui/button';
 import { useThemeStore } from '../store/themeStore';
 import { toast } from 'sonner';
 
-
+// 2. Updated onNavigate to include 'announcements'
 interface AppSidebarProps {
-  onNavigate: (view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers') => void;
+  onNavigate: (view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | 'announcements') => void;
   onLogout: () => void;
   currentView?: string;
   userName?: string;
@@ -56,7 +57,6 @@ interface AppSidebarProps {
   onThemeToggle?: () => void;
   isAuthenticated?: boolean;
 }
-
 
 export function AppSidebar({
   onNavigate,
@@ -100,14 +100,8 @@ export function AppSidebar({
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
-    // Check on mount
     checkMobile();
-    
-    // Add listener for window resize
     window.addEventListener('resize', checkMobile);
-    
-    // Cleanup
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
@@ -118,23 +112,22 @@ export function AppSidebar({
   const hoverBgColor = isDarkMode ? 'hover:bg-[#404040]' : 'hover:bg-gray-100';
   const avatarBgColor = isDarkMode ? 'bg-gray-600' : 'bg-gray-300';
 
-
+  // 3. Added 'Announcements' item with 'businessOnly' flag
   const allMenuItems = [
     { icon: Home, label: 'Home', view: 'map' as const },
     { icon: Box, label: 'Explore', view: 'list' as const },
-    { icon: Bookmark, label: 'Bookmarks', view: 'bookmarks' as const, requiresAuth: true },
+    { icon: Megaphone, label: 'Announcements', view: 'announcements' as const, businessOnly: true, requiresAuth: true },
+    { icon: Bookmark, label: 'Bookmarks', view: 'bookmarks' as const, requiresAuth: true, userOnly: true },
     { icon: Ticket, label: 'Vouchers', view: 'vouchers' as const, userOnly: true, requiresAuth: true },
     { icon: Layers, label: 'Forum', view: 'forum' as const, requiresAuth: true },
   ];
 
-
+  // 4. Updated filtering logic to handle businessOnly and userOnly
   const mainMenuItems = allMenuItems.filter(item => {
-    if (item.userOnly && role !== 'user') {
-      return false;
-    }
+    if (item.userOnly && businessMode.isBusinessMode) return false;
+    if ('businessOnly' in item && item.businessOnly && !businessMode.isBusinessMode) return false;
     return true;
   });
-
 
   const bottomMenuItems = [
     { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
@@ -142,9 +135,8 @@ export function AppSidebar({
     { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
   ];
 
-
   const handleMenuClick = (
-    view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | null,
+    view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | 'announcements' | null,
     isThemeToggle?: boolean,
     requiresAuth?: boolean
   ) => {
@@ -159,7 +151,6 @@ export function AppSidebar({
     }
   };
 
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -168,9 +159,9 @@ export function AppSidebar({
       .toUpperCase();
   };
 
+
   const handleBusinessModeToggle = () => {
     if (businessMode.isBusinessMode) {
-      // Switch back to user mode
       setTransitionText('User Mode');
       setTransitionIcon('user');
       setShowTransition(true);
@@ -183,18 +174,12 @@ export function AppSidebar({
         });
       }, 800);
 
-      // Start fade out
-      setTimeout(() => {
-        setIsFadingOut(true);
-      }, 1600);
-
-      // Remove element after fade out completes
+      setTimeout(() => setIsFadingOut(true), 1600);
       setTimeout(() => {
         setShowTransition(false);
         setIsFadingOut(false);
       }, 2200);
     } else {
-      // Switch to business mode with the first business
       if (businesses.length > 0) {
         const firstBusiness = businesses[0];
         setTransitionText(`Business Mode`);
@@ -209,12 +194,7 @@ export function AppSidebar({
           });
         }, 800);
 
-        // Start fade out
-        setTimeout(() => {
-          setIsFadingOut(true);
-        }, 1600);
-
-        // Remove element after fade out completes
+        setTimeout(() => setIsFadingOut(true), 1600);
         setTimeout(() => {
           setShowTransition(false);
           setIsFadingOut(false);
@@ -223,8 +203,9 @@ export function AppSidebar({
     }
   };
 
+
   const handleBusinessSwitch = (uen: string, name: string) => {
-    setTransitionText(name); // Show the business name
+    setTransitionText(name);
     setTransitionIcon('business');
     setShowTransition(true);
 
@@ -237,33 +218,35 @@ export function AppSidebar({
       });
     }, 800);
 
-    // Start fade out
-    setTimeout(() => {
-      setIsFadingOut(true);
-    }, 1600);
-
-    // Remove element after fade out completes
+    setTimeout(() => setIsFadingOut(true), 1600);
     setTimeout(() => {
       setShowTransition(false);
       setIsFadingOut(false);
     }, 2200);
   };
 
-
-  // Combine all menu items for mobile view
   const authNavItem = isAuthenticated
   ? { icon: null, label: 'Profile', view: 'profile' as const, isAvatar: true }
   : { icon: LogIn, label: 'Login', view: null, isLoginButton: true };
 
+  // 5. Conditionally build the mobile navigation items
   const allBottomNavItems = [
-    ...mainMenuItems.filter(item => item.view !== 'vouchers'),
-    { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
-    authNavItem,
-    { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
+    ...mainMenuItems.filter(item => !('userOnly' in item && item.userOnly)),
   ];
+
+  if (!businessMode.isBusinessMode) {
+      const vouchersItem = allMenuItems.find(item => item.view === 'vouchers');
+      if (vouchersItem) allBottomNavItems.push(vouchersItem);
+  }
+
+  allBottomNavItems.push(
+      { icon: Bell, label: 'Notifications', view: 'notifications' as const, hasNotification: notificationCount > 0, requiresAuth: true },
+      authNavItem
+  );
+
   return (
     <>
-      {/* Desktop Sidebar - only render on desktop */}
+      {/* Desktop Sidebar */}
       {!isMobile && (
         <div
           className="fixed left-0 top-0 h-screen transition-all duration-300 ease-in-out z-40"
@@ -295,12 +278,15 @@ export function AppSidebar({
             {mainMenuItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentView === item.view;
-              const isDisabled = 'requiresAuth' in item && item.requiresAuth && !isAuthenticated;
+              const isDisabled = ('requiresAuth' in item && item.requiresAuth && !isAuthenticated) || 
+                                 (businessMode.isBusinessMode && item.userOnly) || 
+                                 (!businessMode.isBusinessMode && 'businessOnly' in item && item.businessOnly);
 
               return (
                 <button
                   key={item.label}
                   onClick={() => handleMenuClick(item.view, false, 'requiresAuth' in item ? item.requiresAuth : false)}
+                  disabled={isDisabled}
                   className={`w-full rounded-lg p-3 flex items-center gap-3 transition-colors ${
                     isActive
                       ? 'bg-[#FFA1A3]/20 text-[#FFA1A3]'
@@ -318,11 +304,12 @@ export function AppSidebar({
             })}
           </nav>
 
+          <div className="flex-grow"></div> {/* Pushes content to the bottom */}
+
           <nav className={`px-3 py-4 space-y-1 border-t ${borderColor}`}>
             {bottomMenuItems.map((item) => {
               const Icon = item.icon;
               const isDisabled = 'requiresAuth' in item && item.requiresAuth && !isAuthenticated;
-
               return (
                 <button
                   key={item.label}
@@ -347,8 +334,7 @@ export function AppSidebar({
             })}
           </nav>
 
-          {/* Business Mode Toggle Section - Only visible if user has businesses */}
-          {isAuthenticated && hasBusiness && businesses.length > 0 && (
+          {isAuthenticated && hasBusiness && (
             <nav className={`px-3 py-4 space-y-1 border-t ${borderColor}`}>
               <button
                 onClick={handleBusinessModeToggle}
@@ -358,20 +344,14 @@ export function AppSidebar({
                     : `${secondaryTextColor} ${hoverBgColor} ${isDarkMode ? 'hover:text-white' : 'hover:text-black'}`
                 }`}
               >
-                <Briefcase className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
-                  businessMode.isBusinessMode ? 'scale-110' : ''
-                }`} />
+                <Briefcase className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${businessMode.isBusinessMode ? 'scale-110' : ''}`} />
                 {isExpanded && (
                   <span className="text-sm whitespace-nowrap flex-1 text-left font-medium">
-                    {businessMode.isBusinessMode ? 'User Mode' : 'Business Mode'}
+                    {businessMode.isBusinessMode ? 'Switch to User' : 'Business Mode'}
                   </span>
                 )}
-                {businessMode.isBusinessMode && (
-                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#FFA1A3] rounded-full animate-pulse"></div>
-                )}
               </button>
-
-              {/* Business Dropdown - Only visible when in business mode and user has multiple businesses */}
+              
               {businessMode.isBusinessMode && businesses.length > 1 && (
                 <DropdownMenu open={showBusinessDropdown} onOpenChange={setShowBusinessDropdown}>
                   <DropdownMenuTrigger asChild>
@@ -395,11 +375,7 @@ export function AppSidebar({
                       side="right"
                       sideOffset={8}
                       className="w-56"
-                      style={{
-                        backgroundColor: bgColor,
-                        borderColor: isDarkMode ? '#404040' : '#e5e7eb',
-                        zIndex: 9999
-                      }}
+                      style={{ backgroundColor: bgColor, borderColor: isDarkMode ? '#404040' : '#e5e7eb', zIndex: 9999 }}
                     >
                       <DropdownMenuLabel className={textColor}>My Businesses</DropdownMenuLabel>
                       <DropdownMenuSeparator style={{ backgroundColor: isDarkMode ? '#404040' : '#e5e7eb' }} />
@@ -436,57 +412,36 @@ export function AppSidebar({
 
           {isAuthenticated && (
             <div className={`p-3 border-t ${borderColor} transition-all duration-300`}>
-              <div className={`w-full rounded-lg p-3 flex items-center gap-3 ${textColor} transition-all duration-300 relative ${
-                businessMode.isBusinessMode ? 'bg-[#FFA1A3]/10' : ''
-              }`}>
+              <div className={`w-full rounded-lg p-3 flex items-center gap-3 ${textColor} transition-all duration-300 relative ${businessMode.isBusinessMode ? 'bg-[#FFA1A3]/10' : ''}`}>
                 <button
-                  onClick={() => handleMenuClick('profile')}
-                  className={`flex items-center gap-3 ${hoverBgColor} transition-colors rounded-lg flex-1`}
+                  onClick={() => handleMenuClick('profile', false, true)}
+                  className={`flex items-center gap-3 ${hoverBgColor} transition-colors rounded-lg flex-1 p-1`}
                 >
                 <div className="relative flex-shrink-0">
-                  <Avatar className={`w-10 h-10 transition-all duration-300 ${
-                    businessMode.isBusinessMode ? 'ring-2 ring-[#FFA1A3] ring-offset-2' : ''
-                  }`} style={{ ringOffsetColor: bgColor }}>
-                    {avatarUrl ? (
-                      <AvatarImage
+                  <Avatar className={`w-10 h-10 transition-all duration-300 ${businessMode.isBusinessMode ? 'ring-2 ring-[#FFA1A3] ring-offset-2' : ''}`} style={{ ringOffsetColor: bgColor }}>
+                    <AvatarImage
                         key={businessMode.isBusinessMode ? businessMode.currentBusinessUen : 'user'}
                         src={avatarUrl}
                         alt={businessMode.isBusinessMode ? businessMode.currentBusinessName || userName : userName}
                         className="animate-in fade-in duration-300"
-                      />
-                    ) : (
-                      <AvatarFallback
+                    />
+                    <AvatarFallback
                         key={businessMode.isBusinessMode ? businessMode.currentBusinessUen : 'user'}
-                        className={`${avatarBgColor} ${textColor} transition-all duration-300 animate-in fade-in ${
-                          businessMode.isBusinessMode ? 'bg-[#FFA1A3] text-white' : ''
-                        }`}
-                      >
+                        className={`${avatarBgColor} ${textColor} transition-all duration-300 animate-in fade-in ${businessMode.isBusinessMode ? 'bg-[#FFA1A3] text-white' : ''}`}
+                    >
                         {businessMode.isBusinessMode && businessMode.currentBusinessName
                           ? getInitials(businessMode.currentBusinessName)
                           : getInitials(userName)}
-                      </AvatarFallback>
-                    )}
+                    </AvatarFallback>
                   </Avatar>
-                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 transition-colors duration-300 ${
-                    businessMode.isBusinessMode ? 'bg-[#FFA1A3]' : 'bg-green-500'
-                  }`} style={{ borderColor: bgColor }}></div>
+                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 transition-colors duration-300 ${businessMode.isBusinessMode ? 'bg-[#FFA1A3]' : 'bg-green-500'}`} style={{ borderColor: bgColor }}></div>
                 </div>
                 {isExpanded && (
                   <div className="flex-1 text-left overflow-hidden">
-                    <p
-                      key={`name-${businessMode.isBusinessMode ? businessMode.currentBusinessUen : 'user'}`}
-                      className={`text-sm ${textColor} whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300 animate-in slide-in-from-left ${
-                        businessMode.isBusinessMode ? 'text-[#FFA1A3] font-semibold' : ''
-                      }`}
-                    >
-                      {businessMode.isBusinessMode && businessMode.currentBusinessName
-                        ? businessMode.currentBusinessName
-                        : userName}
+                    <p className={`text-sm ${textColor} whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300 ${businessMode.isBusinessMode ? 'text-[#FFA1A3] font-semibold' : ''}`}>
+                      {businessMode.isBusinessMode && businessMode.currentBusinessName ? businessMode.currentBusinessName : userName}
                     </p>
-                    <p
-                      key={`email-${businessMode.isBusinessMode ? 'business' : 'user'}`}
-                      className={`text-xs ${secondaryTextColor} whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300 animate-in slide-in-from-left delay-75`}
-                    >
+                    <p className={`text-xs ${secondaryTextColor} whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300`}>
                       {businessMode.isBusinessMode ? 'Business Account' : userEmail}
                     </p>
                   </div>
@@ -495,13 +450,7 @@ export function AppSidebar({
               {isExpanded && (
                 <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                   <DropdownMenuTrigger asChild>
-                    <button
-                      className={`p-1 ${hoverBgColor} rounded transition-colors`}
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        setIsDropdownOpen(!isDropdownOpen);
-                      }}
-                    >
+                    <button className={`p-1 ${hoverBgColor} rounded transition-colors`}>
                       <MoreVertical className={`w-4 h-4 ${secondaryTextColor} flex-shrink-0`} />
                     </button>
                   </DropdownMenuTrigger>
@@ -511,34 +460,16 @@ export function AppSidebar({
                       side="right"
                       sideOffset={8}
                       className="w-56"
-                      style={{
-                        backgroundColor: bgColor,
-                        borderColor: isDarkMode ? '#404040' : '#e5e7eb',
-                        zIndex: 9999
-                      }}
-                      onCloseAutoFocus={(e: Event) => e.preventDefault()}
+                      style={{ backgroundColor: bgColor, borderColor: isDarkMode ? '#404040' : '#e5e7eb', zIndex: 9999 }}
+                      onCloseAutoFocus={(e) => e.preventDefault()}
                     >
                       <DropdownMenuLabel className={textColor}>My Account</DropdownMenuLabel>
                       <DropdownMenuSeparator style={{ backgroundColor: isDarkMode ? '#404040' : '#e5e7eb' }} />
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setIsDropdownOpen(false);
-                          handleMenuClick('profile');
-                        }}
-                        className={`${textColor} ${hoverBgColor} cursor-pointer`}
-                      >
+                      <DropdownMenuItem onClick={() => handleMenuClick('profile', false, true)} className={`${textColor} ${hoverBgColor} cursor-pointer`}>
                         <User className="w-4 h-4 mr-2" />
                         <span>View Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setIsDropdownOpen(false);
-                          onLogout();
-                        }}
-                        className={`${textColor} ${hoverBgColor} cursor-pointer`}
-                      >
+                      <DropdownMenuItem onClick={onLogout} className={`${textColor} ${hoverBgColor} cursor-pointer`}>
                         <LogOut className="w-4 h-4 mr-2 text-red-500" />
                         <span className="text-red-500">Log Out</span>
                       </DropdownMenuItem>
@@ -552,75 +483,42 @@ export function AppSidebar({
         </div>
       )}
 
-      {/* Mobile Bottom Navigation - only render on mobile */}
+      {/* Mobile Bottom Navigation */}
       {isMobile && (
         <div
           className="fixed bottom-0 left-0 right-0 z-40 border-t safe-area-inset-bottom"
-          style={{
-            backgroundColor: bgColor,
-            borderTopColor: isDarkMode ? '#404040' : '#e5e7eb',
-            width: '100%',
-            maxWidth: '100vw'
-          }}
+          style={{ backgroundColor: bgColor, borderTopColor: isDarkMode ? '#404040' : '#e5e7eb', width: '100%', maxWidth: '100vw' }}
         >
-          <div 
-            className="px-2 py-3"
-            style={{ 
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              scrollbarWidth: 'thin',
-              scrollbarColor: isDarkMode ? '#404040 transparent' : '#e5e7eb transparent',
-              WebkitOverflowScrolling: 'touch',
-              msOverflowStyle: 'auto',
-              width: '100%'
-            }}
-          >
+          <div className="px-2 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none', '-webkit-overflow-scrolling': 'touch' }}>
             <div className="inline-flex gap-1" style={{ whiteSpace: 'nowrap' }}>
               {allBottomNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.view;
-                const isThemeToggle = ('isThemeToggle' in item && item.isThemeToggle) as boolean | undefined;
-                const hasNotification = 'hasNotification' in item && item.hasNotification;
                 const isAvatar = 'isAvatar' in item && item.isAvatar;
                 const isLoginButton = 'isLoginButton' in item && item.isLoginButton;
                 const isDisabled = 'requiresAuth' in item && item.requiresAuth && !isAuthenticated;
-
+                const hasNotification = 'hasNotification' in item && item.hasNotification;
+                
                 return (
                   <button
                     key={item.label}
                     onClick={() => {
-                      if (isLoginButton) {
-                        navigate('/login');
-                      } else {
-                        handleMenuClick(item.view, isThemeToggle, 'requiresAuth' in item ? item.requiresAuth : false);
-                      }
+                      if (isLoginButton) navigate('/login');
+                      else handleMenuClick(item.view, false, 'requiresAuth' in item ? item.requiresAuth : false);
                     }}
                     className={`inline-flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors relative ${
-                      isActive
-                        ? 'bg-[#FFA1A3]/20 text-[#FFA1A3]'
-                        : isDisabled
-                        ? `opacity-25 cursor-not-allowed ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`
-                        : `${secondaryTextColor} active:bg-gray-100 ${isDarkMode ? 'active:bg-gray-700' : ''}`
+                      isActive ? 'bg-[#FFA1A3]/20 text-[#FFA1A3]' : isDisabled ? `opacity-25 cursor-not-allowed ${secondaryTextColor}` : `${secondaryTextColor} active:bg-gray-100 ${isDarkMode ? 'active:bg-gray-700' : ''}`
                     }`}
                     style={{ minWidth: '64px', flexShrink: 0 }}
                   >
                     {isAvatar ? (
                       <Avatar className="w-6 h-6">
-                        {avatarUrl ? (
-                          <AvatarImage src={avatarUrl} alt={userName} />
-                        ) : (
-                          <AvatarFallback className={`${avatarBgColor} ${textColor} text-xs`}>
-                            {getInitials(userName)}
-                          </AvatarFallback>
-                        )}
+                        <AvatarImage src={avatarUrl} alt={userName} />
+                        <AvatarFallback className={`${avatarBgColor} ${textColor} text-xs`}>{getInitials(userName)}</AvatarFallback>
                       </Avatar>
-                    ) : (
-                      Icon && <Icon className="w-5 h-5 flex-shrink-0" />
-                    )}
+                    ) : Icon && <Icon className="w-5 h-5 flex-shrink-0" />}
                     <span className="text-xs mt-1 whitespace-nowrap">{item.label}</span>
-                    {hasNotification && (
-                      <div className="absolute top-1 right-1 w-2 h-2 bg-[#FFA1A3] rounded-full"></div>
-                    )}
+                    {hasNotification && <div className="absolute top-1 right-1 w-2 h-2 bg-[#FFA1A3] rounded-full"></div>}
                   </button>
                 );
               })}
@@ -628,7 +526,7 @@ export function AppSidebar({
           </div>
         </div>
       )}
-
+      
       {/* Login Prompt Modal */}
       <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
         <DialogContent className="sm:max-w-md">
@@ -639,181 +537,39 @@ export function AppSidebar({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:justify-center">
-            <Button
-              variant="outline"
-              onClick={() => setShowLoginPrompt(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                setShowLoginPrompt(false);
-                navigate('/login');
-              }}
-              className="bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white"
-            >
-              Sign In
-            </Button>
-            <Button
-              onClick={() => {
-                setShowLoginPrompt(false);
-                navigate('/signup');
-              }}
-              variant="outline"
-            >
-              Sign Up
-            </Button>
+            <Button variant="outline" onClick={() => setShowLoginPrompt(false)}>Cancel</Button>
+            <Button onClick={() => { setShowLoginPrompt(false); navigate('/login'); }} className="bg-[#FFA1A3] hover:bg-[#FF8A8C] text-white">Sign In</Button>
+            <Button onClick={() => { setShowLoginPrompt(false); navigate('/signup'); }} variant="outline">Sign Up</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      
       {/* Full-screen transition animation */}
       {showTransition && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 999999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'none',
-            animation: isFadingOut ? 'fadeOut 0.6s ease-in-out forwards' : 'fadeIn 0.5s ease-in-out',
-          }}
-        >
-          {/* Animated slide from left */}
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, #FFA1A3 0%, #FF8A8C 50%, #FFA1A3 100%)',
-              opacity: 0.95,
-              animation: 'slideInFromLeft 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transformOrigin: 'left',
-            }}
-          />
-
-          {/* Content */}
-          <div
-            style={{
-              position: 'relative',
-              zIndex: 10,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '24px',
-              animation: 'scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s backwards',
-            }}
-          >
-            {/* Icon with rotation */}
-            <div
-              style={{
-                width: '96px',
-                height: '96px',
-                borderRadius: '50%',
-                background: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                animation: 'rotateIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s backwards',
-              }}
-            >
-              {transitionIcon === 'business' ? (
-                <Briefcase style={{ width: '48px', height: '48px', color: '#FFA1A3' }} />
-              ) : (
-                <User style={{ width: '48px', height: '48px', color: '#FFA1A3' }} />
-              )}
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', animation: isFadingOut ? 'fadeOut 0.6s ease-in-out forwards' : 'fadeIn 0.5s ease-in-out', }}>
+          <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', background: 'linear-gradient(90deg, #FFA1A3 0%, #FF8A8C 50%, #FFA1A3 100%)', opacity: 0.95, animation: 'slideInFromLeft 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)', transformOrigin: 'left', }} />
+          <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', animation: 'scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s backwards', }}>
+            <div style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', animation: 'rotateIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s backwards', }}>
+              {transitionIcon === 'business' ? <Briefcase style={{ width: '48px', height: '48px', color: '#FFA1A3' }} /> : <User style={{ width: '48px', height: '48px', color: '#FFA1A3' }} />}
             </div>
-
-            {/* Text */}
-            <div
-              style={{
-                textAlign: 'center',
-                animation: 'slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s backwards',
-              }}
-            >
-              <h2 style={{
-                fontSize: '36px',
-                fontWeight: 'bold',
-                color: 'white',
-                marginBottom: '8px',
-              }}>
-                {transitionText}
-              </h2>
-              <p style={{
-                color: 'white',
-                fontSize: '18px',
-                opacity: 0.9,
-              }}>
-                {transitionIcon === 'business'
-                  ? (transitionText.includes('Mode') ? 'Managing your business' : 'Switching business')
-                  : 'Personal account'}
+            <div style={{ textAlign: 'center', animation: 'slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s backwards', }}>
+              <h2 style={{ fontSize: '36px', fontWeight: 'bold', color: 'white', marginBottom: '8px', }}>{transitionText}</h2>
+              <p style={{ color: 'white', fontSize: '18px', opacity: 0.9, }}>
+                {transitionIcon === 'business' ? (transitionText.includes('Mode') ? 'Managing your business' : 'Switching business') : 'Personal account'}
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Add keyframe animations */}
+      {/* CSS Keyframes */}
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @keyframes fadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
-        }
-
-        @keyframes slideInFromLeft {
-          from { transform: translateX(-100%); }
-          to { transform: translateX(0); }
-        }
-
-        @keyframes scaleIn {
-          from { transform: scale(0); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes rotateIn {
-          from { transform: rotate(-180deg) scale(0); opacity: 0; }
-          to { transform: rotate(0) scale(1); opacity: 1; }
-        }
-
-        @keyframes slideUp {
-          from { transform: translateY(30px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-
-        @keyframes waveSweep {
-          from { transform: translateX(-100%); }
-          to { transform: translateX(100%); }
-        }
-
-        @keyframes popIn {
-          0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-          50% { transform: translate(-50%, -50%) scale(1.1); }
-          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-
-        @keyframes spinPop {
-          0% { transform: rotate(-180deg) scale(0); opacity: 0; }
-          50% { transform: rotate(10deg) scale(1.1); }
-          100% { transform: rotate(0) scale(1); opacity: 1; }
-        }
-
-        @keyframes fadeSlideUp {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes scaleIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes rotateIn { from { transform: rotate(-180deg) scale(0); opacity: 0; } to { transform: rotate(0) scale(1); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
       `}</style>
     </>
   );

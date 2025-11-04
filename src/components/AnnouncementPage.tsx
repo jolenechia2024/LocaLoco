@@ -64,7 +64,8 @@ export function AnnouncementsPage({
   const fetchAnnouncements = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/announcements?businessUen=${businessUen}`);
+      const cacheBuster = `_=${new Date().getTime()}`;
+      const response = await fetch(`/api/announcements?businessUen=${businessUen}&${cacheBuster}`);
       if (!response.ok) throw new Error('Failed to fetch announcements');
       const data = await response.json();
       setAnnouncements(data || []);

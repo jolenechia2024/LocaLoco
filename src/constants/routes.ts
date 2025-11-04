@@ -18,7 +18,10 @@ export const ROUTES = {
     SETTINGS: '/settings',
     VOUCHERS: '/vouchers',
     REVIEW: '/review/:id',
-    
+    ANNOUNCEMENTS: '/announcements', 
+    FORGOT_PASSWORD: '/forgot-password', 
+
+
     // Error
     NOT_FOUND: '/404',
   } as const;

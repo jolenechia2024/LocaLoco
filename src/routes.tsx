@@ -1,5 +1,4 @@
-// routes.tsx
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 
 // Layout components
@@ -10,7 +9,6 @@ import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { WelcomeModal } from './components/pages/WelcomeModal';
 import { LoginPage } from './components/pages/LoginPage';
 import { SignupPage } from './components/pages/SignupPage';
-// import { BusinessVerification } from './components/pages/BusinessVerification'; // Legacy - not used
 
 // Main pages
 import { MapDiscoveryPage } from './components/MapDiscoveryPage';
@@ -23,8 +21,11 @@ import { VouchersPage } from './components/VouchersPage';
 import { WriteReviewPage } from './components/WriteReviewPage';
 import { ErrorPage } from './components/pages/ErrorPage';
 import ErrorBoundary from './components/pages/ErrorBoundary';
-
-import { useNavigate } from "react-router-dom";
+import { BusinessListPage } from './components/BusinessListPage';
+import { BusinessDetailPage } from './components/BusinessDetailPage';
+import { BookmarksPage } from './components/BookmarksPage';
+import { ForgotPasswordPage } from './components/pages/ForgotPassword'; // Adjust path if needed
+import { AnnouncementsPage } from './components/AnnouncementPage';
 
 export const WelcomePage = () => {
   const navigate = useNavigate();
@@ -38,9 +39,23 @@ export const WelcomePage = () => {
   );
 };
 
-import { BusinessListPage } from './components/BusinessListPage';
-import { BusinessDetailPage } from './components/BusinessDetailPage';
-import { BookmarksPage } from './components/BookmarksPage';
+const ForgotPasswordWrapper = () => {
+  const navigate = useNavigate();
+
+  const handleEmailSent = (email: string) => {
+    // In a real app, you'd navigate to a reset page with a token
+    // For this demo, we'll just go back to login after showing a message
+    console.log(`Password reset for ${email} initiated.`);
+    navigate(ROUTES.LOGIN);
+  };
+  
+  return (
+    <ForgotPasswordPage 
+      onBack={() => navigate(ROUTES.LOGIN)}
+      onEmailSent={handleEmailSent}
+    />
+  );
+};
 
 export const AppRoutes = () => {
   return (
@@ -48,8 +63,9 @@ export const AppRoutes = () => {
       {/* Public Routes - No Auth Required */}
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
       <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
+      <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordWrapper />} />
 
-      {/* Public Routes with Layout - Guests can browse */}
+      {/* Public Routes with Layout */}
       <Route element={<MainLayout />}>
         <Route path={ROUTES.HOME} element={<MapDiscoveryPage />} />
         <Route path={ROUTES.MAP} element={<MapDiscoveryPage />} />
@@ -73,6 +89,9 @@ export const AppRoutes = () => {
         <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
         <Route path={ROUTES.VOUCHERS} element={<VouchersPage />} />
         <Route path={ROUTES.REVIEW} element={<WriteReviewPage />} />
+        
+        {/* The element here is now a placeholder. ProtectedRoute will render the real component. */}
+        <Route path={ROUTES.ANNOUNCEMENTS} element={<AnnouncementsPage businessUen="" onBack={() => {}} />} />
       </Route>
 
       {/* Error Routes */}

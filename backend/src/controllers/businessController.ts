@@ -101,13 +101,15 @@ class businessController {
         try {
             await BusinessModel.registerBusiness(business)
             console.log('✅ Business registered, now updating user hasBusiness flag for:', business.ownerID);
-
+            const ownerId = business.ownerID;
+            const now = new Date();
             // Update user's hasBusiness flag
             await UserModel.updateProfile(business.ownerID, {
+                userId: ownerId,
                 hasBusiness: true,
-                updatedAt: new Date()
+                updatedAt: now.toISOString(), // ✅ FIXED: Converts Date to string            });
             });
-
+            
             console.log('✅ User hasBusiness flag updated successfully');
             res.status(200).json({ success: true, message: 'business registered' });
         }
