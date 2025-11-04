@@ -24,7 +24,7 @@ G10 Group 3
 | Jolene | Frontend Developer -   Business card & details components, explore page, bookmark UX, UI polish |
 | Charles | Backend Developer - BE lead: data feed, filter logic/endpoints, local storage, build & deploy |
 | Pamika Lim | UI/FE: assets & styles; Google mapsAPI/UI + distance/geolocate + forum, profile page, Onemaps API + postal code/address conversion  |
-| Lin Hui | Backend Developer -  login & validation; UEN verification (stretch), link verification (stretch) |
+| Lin Hui | Backend Developer -  Business UEN verification, google safe browsing link verification (API), referral code UI and backend|
 
 > Place all headshot thumbnails in the `/photos` folder (JPEG or PNG).
 
@@ -34,6 +34,8 @@ G10 Group 3
 
 > Small local businesses struggle to maintain an online presence, limiting visibility to customers. Local shoppers also struggle to discover and trust nearby independent businesses because key information is scattered and inconsistent.
 > Our web application provides a one-stop-for-all platform for shoppers to support and explore different local businesses, and for local entrepreneurs to reach more customers and grow their presence.
+
+Github URL: <insert>
 
 ---
 
@@ -96,11 +98,11 @@ Provide screenshots and captions showing how users interact with your app.
 
 2. **Search Feature**  
    <img src="screenshots/search.png" width="600">  
-   - Users can browse and filter items by criteria.
+   - Users can browse and filter stores by criteria.
 
 3. **Profile Page**  
    <img src="screenshots/profile.png" width="600">  
-   - Shows user's details, vouchers, reviews, loyalty points and bookmarked businesses.
+   - Shows user's details, vouchers, reviews, loyalty points, referrals and bookmarked businesses.
 4. **Forum**  
    <img src="screenshots/forum.png" width="600">  
    - Shows different users coming together to share their experiences about local businesses they have visited.
@@ -109,13 +111,13 @@ Provide screenshots and captions showing how users interact with your app.
    - Shows user related activity, new revies, upcoming events and points updates.
 6. **Vouchers**
 <img src="screenshots/vouchers.png" width="600">  
-   - Shows user's points and list vouchers that the user can use their points to reedeem to use in stores.
+   - Shows user's points and list vouchers that the user can use their points to reedeem to use in stores. Shows users the vouchers they currently have, as well as expiry date.
 
 ---
 
 ## Developers Setup Guide
 
-Comprehensive steps to help other developers or evaluators run and test your project.
+Comprehensive steps to help other developers or evaluators run and test LocaLoco.
 
 ---
 
@@ -128,10 +130,12 @@ Comprehensive steps to help other developers or evaluators run and test your pro
 
 ### 1) Download the Project
 ```bash
-git clone https://github.com/<org-or-user>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/<org-or-user>/LocaLoco.git
+cd LocaLoco
 npm install
-npm start
+cd backend
+npm install
+cd ..
 ```
 
 ---
@@ -140,13 +144,23 @@ npm start
 Create a `.env` file in the root directory with the following structure:
 
 ```bash
-VITE_API_URL=<your_backend_or_firebase_url>
-VITE_FIREBASE_API_KEY=<your_firebase_api_key>
-VITE_FIREBASE_AUTH_DOMAIN=<your_auth_domain>
-VITE_FIREBASE_PROJECT_ID=<your_project_id>
-VITE_FIREBASE_STORAGE_BUCKET=<your_storage_bucket>
-VITE_FIREBASE_MESSAGING_SENDER_ID=<your_sender_id>
-VITE_FIREBASE_APP_ID=<your_app_id>
+# Database Configuration
+DB_HOST=127.0.0.1
+DB_USER=root
+DB_PASSWORD=root
+DB_NAME=wad2_project
+DB_PORT=3306
+DATABASE_URL=mysql://root:your_mysql_password@localhost:3306/wad2_project
+
+# Better Auth Configuration
+BETTER_AUTH_SECRET=<insert>
+BETTER_AUTH_URL=http://localhost:3000
+
+# Google Maps API (Optional - for map features)
+VITE_GOOGLE_MAPS_API_KEY=<insert>
+# Azure Storage (Optional - for image uploads)
+AZURE_STORAGE_CONNECTION_STRING=<insert>
+AZURE_STORAGE_CONTAINER_NAME=y<insert>
 ```
 
 > Never commit the `.env` file to your repository.  
@@ -154,67 +168,71 @@ VITE_FIREBASE_APP_ID=<your_app_id>
 
 ---
 
-### 3) Backend / Cloud Service Setup
+### 3) Database Setup
 
-#### Firebase
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project.
-3. Enable the following:
-   - **Authentication** → Email/Password sign-in
-   - **Firestore Database** or **Realtime Database**
-   - **Hosting (optional)** if you plan to deploy your web app
-4. Copy the Firebase configuration into your `.env` file.
+#### MySQL Database
+1. **Start MySQL Server**
+   - Make sure your MySQL server is running on `localhost:3306`
+   
+2. **Create Database**
+   ```sql
+   CREATE DATABASE wad2_project;
+   ```
 
-#### Optional: Express.js / MongoDB
-If your app includes a backend:
-1. Create a `/server` folder for backend code.
-2. Inside `/server`, create a `.env` file with:
+3. **Import Schema & Data** (if SQL dump is provided)
    ```bash
-   MONGO_URI=<your_mongodb_connection_string>
-   JWT_SECRET=<your_jwt_secret_key>
+   mysql -u root -p wad2_project < backend/src/database/newdummy.sql
    ```
-3. Start the backend:
+
+4. Push Schema using Drizzle
    ```bash
-   cd server
-   npm install
-   npm start
+   cd backend
+   npm run db:push
    ```
+
+5. **Verify Database**
+   - Check that tables exist: `user`, `businesses`, `referrals`, `vouchers`, `session`, etc.
+   - The database includes two triggers for auto-generating referral codes on user signup and vouchers
 
 ---
 
-### 4) Run the Frontend
-To start the development server:
+### 4) Run the Application
+
+#### Development Mode 
+Start both frontend and backend concurrently:
 ```bash
 npm run dev
 ```
-The project will run on [http://localhost:5173](http://localhost:5173) by default.
 
-To build and preview the production version:
+- **Frontend**: [http://localhost:5173](http://localhost:5173)
+- **Backend**: [http://localhost:3000](http://localhost:3000)
+
+#### Production Build
 ```bash
 npm run build
-npm run preview
+npm start
 ```
 
 ---
 
 ### 5) Testing the Application
 
-#### Manual Testing
-Perform the following checks before submission:
+#### Key Features to Test
 
-| Area | Test Description | Expected Outcome |
+| Feature | Test Description | Expected Outcome |
 |:--|:--|:--|
-| Authentication | Register, Login, Logout | User successfully signs in/out |
-| CRUD Operations | Add, Edit, Delete data | Database updates correctly |
-| Responsiveness | Test on mobile & desktop | Layout adjusts without distortion |
-| Navigation | All menu links functional | Pages route correctly |
-| Error Handling | Invalid inputs or missing data | User-friendly error messages displayed |
+| **Authentication** | Sign up, login, logout | User session persists, redirects to map page |
+| **Referral System** | Sign up with referral code | Popup appears, voucher issued, referral count updates |
+| **Profile Page** | View profile, referral panel, vouchers | Stats displayed correctly (vouchers, referrals) |
+| **Vouchers** | Check "My Vouchers" tab | User's redeemed vouchers from referrals shown |
+| **Business CRUD** | Add, edit, delete business | Database updates, UI reflects changes |
+| **Map View** | Browse businesses on map | Markers display, clicking shows business details |
+| **Logout** | Click logout button | User logged out, redirected to welcome page |
 
-#### Automated Testing (Optional)
-If applicable:
-```bash
-npm run test
-```
+#### Test Accounts
+After running the database setup, you can use:
+- Email: `test@example.com`
+- Password: (create via signup page)
 
 ---
 
@@ -222,11 +240,41 @@ npm run test
 
 | Issue | Cause | Fix |
 |:--|:--|:--|
-| `Module not found` | Missing dependencies | Run `npm install` again |
-| `Firebase: permission-denied` | Firestore security rules not set | Check rules under Firestore → Rules |
-| `CORS policy error` | Backend not allowing requests | Enable your domain in CORS settings |
-| `.env` variables undefined | Missing `VITE_` prefix | Rename variables to start with `VITE_` |
-| `npm run dev` fails | Node version mismatch | Check Node version (`node -v` ≥ 18) |
+| **`ERR_CONNECTION_REFUSED`** | Backend not running | Ensure MySQL is running, check `.env` credentials |
+| **`Cannot find module`** | Missing dependencies | Run `npm install` in root AND `cd backend && npm install` |
+| **`Database connection failed`** | Wrong credentials or DB not created | Verify `.env` DB settings, create `wad2_project` database |
+| **`Merge conflict marker`** | Git conflicts in code files | Resolve conflicts, remove `<<<<<<<`, `=======`, `>>>>>>>` markers |
+| **`npm run dev` fails**  | Node version or port conflict | Check `node -v` ≥ 18, kill processes on ports 3000 & 5173 |
+| **TypeScript errors** | Pre-existing code issues | These are warnings; app should still run in dev mode |
+| **Logout returns 400** | Better-auth route issue | Ensure `/api/auth/*` handler is registered before other routes |
+| **Referral code invalid** | Database trigger not set | Run the SQL trigger script or check `referrals` table schema |
+
+---
+
+### 7) Project Structure
+
+```
+LocaLoco/
+├── backend/
+│   ├── src/
+│   │   ├── controllers/     # API request handlers
+│   │   ├── models/          # Database operations
+│   │   ├── routes/          # API routes
+│   │   ├── database/        # Schema & DB config
+│   │   ├── lib/             # Auth & utilities
+│   │   └── index.ts         # Server entry point
+│   ├── package.json
+│   └── tsconfig.json
+├── src/
+│   ├── components/          # React components
+│   ├── hooks/               # Custom hooks (useAuth, useUser)
+│   ├── store/               # Zustand state management
+│   ├── types/               # TypeScript types
+│   └── lib/                 # Auth client
+├── package.json             # Frontend dependencies & scripts
+├── .env                     # Environment variables (DO NOT COMMIT)
+└── README.md
+```
 
 ---
 
