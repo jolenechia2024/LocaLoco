@@ -254,7 +254,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
           toast.success('Address updated successfully');
         } else {
           // Show error message when no address is found
-          setPostalCodeError('Invalid Postal code. Please Key in a valid Postal Code');
+          setPostalCodeError('Invalid Postal code. Please key in a valid Postal Code');
           console.log('No address found for postal code:', postalCode);
         }
       } catch (error) {
