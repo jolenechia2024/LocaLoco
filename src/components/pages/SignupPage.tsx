@@ -202,6 +202,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
   const [useSameHours, setUseSameHours] = useState(false);
   const [defaultHours, setDefaultHours] = useState({ open: '09:00', close: '17:00' });
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+  const [postalCodeError, setPostalCodeError] = useState(''); // New state for postal code error
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -234,6 +235,9 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
     // Update postal code in business data
     handleBusinessChange('postalCode', postalCode);
     
+    // Clear previous error
+    setPostalCodeError('');
+    
     // Only trigger API call when we have exactly 6 digits
     if (postalCode.length === 6 && !isNaN(Number(postalCode))) {
       setIsFetchingAddress(true);
@@ -247,18 +251,16 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
           handleBusinessChange('latitude', lat);
           handleBusinessChange('longitude', lng);
           
-          // Console.log the coordinates instead of showing in UI
-          // console.log('Coordinates for address:', address);
-          // console.log('Latitude:', lat);
-          // console.log('Longitude:', lng);
-          
           toast.success('Address updated successfully');
         } else {
+          // Show error message when no address is found
+          setPostalCodeError('Invalid Postal code. Please Key in a valid Postal Code');
           console.log('No address found for postal code:', postalCode);
         }
       } catch (error) {
         console.error('Error processing postal code:', error);
-        // Don't show toast error for API failures during typing
+        // Show error message for API failures
+        setPostalCodeError('Error validating postal code. Please try again.');
       } finally {
         setIsFetchingAddress(false);
       }
@@ -280,11 +282,6 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         const { lat, lng } = await getLatLngFromAddress(address);
         handleBusinessChange('latitude', lat);
         handleBusinessChange('longitude', lng);
-        
-        // Console.log the coordinates instead of showing in UI
-        // console.log('Coordinates for manually entered address:', address);
-        // console.log('Latitude:', lat);
-        // console.log('Longitude:', lng);
       } catch (error) {
         console.error('Error getting coordinates for address:', error);
       }
@@ -404,6 +401,11 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
       case 2:
         if (!currentBusiness.uen || !currentBusiness.businessName || !currentBusiness.businessCategory || !currentBusiness.description || !currentBusiness.address) {
           setError('Please fill in all required fields');
+          return false;
+        }
+        // Also validate postal code if there's an error
+        if (postalCodeError) {
+          setError('Please fix the postal code error before proceeding');
           return false;
         }
         return true;
@@ -848,6 +850,12 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
                 {isFetchingAddress && (
                   <p className="text-xs text-blue-500 mt-1">Fetching address...</p>
                 )}
+                {postalCodeError && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {postalCodeError}
+                  </p>
+                )}
               </div>
               <div className="md:col-span-3">
                 <Label htmlFor="address" className="text-sm text-foreground">Address</Label>
@@ -904,7 +912,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
       );
     }
 
-    // ... rest of the renderStep function remains the same for steps 3, 4, 5, and 6
+    // ... rest of the renderStep function remains the same for steps 3, 4, and 5
     if (currentStep === 3 && hasBusiness) {
       return (
         <div className="space-y-3">
