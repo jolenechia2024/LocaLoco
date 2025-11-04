@@ -12,6 +12,7 @@ export const useUser = (userId: string | null) => {
     reviewsCount: 0,
     loyaltyPoints: 0,
   });
+  const [vouchers, setVouchers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,6 +78,9 @@ export const useUser = (userId: string | null) => {
 
         console.log('✅ Mapped user data:', userData);
         setUser(userData);
+
+        // ✅ Set vouchers from response
+        setVouchers(data.vouchers || []);
 
         // ✅ Set stats from response (or defaults for new users)
         setStats({
@@ -152,5 +156,5 @@ export const useUser = (userId: string | null) => {
     []
   );
 
-  return { user, stats, updateUser, loading, error };
+  return { user, stats, vouchers, updateUser, loading, error };
 };

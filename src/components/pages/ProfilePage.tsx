@@ -10,6 +10,7 @@ import { Separator } from '../ui/separator';
 import { BusinessCard } from '../BusinessCard';
 import { EditProfileDialog } from './EditProfileDialog';
 import { useThemeStore } from '../../store/themeStore';
+import ReferralPanel from './ReferralPanel';
 
 interface ProfilePageProps {
   user: User | null;  // ✅ MUST be nullable
@@ -225,6 +226,18 @@ export function ProfilePage({
             </div>
           </Card>
         </div>
+
+        {/* Referral Panel Section */}
+        {user && (
+          <div className="mb-8">
+            <Card className="p-6" style={{ backgroundColor: cardBg, color: textColor, transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+              <ReferralPanel
+                userId={user.id}
+                appBaseUrl={window.location.origin}
+              />
+            </Card>
+          </div>
+        )}
 
         {/* Bookmarked Businesses Section */}
         <div>

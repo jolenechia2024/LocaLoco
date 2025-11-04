@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useUser } from '../hooks/useUser';
+import { getVouchers } from '../types/ref';
 import { 
   ArrowLeft, 
   DollarSign, 
@@ -54,6 +55,37 @@ export function VouchersPage({
   }, [currentPoints, setZustandPoints]);
 
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [myVouchers, setMyVouchers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user vouchers from database
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const data = await getVouchers({
+          userId,
+          status: 'issued',
+          limit: 100
+        });
+        console.log('📦 Fetched vouchers from database:', data);
+        setMyVouchers(data.vouchers || []);
+      } catch (error) {
+        console.error('Error fetching vouchers:', error);
+        toast.error('Failed to load your vouchers');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVouchers();
+  }, [userId]);
+
   const [redeemedVouchers, setRedeemedVouchers] = useState<RedeemedVoucher[]>(mockRedeemedVouchers);
 
   // Color variables for dark/light mode
@@ -405,14 +437,81 @@ export function VouchersPage({
           </TabsContent>
 
           <TabsContent value="my-vouchers" className="space-y-6 mt-6">
-            {redeemedVouchers.length > 0 ? (
+            {loading ? (
+              <Card style={{ backgroundColor: cardBgColor, borderColor: borderColor }}>
+                <CardContent className="p-12 text-center">
+                  <p style={{ color: secondaryTextColor }}>Loading your vouchers...</p>
+                </CardContent>
+              </Card>
+            ) : myVouchers.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {redeemedVouchers.map((redeemedVoucher) => (
-                  <RedeemedVoucherCard 
-                    key={redeemedVoucher.id} 
-                    redeemedVoucher={redeemedVoucher} 
-                  />
-                ))}
+                {myVouchers.map((voucher, index) => {
+                  console.log('🎫 Voucher data:', voucher);
+                  return (
+                  <Card key={voucher.id || index} style={{ backgroundColor: cardBgColor, borderColor: borderColor }}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div
+                          className="p-3 rounded-lg"
+                          style={{ backgroundColor: 'rgba(255, 161, 163, 0.2)' }}
+                        >
+                          <DollarSign className="w-6 h-6 text-[#FFA1A3]" />
+                        </div>
+                        <Badge className={
+                          voucher.status === 'used' ? 'bg-green-600 text-white' :
+                          voucher.status === 'expired' ? 'bg-gray-600 text-white' :
+                          voucher.status === 'revoked' ? 'bg-red-600 text-white' :
+                          'bg-[#FFA1A3] text-white'
+                        }>
+                          {voucher.status === 'used' && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                          {voucher.status.charAt(0).toUpperCase() + voucher.status.slice(1)}
+                        </Badge>
+                      </div>
+                      <CardTitle className="mt-3" style={{ color: textColor }}>
+                        ${voucher.amount} Voucher
+                      </CardTitle>
+                      <CardDescription style={{ color: secondaryTextColor }}>
+                        Referral reward voucher
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-sm" style={{ color: secondaryTextColor }}>
+                          {voucher.referralCode ? 'Referral Code Used' : 'Voucher ID'}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 px-3 py-2 rounded-lg text-center tracking-wider text-sm"
+                                style={{ backgroundColor: accentBgColor, color: textColor }}>
+                            {voucher.referralCode || `#${voucher.id}`}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(voucher.referralCode || `#${voucher.id}`);
+                              toast.success('Code copied to clipboard!');
+                            }}
+                            disabled={voucher.status === 'used' || voucher.status === 'expired'}
+                            style={{ color: textColor, borderColor: borderColor }}
+                            className={isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <div style={{ color: secondaryTextColor }}>
+                          <p>Issued: {new Date(voucher.issuedAt).toLocaleDateString()}</p>
+                          {voucher.expiresAt && (
+                            <p>Expires: {new Date(voucher.expiresAt).toLocaleDateString()}</p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+                })}
               </div>
             ) : (
               <Card style={{ backgroundColor: cardBgColor, borderColor: borderColor }}>

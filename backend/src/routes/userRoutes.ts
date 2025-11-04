@@ -18,6 +18,7 @@ userRouter.post('/api/user/delete-profile', UserController.deleteProfile.bind(Us
 // handle referral user
 userRouter.post('/api/user/referral', UserController.handleReferral.bind(UserController));
 
-// insert new user referral code
+// Get user vouchers
+userRouter.get('/api/users/:userId/vouchers', UserController.getUserVouchers.bind(UserController));
 
 export default userRouter

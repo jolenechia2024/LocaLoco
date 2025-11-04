@@ -1,5 +1,5 @@
 // src/components/pages/SignupPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Store, ChevronRight, ChevronLeft, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +18,7 @@ import { useThemeStore } from '../../store/themeStore';
 import { toast } from 'sonner';
 import { authClient } from '../../lib/authClient';
 import { useAuthStore } from '../../store/authStore';
+import { ReferralCodeDialog } from '../ReferralCodeDialog';
 
 
 interface SignupPageProps {
@@ -208,12 +209,61 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
 
   const [businesses, setBusinesses] = useState<BusinessData[]>([createEmptyBusiness()]);
 
+  // Referral system state
+  const [showReferralDialog, setShowReferralDialog] = useState(false);
+  const [newUserId, setNewUserId] = useState<string | null>(null);
+  const [prefillReferralCode, setPrefillReferralCode] = useState<string>('');
+
+  // Auto-fill referral code from URL query param ?ref=XXXX
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get('ref');
+    if (ref) {
+      setPrefillReferralCode(ref.toUpperCase());
+      console.log('🔗 Referral link detected, will auto-fill code:', ref.toUpperCase());
+    }
+  }, []);
+
   const totalSteps = hasBusiness ? 6 : 1;
   const currentBusiness = businesses[currentBusinessIndex];
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError('');
+  };
+
+  // Handle referral code submission
+  const handleReferralSubmit = async (referralCode: string) => {
+    if (newUserId && referralCode) {
+      try {
+        const response = await fetch('http://localhost:3000/api/user/referral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            referralCode: referralCode,
+            referredId: newUserId
+          })
+        });
+
+        if (response.ok) {
+          toast.success('Referral code applied! You and your friend will receive $5 vouchers!');
+        } else {
+          toast.error('Invalid referral code');
+        }
+      } catch (error) {
+        console.error('Error applying referral code:', error);
+        toast.error('Could not apply referral code');
+      }
+    }
+
+    setShowReferralDialog(false);
+    setTimeout(() => navigate('/map'), 300);
+  };
+
+  // Handle dialog skip
+  const handleReferralSkip = () => {
+    setShowReferralDialog(false);
+    setTimeout(() => navigate('/map'), 300);
   };
 
   const handleBusinessChange = (field: string, value: any) => {
@@ -551,9 +601,12 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         toast.success('All businesses registered!');
       }
 
-      // Redirect to login - session will be automatically detected there
-      toast.success('Redirecting to your account...');
-      setTimeout(() => navigate('/login'), 500);
+      // Show referral dialog before redirecting
+      console.log('🎊 Setting up referral dialog with userId:', userData.user.id);
+      setNewUserId(userData.user.id);
+      setShowReferralDialog(true);
+      console.log('🎊 showReferralDialog set to true');
+      // Navigation happens after dialog is closed (see handleReferralSubmit/Skip)
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       setError('Error signing up: ' + errorMessage);
@@ -1279,6 +1332,14 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
           </form>
         </div>
       </div>
+
+      {/* Referral Dialog - shows after successful signup */}
+      <ReferralCodeDialog
+        open={showReferralDialog}
+        onSubmit={handleReferralSubmit}
+        onSkip={handleReferralSkip}
+        initialCode={prefillReferralCode}
+      />
     </div>
   );
 }

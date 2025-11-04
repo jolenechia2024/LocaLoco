@@ -16,11 +16,30 @@ class UserModel {
         try {
             console.log('🔍 getUserById called with userId:', userId);
             const profile = await db.select().from(user).where(eq(user.id, userId))
-            const availableVouchers = await db.select().from(vouchers).where(eq(vouchers.userId, userId))
+
+            // Fetch vouchers with referral code (join with referrals table)
+            console.log('🎫 Fetching vouchers with referral codes for userId:', userId);
+            const availableVouchers = await db
+                .select({
+                    id: vouchers.id,
+                    userId: vouchers.userId,
+                    refId: vouchers.refId,
+                    amount: vouchers.amount,
+                    status: vouchers.status,
+                    issuedAt: vouchers.issuedAt,
+                    expiresAt: vouchers.expiresAt,
+                    referralCode: referrals.referralCode
+                })
+                .from(vouchers)
+                .leftJoin(referrals, eq(referrals.id, vouchers.refId))
+                .where(eq(vouchers.userId, userId));
+
+            console.log('🎫 Fetched vouchers with codes:', availableVouchers);
 
             // Fetch user points and reviews if profile exists
             let points = 0;
             let reviews: any[] = [];
+            let successfulReferrals = 0;
             if (profile[0]) {
                 const availablePoints = await db.select().from(userPoints).where(eq(userPoints.userEmail, profile[0].email))
                 points = availablePoints[0]?.points || 0;
@@ -29,13 +48,25 @@ class UserModel {
                 console.log('🔍 Fetching reviews for email:', profile[0].email);
                 reviews = await db.select().from(businessReviews).where(eq(businessReviews.userEmail, profile[0].email))
                 console.log('📊 Reviews found:', reviews.length, reviews);
+
+                // Count successful referrals (where this user is the referrer and status is 'claimed')
+                const successfulReferralsResult = await db
+                    .select()
+                    .from(referrals)
+                    .where(and(
+                        eq(referrals.referrerUserId, userId),
+                        eq(referrals.status, 'claimed')
+                    ));
+
+                successfulReferrals = successfulReferralsResult.length;
             }
 
             return {
                 profile: profile[0] || null,
                 vouchers: availableVouchers,
                 points: points,
-                reviews: reviews
+                reviews: reviews,
+                successfulReferrals: successfulReferrals
             }
         }
         catch (error) {
