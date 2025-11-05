@@ -106,3 +106,22 @@ export interface OpenStatus {
   nextChange?: string;
   closingSoon?: boolean;
 }
+
+export interface BusinessOwner {
+  id: string;
+  businessName: string;
+  role: 'business_owner'; // ✅ Changed from 'business' to 'business_owner'
+  address: string;
+  operatingDays: string[];
+  businessEmail: string;
+  phone: string;
+  website: string;
+  socialMedia: string;
+  wallpaper?: string;
+  priceTier: '' | '$' | '$$' | '$$$' | '$$$$'; // ✅ Added empty string option
+  offersDelivery: boolean;
+  offersPickup: boolean;
+  paymentOptions: string[];
+  category: string;
+  description: string;
+}
