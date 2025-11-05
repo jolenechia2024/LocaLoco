@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { useUserPointsStore } from '../store/userStore';
 import { toast } from 'sonner';
 import { BusinessVerificationData } from '../types/auth.store.types';
+import { useBookmarks } from '../hooks/useBookmarks'; 
 
 const API_BASE_URL = 'http://localhost:3000';
 
@@ -58,15 +59,14 @@ const uploadWallpaper = async (file: File): Promise<string> => {
   };
 
 
-const MOCK_BOOKMARKED_BUSINESSES: Business[] = [];
 
 export function ProfilePageDisplay() {
   const navigate = useNavigate();
   const { userId, role } = useAuth();
   const { isDarkMode } = useTheme();
   const { setPoints } = useUserPointsStore();
-  const [bookmarkedBusinesses] = useState<Business[]>(MOCK_BOOKMARKED_BUSINESSES);
-
+  const {bookmarkedBusinesses, toggleBookmark} = useBookmarks();
+  
   // Get business mode state
   const businessMode = useAuthStore((state) => state.businessMode);
   const setAvatarUrl = useAuthStore((state) => state.setAvatarUrl);
@@ -114,7 +114,6 @@ export function ProfilePageDisplay() {
   // Navigation handlers
   const handleBack = () => navigate(ROUTES.BUSINESSES);
   const handleViewBusinessDetails = (business: Business) => navigate(`${ROUTES.BUSINESSES}/${business.uen}`);
-  const handleBookmarkToggle = (businessId: string) => console.log('Toggle bookmark for:', businessId);
   const handleNavigateToVouchers = () => navigate(ROUTES.VOUCHERS);
 
   const handleAddBusiness = async (data: BusinessVerificationData) => {
@@ -247,7 +246,7 @@ export function ProfilePageDisplay() {
       onUpdateUser={updateUser}
       onAddBusiness={handleAddBusiness}
       onViewBusinessDetails={handleViewBusinessDetails}
-      onBookmarkToggle={handleBookmarkToggle}
+      onBookmarkToggle={toggleBookmark}
       onNavigateToVouchers={handleNavigateToVouchers}
     />
   );

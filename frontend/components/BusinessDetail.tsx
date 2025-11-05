@@ -184,7 +184,7 @@ export function BusinessDetail({
       <Card className="overflow-hidden">
         <div className="relative">
           <ImageWithFallback
-            src={`https://localoco.blob.core.windows.net/images/${business.image}`}
+            src={`${business.image}`}
             alt={business.name}
             className="w-full h-48 object-cover"
           />
