@@ -7,27 +7,73 @@ import { useAuthStore } from '../store/authStore';
 import { ProfilePage } from './pages/ProfilePage';
 import { BusinessProfilePage } from './pages/BusinessProfilePage';
 import { ROUTES } from '../constants/routes';
-import { Business } from '../types/business';
-import { BusinessOwner } from '../data/mockBusinessOwnerData';
+import { Business, BusinessOwner } from '../types/business';
 import { useState, useEffect } from 'react';
 import { useUserPointsStore } from '../store/userStore';
+import { toast } from 'sonner';
+import { BusinessVerificationData } from '../types/auth.store.types';
+
+const API_BASE_URL = 'http://localhost:3000';
+
+// ✅ COPIED FROM YOUR SIGNUP PAGE LOGIC
+const uploadWallpaper = async (file: File): Promise<string> => {
+    const toastId = toast.loading('Uploading image...');
+
+    try {
+      // Step 1: Get the secure upload URL from your backend
+      const sasResponse = await fetch(
+        `${API_BASE_URL}/api/url-generator?filename=${encodeURIComponent(file.name)}`
+      );
+
+      if (!sasResponse.ok) {
+        throw new Error('Failed to generate upload URL');
+      }
+
+      const sasData = await sasResponse.json();
+
+      // Step 2: Upload the file directly to Azure Blob Storage
+      const uploadResponse = await fetch(sasData.uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type,
+          'x-ms-blob-type': 'BlockBlob'
+        },
+        body: file
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Image upload failed with status ${uploadResponse.status}`);
+      }
+
+      // Step 3: Return the final, permanent URL of the image
+      const wallpaperUrl = `https://localoco.blob.core.windows.net/images/${sasData.blobName}`;
+      toast.success('Image uploaded successfully!', { id: toastId });
+      return wallpaperUrl;
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+      toast.error(`Upload error: ${errorMessage}`, { id: toastId });
+      throw error;
+    }
+  };
 
 
 const MOCK_BOOKMARKED_BUSINESSES: Business[] = [];
 
 export function ProfilePageDisplay() {
   const navigate = useNavigate();
-  const { userId, role } = useAuth(); // ✅ Get role from useAuth
+  const { userId, role } = useAuth();
   const { isDarkMode } = useTheme();
-  const { setPoints } = useUserPointsStore(); // ✅ Correct
+  const { setPoints } = useUserPointsStore();
   const [bookmarkedBusinesses] = useState<Business[]>(MOCK_BOOKMARKED_BUSINESSES);
 
   // Get business mode state
   const businessMode = useAuthStore((state) => state.businessMode);
-  const setAvatarUrl = useAuthStore((state) => state.setAvatarUrl);  // ✅ Get setter
+  const setAvatarUrl = useAuthStore((state) => state.setAvatarUrl);
+  const enableBusinessMode = useAuthStore((state) => state.enableBusinessMode);
 
   // Call useUser hook unconditionally for user data
-  const { user, stats, updateUser } = useUser(userId);
+  const { user, stats, updateUser, mutate: mutateUser } = useUser(userId);
 
   // Fetch business data when in business mode
   const { business, loading: businessLoading } = useBusinessByUen(
@@ -136,6 +182,9 @@ export function ProfilePageDisplay() {
       onViewBusinessDetails={handleViewBusinessDetails}
       onBookmarkToggle={handleBookmarkToggle}
       onNavigateToVouchers={handleNavigateToVouchers}
+      uploadWallpaper={uploadWallpaper}
+      enableBusinessMode={enableBusinessMode}
+      mutateUser={mutateUser}
     />
   );
 }
