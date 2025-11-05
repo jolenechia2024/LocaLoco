@@ -126,6 +126,8 @@ export interface AuthState {
   role: UserRole | null;
   userId: string | null;
   accessToken: string | null;
+  userProfile: any | null;
+  avatarUrl: string | null;  // ✅ Just the avatar URL
   businessMode: BusinessModeState;
 }
 
@@ -136,6 +138,8 @@ export interface AuthActions {
   enableBusinessMode: (businessUen: string, businessName: string) => void;
   disableBusinessMode: () => void;
   switchBusiness: (businessUen: string, businessName: string) => void;
+  setUserProfile: (profile: any) => void;
+  setAvatarUrl: (url: string | null) => void;  // ✅ Just update avatar
 }
 
 export type AuthStore = AuthState & AuthActions;
@@ -145,6 +149,8 @@ const initialState: AuthState = {
   role: null,
   userId: null,
   accessToken: null,
+  userProfile: null,
+  avatarUrl: null,  // ✅ Avatar URL
   businessMode: {
     isBusinessMode: false,
     currentBusinessUen: null,

@@ -2,10 +2,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User, UserStats } from '../types/user';
 import { BusinessOwner } from '../types/auth.store.types';
+import { useAuthStore } from '../store/authStore';
 
 const API_BASE_URL = 'http://localhost:3000';
 
 export const useUser = (userId: string | null) => {
+  const setAvatarUrl = useAuthStore((state) => state.setAvatarUrl);
   const [user, setUser] = useState<User | BusinessOwner | null>(null);
   const [stats, setStats] = useState<UserStats>({
     vouchersCount: 0,
@@ -61,14 +63,16 @@ export const useUser = (userId: string | null) => {
       };
 
       setUser(userData);
-      
+      // ✅ Update avatar in store
+      setAvatarUrl(userData.avatarUrl || null);
+
       // Set stats directly from the API response
       setStats({
         vouchersCount: statsData?.vouchersCount || 0,
         reviewsCount: statsData?.reviewsCount || 0,
         loyaltyPoints: statsData?.loyaltyPoints || 0,
       });
-      
+
       setVouchers(data.vouchers || []);
 
     } catch (err) {
@@ -80,7 +84,7 @@ export const useUser = (userId: string | null) => {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, setAvatarUrl]);
 
   // This effect runs on mount and whenever fetchUserProfile changes
   useEffect(() => {
@@ -100,8 +104,8 @@ export const useUser = (userId: string | null) => {
 
       try {
         const isBusinessOwner = 'businessName' in updatedUser;
-        const userName = isBusinessOwner 
-          ? (updatedUser as BusinessOwner).businessName 
+        const userName = isBusinessOwner
+          ? (updatedUser as BusinessOwner).businessName
           : (updatedUser as User).name;
 
         const response = await fetch(`${API_BASE_URL}/api/user/update-profile`, {
@@ -124,14 +128,15 @@ export const useUser = (userId: string | null) => {
         const data = await response.json();
         console.log('✅ Profile updated:', data);
 
-        setUser({ ...updatedUser });
-        
+        // ✅ Re-fetch user profile to update all useUser instances
+        await fetchUserProfile();
+
       } catch (err) {
         console.error('❌ Error updating user:', err);
         setError(err instanceof Error ? err.message : 'Update failed');
       }
     },
-    []
+    [fetchUserProfile]
   );
 
   // ✅ FIX: The `mutate` function is now included in the return object.

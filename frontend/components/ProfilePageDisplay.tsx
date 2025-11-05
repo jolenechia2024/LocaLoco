@@ -8,7 +8,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { BusinessProfilePage } from './pages/BusinessProfilePage';
 import { ROUTES } from '../constants/routes';
 import { Business } from '../types/business';
-import { BusinessOwner } from '../data/mockBusinessOwnerData'; // ✅ Import BusinessOwner
+import { BusinessOwner } from '../data/mockBusinessOwnerData';
 import { useState, useEffect } from 'react';
 import { useUserPointsStore } from '../store/userStore';
 
@@ -24,6 +24,7 @@ export function ProfilePageDisplay() {
 
   // Get business mode state
   const businessMode = useAuthStore((state) => state.businessMode);
+  const setAvatarUrl = useAuthStore((state) => state.setAvatarUrl);  // ✅ Get setter
 
   // Call useUser hook unconditionally for user data
   const { user, stats, updateUser } = useUser(userId);
@@ -49,9 +50,16 @@ export function ProfilePageDisplay() {
   // Sync loyalty points with user points store
   useEffect(() => {
     if (stats?.loyaltyPoints !== undefined) {
-      setPoints(stats.loyaltyPoints); // ✅ Correct
+      setPoints(stats.loyaltyPoints);
     }
   }, [stats?.loyaltyPoints, setPoints]);
+
+  // ✅ Update avatar when business wallpaper changes
+  useEffect(() => {
+    if (business?.wallpaper) {
+      setAvatarUrl(business.wallpaper);
+    }
+  }, [business?.wallpaper, setAvatarUrl]);
 
   // Navigation handlers
   const handleBack = () => navigate(ROUTES.BUSINESSES);

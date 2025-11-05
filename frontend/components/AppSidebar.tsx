@@ -442,7 +442,15 @@ export function AppSidebar({
                             businessMode.currentBusinessUen === business.uen ? 'bg-[#FFA1A3]/10' : ''
                           }`}
                         >
-                          <Store className="w-4 h-4 mr-2" />
+                          {business.wallpaper ? (
+                            <img
+                              src={business.wallpaper}
+                              alt={business.businessName}
+                              className="w-6 h-6 mr-2 rounded-full object-cover"
+                            />
+                          ) : (
+                            <Store className="w-4 h-4 mr-2" />
+                          )}
                           <span className="truncate">{business.businessName}</span>
                         </DropdownMenuItem>
                       ))}

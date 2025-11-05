@@ -42,11 +42,11 @@ export function BusinessProfilePage({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const navigate = useNavigate();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
-  const userId = useAuthStore((state) => state.userId); // ✅ Added
-  const { user, updateUser } = useUser(userId); // ✅ Added
+  const userId = useAuthStore((state) => state.userId);
+  const { user, updateUser } = useUser(userId);
 
-  // ✅ Use prop if provided, otherwise use hook
-  const businessOwner = propBusinessOwner || (user as BusinessOwner);
+  // ✅ Keep local state for businessOwner so we can update it immediately
+  const [businessOwner, setBusinessOwner] = useState<BusinessOwner>(propBusinessOwner || (user as BusinessOwner));
 
   // Safety check
   if (!businessOwner || !businessOwner.businessName) {
@@ -68,12 +68,12 @@ export function BusinessProfilePage({
       .toUpperCase();
   };
 
-  // ✅ Check if callback exists before calling
+  // ✅ Update local state immediately so preview updates
   const handleSave = (updatedBusiness: BusinessOwner) => {
+    setBusinessOwner(updatedBusiness);  // ✅ Update local state
     if (onUpdateBusiness) {
       onUpdateBusiness(updatedBusiness);
     } else {
-      // Use updateUser from hook
       updateUser(updatedBusiness);
     }
     toast.success('Business profile updated successfully!');
@@ -89,9 +89,17 @@ export function BusinessProfilePage({
         <Card className="p-8 mb-6" style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff', color: isDarkMode ? '#ffffff' : '#000000', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <Avatar className="w-24 h-24 flex-shrink-0">
-              <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                {getInitials(businessOwner.businessName)}
-              </AvatarFallback>
+              {businessOwner.wallpaper ? (
+                <img
+                  src={businessOwner.wallpaper}
+                  alt={businessOwner.businessName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                  {getInitials(businessOwner.businessName)}
+                </AvatarFallback>
+              )}
             </Avatar>
 
             <div className="flex-1 min-w-0">

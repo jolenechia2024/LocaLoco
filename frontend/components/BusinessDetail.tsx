@@ -41,11 +41,10 @@ export function BusinessDetail({
   const cardBgColor = isDarkMode ? '#262626' : '#ffffff';
   const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
 
+  // Fetch threads immediately on mount to populate the counter
   useEffect(() => {
-    if (selectedTab === 'threads' && threads.length === 0) {
-      fetchThreads();
-    }
-  }, [selectedTab]);
+    fetchThreads();
+  }, [business.uen]); // Re-fetch if business changes
 
   const fetchThreads = async () => {
     setThreadsLoading(true);

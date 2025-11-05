@@ -21,7 +21,20 @@ class UserController {
                 return;
             }
 
-            res.status(200).json(user);
+            // Format the response to match frontend expectations
+            const response = {
+                profile: user.profile,
+                stats: {
+                    vouchersCount: user.vouchers?.length || 0,
+                    reviewsCount: user.reviews?.length || 0,
+                    loyaltyPoints: user.points || 0,
+                },
+                vouchers: user.vouchers,
+                reviews: user.reviews,
+                successfulReferrals: user.successfulReferrals
+            };
+
+            res.status(200).json(response);
 
         } catch (error) {
             console.error('Error fetching profile:', error);

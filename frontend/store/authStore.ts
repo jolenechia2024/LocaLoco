@@ -15,6 +15,8 @@ const initialState: AuthState = {
   role: null,
   userId: null,
   accessToken: null,
+  userProfile: null,
+  avatarUrl: null,  // ✅ Just store the avatar URL
   businessMode: {
     isBusinessMode: false,
     currentBusinessUen: null,
@@ -75,6 +77,15 @@ export const useAuthStore = create<AuthStore>()(
             currentBusinessName: businessName,
           },
         });
+      },
+
+      setUserProfile: (profile) => {
+        set({ userProfile: profile });
+      },
+
+      // ✅ Update avatar URL
+      setAvatarUrl: (url) => {
+        set({ avatarUrl: url });
       },
     }),
     {

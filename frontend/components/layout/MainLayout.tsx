@@ -4,6 +4,7 @@ import { AppSidebar } from '../AppSidebar';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useUser } from '../../hooks/useUser';
+import { useAuthStore } from '../../store/authStore';
 import { ROUTES } from '../../constants/routes';
 
 export const MainLayout = () => {
@@ -13,6 +14,7 @@ export const MainLayout = () => {
   const navigate = useNavigate();
 
   const { user, stats, updateUser } = useUser(userId || null);
+  const avatarUrl = useAuthStore((state) => state.avatarUrl);  // ✅ Get avatar from store
   const isAuthenticated = !!userId; // Check if user is logged in
 
   const getCurrentView = () => {
@@ -63,14 +65,14 @@ export const MainLayout = () => {
       return {
         name: user.businessName,
         email: user.businessEmail,
-        avatarUrl: user.wallpaper,
+        avatarUrl: avatarUrl || user.wallpaper,  // ✅ Use store first, fallback to wallpaper
         isGuest: false,
       };
     } else {
       return {
         name: user.name,
         email: user.email,
-        avatarUrl: user.avatarUrl,
+        avatarUrl: avatarUrl || user.avatarUrl,  // ✅ Use store first, fallback to user.avatarUrl
         isGuest: false,
       };
     }

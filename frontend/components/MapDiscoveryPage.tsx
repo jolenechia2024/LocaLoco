@@ -10,12 +10,17 @@ import { GoogleMap, Marker, InfoWindow, useLoadScript } from '@react-google-maps
 import { useBusinessStore } from '../store/businessStore';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
+import { useBusinesses } from '../hooks/useBusinesses';
 
 const defaultCenter = { lat: 1.3521, lng: 103.8198 }; // Singapore fallback
 
 export function MapDiscoveryPage() {
   const navigate = useNavigate();
   const mapRef = useRef<google.maps.Map | null>(null);
+
+  // ✅ Use useBusinesses hook to ensure businesses are fetched
+  useBusinesses();
+
   const businesses = useBusinessStore((state) => state.businesses);
   const setSelectedBusiness = useBusinessStore((state) => state.setSelectedBusiness);
   const logout = useAuthStore((state) => state.logout);

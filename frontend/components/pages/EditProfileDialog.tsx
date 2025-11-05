@@ -15,6 +15,7 @@ import { Textarea } from '../ui/textarea';
 import { Upload, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useThemeStore } from '../../store/themeStore';
+import { useAuthStore } from '../../store/authStore';
 
 
 interface EditProfileDialogProps {
@@ -31,6 +32,7 @@ export function EditProfileDialog({
   onSave,
 }: EditProfileDialogProps) {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const setAvatarUrl = useAuthStore((state) => state.setAvatarUrl);  // ✅ Get setter
   const [formData, setFormData] = useState<User>(user);
   const [previewUrl, setPreviewUrl] = useState<string | null>(user.avatarUrl || null);
   const [uploading, setUploading] = useState(false);
@@ -99,6 +101,9 @@ export function EditProfileDialog({
         avatarUrl: result.image,
         bio: result.bio || '',
       };
+
+      // ✅ Update avatar in store so sidebar sees it
+      setAvatarUrl(result.image || null);
 
       onSave(updatedUser);
       onOpenChange(false);
