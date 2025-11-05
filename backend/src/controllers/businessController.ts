@@ -76,7 +76,7 @@ class businessController {
     static async registerBusiness(req: Request, res: Response, next: NextFunction): Promise<void> {
 
         const business = {
-            ownerId: req.body.userId,
+            ownerId: req.body.ownerID,
             uen: req.body.uen,
             businessName: req.body.businessName,
             businessCategory: req.body.businessCategory,
