@@ -120,12 +120,12 @@ const UserVoucherCard = ({
           <p className="text-sm" style={{ color: styles.secondaryTextColor }}>Voucher Code</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 px-3 py-2 rounded-lg text-center tracking-wider text-sm" style={{ backgroundColor: styles.accentBgColor, color: styles.textColor }}>
-              {voucher.code || `#${voucher.id}`}
+              {voucher.referralCode || `#${voucher.id}`}
             </code>
             <Button variant="outline" size="sm" onClick={() => copyCode(voucher.code || `#${voucher.id}`)} disabled={voucher.status !== 'issued'}>
               <Copy className="w-4 h-4" />
             </Button>
-          </div>
+          </div> 
         </div>
         <div className="flex items-center justify-between text-sm">
           <div style={{ color: styles.secondaryTextColor }}>
