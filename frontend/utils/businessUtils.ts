@@ -23,7 +23,7 @@ export interface BackendBusiness {
   offersPickup?: boolean;
   paymentOptions?: string[];
 }
-
+    
 // Map backend category to frontend BusinessCategory
 const categoryMap: Record<string, BusinessCategory> = {
   'all': 'all',
