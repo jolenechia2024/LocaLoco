@@ -5,6 +5,8 @@ import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useThemeStore } from '../store/themeStore';
 import { useEffect, useState } from 'react';
+import * as React from 'react';
+
 
 interface Announcement {
   announcementId: number;
