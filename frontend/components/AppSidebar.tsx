@@ -20,7 +20,8 @@ import {
   LogOut,
   LogIn,
   Briefcase,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
@@ -78,6 +79,7 @@ export function AppSidebar({
   const [isMobile, setIsMobile] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
+  const [showMobileBusinessMenu, setShowMobileBusinessMenu] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const [transitionText, setTransitionText] = useState('');
   const [transitionIcon, setTransitionIcon] = useState<'user' | 'business'>('user');
@@ -281,6 +283,16 @@ export function AppSidebar({
     ...(isAuthenticated
       ? [{ icon: null, label: 'Profile', view: 'profile' as const, isAvatar: true }]
       : [{ icon: LogIn, label: 'Login', view: null as const, isLoginButton: true }]
+    ),
+    // ✅ Add business mode toggle for mobile (only show if user has businesses)
+    ...(isAuthenticated && hasBusiness
+      ? [{
+          icon: Briefcase,
+          label: businessMode.isBusinessMode ? 'User Mode' : 'Business Mode',
+          view: null as const,
+          isBusinessModeToggle: true
+        }]
+      : []
     ),
     { icon: Settings, label: 'Settings', view: 'settings' as const, requiresAuth: true },
   ];
@@ -645,6 +657,7 @@ export function AppSidebar({
                 const isLoginButton = 'isLoginButton' in item && item.isLoginButton;
                 const isDisabled = 'requiresAuth' in item && item.requiresAuth && !isAuthenticated;
                 const isBusinessItem = 'isBusinessItem' in item && item.isBusinessItem;
+                const isBusinessModeToggle = 'isBusinessModeToggle' in item && item.isBusinessModeToggle;
 
 
                 return (
@@ -653,6 +666,8 @@ export function AppSidebar({
                     onClick={() => {
                       if (isLoginButton) {
                         navigate('/login');
+                      } else if (isBusinessModeToggle) {
+                        setShowMobileBusinessMenu(true);
                       } else {
                         handleMenuClick(item.view, isThemeToggle, 'requiresAuth' in item ? item.requiresAuth : false);
                       }
@@ -881,6 +896,99 @@ export function AppSidebar({
           to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
+
+      {/* Mobile Business Menu Modal */}
+      {showMobileBusinessMenu && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-end md:hidden"
+          onClick={() => setShowMobileBusinessMenu(false)}
+        >
+          <div
+            className="w-full rounded-t-2xl p-6 space-y-4 animate-slide-up"
+            style={{ backgroundColor: bgColor }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${textColor}`}>
+                {businessMode.isBusinessMode ? 'Switch Business' : 'Select Business'}
+              </h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowMobileBusinessMenu(false)}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              {/* Show "User Mode" button if currently in business mode */}
+              {businessMode.isBusinessMode && (
+                <button
+                  onClick={() => {
+                    handleBusinessModeToggle();
+                    setShowMobileBusinessMenu(false);
+                  }}
+                  className={`w-full p-4 rounded-lg flex items-center gap-3 transition-colors ${
+                    isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  <User className="w-6 h-6 text-[#FFA1A3]" />
+                  <div className="flex-1 text-left">
+                    <p className={`font-medium ${textColor}`}>User Mode</p>
+                    <p className={`text-xs ${secondaryTextColor}`}>Switch back to personal account</p>
+                  </div>
+                </button>
+              )}
+
+              {/* List all businesses */}
+              {businesses.map((business) => {
+                const isCurrentBusiness = businessMode.isBusinessMode && businessMode.currentBusinessUen === business.uen;
+
+                return (
+                  <button
+                    key={business.uen}
+                    onClick={() => {
+                      if (businessMode.isBusinessMode) {
+                        handleBusinessSwitch(business.uen, business.businessName);
+                      } else {
+                        handleBusinessModeToggle();
+                        setTimeout(() => {
+                          enableBusinessMode(business.uen, business.businessName);
+                        }, 800);
+                      }
+                      setShowMobileBusinessMenu(false);
+                    }}
+                    className={`w-full p-4 rounded-lg flex items-center gap-3 transition-colors ${
+                      isCurrentBusiness
+                        ? 'bg-[#FFA1A3]/20 border-2 border-[#FFA1A3]'
+                        : isDarkMode
+                        ? 'bg-gray-700 hover:bg-gray-600'
+                        : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                  >
+                    {business.wallpaper ? (
+                      <img
+                        src={business.wallpaper}
+                        alt={business.businessName}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <Store className="w-10 h-10 text-[#FFA1A3]" />
+                    )}
+                    <div className="flex-1 text-left">
+                      <p className={`font-medium ${textColor}`}>{business.businessName}</p>
+                      {isCurrentBusiness && (
+                        <p className="text-xs text-[#FFA1A3]">Currently active</p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

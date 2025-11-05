@@ -184,10 +184,17 @@ export function BusinessDetail({
       <Card className="overflow-hidden">
         <div className="relative">
           <ImageWithFallback
-            src={`${business.image}`}
-            alt={business.name}
-            className="w-full h-48 object-cover"
-          />
+  src={
+    business.image 
+      ? (business.image.startsWith('http') 
+          ? business.image 
+          : `https://localoco.blob.core.windows.net/images/${business.image}`)
+      : '/path/to/your/default-placeholder.png' // Fallback for no image
+  }
+  alt={business.name}
+  className="w-full h-48 object-cover"
+/>
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-4 left-4 right-4">
             <div className="flex items-start justify-between text-white">
