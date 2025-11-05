@@ -18,13 +18,14 @@ G10 Group 3
 
 ## Group Members
 
-| Full Name | Role / Features Responsible For |
-|:--:|:--|:--|
-| Suan Loong | Frontend Developer - Landing map UI, sidebar, advanced search overlay |
-| Jolene | Frontend Developer -   Business card & details components, explore page, bookmark UX, UI polish |
-| Charles | Backend Developer - BE lead: data feed, filter logic/endpoints, local storage, build & deploy |
-| Pamika Lim | UI/FE: assets & styles; Google mapsAPI/UI + distance/geolocate + forum, profile page, Onemaps API + postal code/address conversion  |
-| Lin Hui | Backend Developer -  Business UEN verification, google safe browsing link verification (API), referral code UI and backend|
+| Name | Role & Contributions |
+|------|------------------------|
+| **Suan Loong** | Frontend Developer — Landing map UI, sidebar, advanced search overlay |
+| **Jolene** | Frontend Developer — Business card & details components, explore page, bookmark UX, UI polish |
+| **Charles** | Backend Developer — BE lead: data feed, filter logic/endpoints, local storage, build & deploy |
+| **Pamika Lim** | UI / Frontend — Assets & styles; Google Maps API/UI + distance/geolocate + forum, profile page, OneMap API + postal code/address conversion |
+| **Lin Hui** | Backend Developer — Business UEN verification, Google Safe Browsing link verification (API), referral code UI and backend |
+
 
 > Place all headshot thumbnails in the `/photos` folder (JPEG or PNG).
 
@@ -48,23 +49,21 @@ Secondary - independent, local businesses that need discovery and have troubles 
 ### 💡 What Users Can Do & Benefits
 Explain the core features and the benefit each provides.  
 
-| Feature | Description | User Benefit |
-|:--|:--|:--|
 
-| **Interactive Map View (Google Maps API)** | Displays nearby local businesses as map pins, showing their distance from the user. Users can tap to view store details or get directions. | Enables effortless discovery of nearby shops and cafes, making it easy to explore and support local businesses.   |
-| **Search & Filter Function**               | Allows users to search for specific businesses or filter by category (e.g., food, fashion, services, price).                                      | Saves time by helping users quickly find exactly what they’re looking for based on their interests.               |
-| **Vendor Profiles / Storefronts**          | Each business has a dedicated page showing its description, photos, contact info, operating hours, and embedded map location.| Provides shoppers with essential information at a glance and helps businesses present their brand professionally. |
-| **Announcements Section**                  | Displays the latest events, promotions, or new openings from local businesses. | Keeps users updated on current happenings and encourages them to visit or participate in local events.|
-| **Reviews & Ratings**  | Users can rate and review businesses they’ve visited, and view feedback from others.| Builds trust and helps users make informed choices while giving businesses valuable feedback.|
-| **Community Forum** | A space for users to discuss and share experiences or recommendations about local businesses.                                              | Fosters a sense of community and promotes engagement among local shoppers and merchants. |
-| **Vendor Onboarding & Verification**| Businesses can sign up, verify their legitimacy (e.g., UEN), and manage multiple listings if they own more than one outlet.| Ensures authenticity of businesses and gives small vendors a reliable way to publicize themselves. |
-**Referral & Rewards System**|
-Each new user receives a unique referral code upon signup. When friends register using the code, both parties earn a $5 voucher. If a referral code is used more than five times, the reward increases to $10.|
-Encourages user and platform growth through word-of-mouth while rewarding loyal users for promoting the platform.|
-**Profile Page**|	Displays user details such as name, email, profile picture, reviews, loyalty points, and vouchers.|	Allows users to track their activity, manage their rewards, and personalize their experience.
-**Edit Profile Overlay** |	Lets users update their personal details including name, email, location, and profile photo directly within the app. |	Empowers users to maintain accurate and personalized information with ease.
-**Vendor Onboarding & Verification** |	Businesses can sign up, verify legitimacy (e.g., UEN), and manage multiple outlets. |	Ensures business authenticity and helps vendors effectively promote their stores.
-**Link Verification** |	Automatically checks URLs uploaded by businesses to ensure they’re safe and not malicious. |Protects users from fraudulent or harmful links, improving trust and platform security.
+
+| **Feature** | **Description** | **User Benefit** |
+|--------------|-----------------|------------------|
+| **Interactive Map View (Google Maps API)** | Displays nearby local businesses as map pins, showing their distance from the user. Users can tap to view store details or get directions. | Enables effortless discovery of nearby shops and cafes, making it easy to explore and support local businesses. |
+| **Search & Filter Function** | Allows users to search for specific businesses or filter by category (e.g., food, fashion, services, price). | Saves time by helping users quickly find exactly what they’re looking for based on their interests. |
+| **Vendor Profiles / Storefronts** | Each business has a dedicated page showing its description, photos, contact info, operating hours, and embedded map location. | Provides shoppers with essential information at a glance and helps businesses present their brand professionally. |
+| **Announcements Section** | Displays the latest events, promotions, or new openings from local businesses. | Keeps users updated on current happenings and encourages them to visit or participate in local events. |
+| **Reviews & Ratings** | Users can rate and review businesses they’ve visited, and view feedback from others. | Builds trust and helps users make informed choices while giving businesses valuable feedback. |
+| **Community Forum** | A space for users to discuss and share experiences or recommendations about local businesses. | Fosters a sense of community and promotes engagement among local shoppers and merchants. |
+| **Vendor Onboarding & Verification** | Businesses can sign up, verify their legitimacy (e.g., UEN), and manage multiple listings if they own more than one outlet. | Ensures authenticity of businesses and gives small vendors a reliable way to publicize themselves. |
+| **Referral & Rewards System** | Each new user receives a unique referral code upon signup. When friends register using the code, both parties earn a $5 voucher. If a referral code is used more than five times, the reward increases to $10. | Encourages user and platform growth through word-of-mouth while rewarding loyal users for promoting the platform. |
+| **Profile Page** | Displays user details such as name, email, profile picture, reviews, loyalty points, and vouchers. | Allows users to track their activity, manage their rewards, and personalize their experience. |
+| **Edit Profile Overlay** | Lets users update their personal details including name, email, location, and profile photo directly within the app. | Empowers users to maintain accurate and personalized information with ease. |
+| **Link Verification** | Automatically checks URLs uploaded by businesses to ensure they’re safe and not malicious. | Protects users from fraudulent or harmful links, improving trust and platform security. |
 | **Announcements Popup (Explore Tab)** | When users tap on the *Explore* tab, a popup highlights current announcements such as promotions, new store openings, or community events. | Instantly informs users about the latest local happenings without needing to search manually, encouraging timely visits and engagement. |
 
 ---
@@ -73,15 +72,15 @@ Encourages user and platform growth through word-of-mouth while rewarding loyal 
 
 | Logo | Technology | Purpose / Usage |
 |:--:|:--|:--|
+| 🖥️ | **React.js + TypeScript** | Frontend framework for building a responsive, interactive UI with strong typing and reusable components. |
+| 🎨 | **Tailwind CSS** | Utility-first CSS framework for consistent, fast, and mobile-responsive styling. |
+| ⚙️ | **Node.js + TypeScript** | Backend runtime and language used to handle API logic, authentication, and integrations. (Migrated from PHP for better scalability and maintainability.) |
+| 🗄️ | **MySQL** | Relational database storing business listings, user accounts, bookmarks, and reviews. |
+| ☁️ | **GitHub + Azure** | Used for version control, continuous integration, and cloud deployment of the application. |
+| 🗺️ | **Google Maps JavaScript API** | Powers live maps, markers, and location-based discovery. Also used for geocoding (address → latitude/longitude) and directions display. |
+| 📍 | **OneMap API (Singapore)** | Converts postal codes into formatted addresses, which are then passed to Google Maps API for coordinate generation and storage in the database. |
+| 🔗 | **Google Safe Browsing API** | Verifies URLs submitted by businesses to prevent unsafe or malicious links from being shared. |
 
-|    🖥️   | **React.js + TypeScript** | Frontend framework for building a responsive, interactive UI with strong typing and reusable components.  |
-|    🎨    | **Tailwind CSS**                        | Utility-first CSS framework for consistent, fast, and mobile-responsive styling.                                                                         |
-|    ⚙️    | **Node.js + TypeScript** | Backend runtime and language used to handle API logic, authentication, and integrations. (Migrated from PHP for better scalability and maintainability.) |
-|    🗄️   | **MySQL** | Relational database storing business listings, user accounts, bookmarks, and reviews.                                                                    | 
-|    ☁️    | **GitHub + Azure**                      | Used for version control, continuous integration, and cloud deployment of the application.                                                               |
-|    🗺️   | **Google Maps JavaScript API**          | Powers live maps, markers, and location-based discovery. Also used for geocoding (address → latitude/longitude) and directions display.                  |
-|    📍    | **OneMap API (Singapore)**              | Converts postal codes into formatted addresses, which are then passed to Google Maps API for coordinate generation and storage in the database.          |
-|    🔗    | **Google Safe Browsing API**            | Verifies URLs submitted by businesses to prevent unsafe or malicious links from being shared.                                                            |
 
 
 > Add or remove technologies depending on your project stack (e.g., Express.js, Supabase, MongoDB Atlas, AWS S3).
