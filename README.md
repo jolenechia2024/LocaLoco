@@ -35,7 +35,7 @@ G10 Group 3
 > Small local businesses struggle to maintain an online presence, limiting visibility to customers. Local shoppers also struggle to discover and trust nearby independent businesses because key information is scattered and inconsistent.
 > Our web application provides a one-stop-for-all platform for shoppers to support and explore different local businesses, and for local entrepreneurs to reach more customers and grow their presence.
 
-Github URL: <insert>
+Github URL: https://github.com/zek01svg/LocaLoco.git
 
 ---
 
@@ -231,8 +231,8 @@ npm start
 
 #### Test Accounts
 After running the database setup, you can use:
-- Email: `test@example.com`
-- Password: (create via signup page)
+- Email: `john2@gmail.com`
+- Password: asdasdasd
 
 ---
 
@@ -240,14 +240,14 @@ After running the database setup, you can use:
 
 | Issue | Cause | Fix |
 |:--|:--|:--|
-| **`ERR_CONNECTION_REFUSED`** | Backend not running | Ensure MySQL is running, check `.env` credentials |
-| **`Cannot find module`** | Missing dependencies | Run `npm install` in root AND `cd backend && npm install` |
-| **`Database connection failed`** | Wrong credentials or DB not created | Verify `.env` DB settings, create `wad2_project` database |
-| **`Merge conflict marker`** | Git conflicts in code files | Resolve conflicts, remove `<<<<<<<`, `=======`, `>>>>>>>` markers |
-| **`npm run dev` fails**  | Node version or port conflict | Check `node -v` ≥ 18, kill processes on ports 3000 & 5173 |
-| **TypeScript errors** | Pre-existing code issues | These are warnings; app should still run in dev mode |
-| **Logout returns 400** | Better-auth route issue | Ensure `/api/auth/*` handler is registered before other routes |
-| **Referral code invalid** | Database trigger not set | Run the SQL trigger script or check `referrals` table schema |
+|:-- **`ERR_CONNECTION_REFUSED`** |:-- Backend not running |:-- Ensure MySQL is running, check `.env` credentials |
+|:-- **`Cannot find module`** |:-- Missing dependencies |:-- Run `npm install` in root AND `cd backend && npm install` |
+|:-- **`Database connection failed`** |:-- Wrong credentials or DB not created | Verify `.env` DB settings, create `wad2_project` database |
+|:-- **`Merge conflict marker`** |:-- Git conflicts in code files |:-- Resolve conflicts, remove `<<<<<<<`, `=======`, `>>>>>>>` markers |
+|:-- **`npm run dev` fails**  |:-- Node version or port conflict | Check `node -v` ≥ 18, kill processes on ports 3000 & 5173 |
+|:-- **TypeScript errors** |:-- Pre-existing code issues |:-- These are warnings; app should still run in dev mode |
+|:-- **Logout returns 400** |:-- Better-auth route issue |:-- Ensure `/api/auth/*` handler is registered before other routes |
+|:-- **Referral code invalid** |:-- Database trigger not set |:-- Run the SQL trigger script or check `referrals` table schema |
 
 ---
 
