@@ -72,6 +72,10 @@ export function ProfilePageDisplay() {
   const setAvatarUrl = useAuthStore((state) => state.setAvatarUrl);
   const enableBusinessMode = useAuthStore((state) => state.enableBusinessMode);
 
+  // ✅ DEBUG: Check businessMode state on every render
+  console.log('🔍 ProfilePageDisplay render - businessMode:', businessMode);
+  console.log('🔍 ProfilePageDisplay render - role:', role);
+
   // Call useUser hook unconditionally for user data
   const { user, stats, updateUser, mutate: mutateUser } = useUser(userId);
 
@@ -112,6 +116,68 @@ export function ProfilePageDisplay() {
   const handleViewBusinessDetails = (business: Business) => navigate(`${ROUTES.BUSINESSES}/${business.uen}`);
   const handleBookmarkToggle = (businessId: string) => console.log('Toggle bookmark for:', businessId);
   const handleNavigateToVouchers = () => navigate(ROUTES.VOUCHERS);
+
+  const handleAddBusiness = async (data: BusinessVerificationData) => {
+    const toastId = toast.loading('Registering your business...');
+
+    try {
+      let wallpaperUrl = '';
+
+      if (data.wallpaper && data.wallpaper instanceof File) {
+        wallpaperUrl = await uploadWallpaper(data.wallpaper);
+      }
+
+      const priceTierMap: Record<string, 'low' | 'medium' | 'high'> = {
+        '$': 'low',
+        '$$': 'medium',
+        '$$$': 'high',
+      };
+
+      const payload = {
+        ...data,
+        uen: data.uen ?? '',
+        businessName: data.businessName ?? '',
+        businessCategory: data.businessCategory ?? '',
+        description: data.description ?? '',
+        address: data.address ?? '',
+        email: data.email ?? '',
+        phoneNumber: data.phoneNumber ?? '',
+        websiteLink: data.websiteLink ?? '',
+        socialMediaLink: data.socialMediaLink ?? '',
+        wallpaper: wallpaperUrl || '',
+        dateOfCreation: data.dateOfCreation ?? null,
+        priceTier: priceTierMap[data.priceTier] || 'medium',
+        offersDelivery: data.offersDelivery ? 1 : 0,
+        offersPickup: data.offersPickup ? 1 : 0,
+        ownerId: userId,
+        latitude: 0,
+        longitude: 0,
+        open247: data.open247 ? 1 : 0,
+      };
+      delete (payload as any).website;
+      delete (payload as any).socialMedia;
+
+      const response = await fetch(`${API_BASE_URL}/api/register-business`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+
+      const result = await response.json();
+      toast.success('Business registered successfully! Refreshing...', { id: toastId });
+
+      // ✅ Reload to refresh sidebar's business list and hasBusiness flag
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error: any) {
+      console.error('Error registering business:', error);
+      toast.error(error.message || 'Failed to register business', { id: toastId });
+    }
+  };
 
   // Loading state - show if no userId or no user data yet
   if (!userId || !user) {
@@ -179,12 +245,10 @@ export function ProfilePageDisplay() {
       bookmarkedBusinesses={bookmarkedBusinesses}
       onBack={handleBack}
       onUpdateUser={updateUser}
+      onAddBusiness={handleAddBusiness}
       onViewBusinessDetails={handleViewBusinessDetails}
       onBookmarkToggle={handleBookmarkToggle}
       onNavigateToVouchers={handleNavigateToVouchers}
-      uploadWallpaper={uploadWallpaper}
-      enableBusinessMode={enableBusinessMode}
-      mutateUser={mutateUser}
     />
   );
 }

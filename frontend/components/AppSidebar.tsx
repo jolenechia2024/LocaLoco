@@ -486,25 +486,46 @@ export function AppSidebar({
                   <Avatar className={`w-10 h-10 transition-all duration-300 ${
                     businessMode.isBusinessMode ? 'ring-2 ring-[#FFA1A3] ring-offset-2' : ''
                   }`} style={{ ringOffsetColor: bgColor }}>
-                    {avatarUrl ? (
-                      <AvatarImage
-                        key={businessMode.isBusinessMode ? businessMode.currentBusinessUen : 'user'}
-                        src={avatarUrl}
-                        alt={businessMode.isBusinessMode ? businessMode.currentBusinessName || userName : userName}
-                        className="animate-in fade-in duration-300"
-                      />
-                    ) : (
-                      <AvatarFallback
-                        key={businessMode.isBusinessMode ? businessMode.currentBusinessUen : 'user'}
-                        className={`${avatarBgColor} ${textColor} transition-all duration-300 animate-in fade-in ${
-                          businessMode.isBusinessMode ? 'bg-[#FFA1A3] text-white' : ''
-                        }`}
-                      >
-                        {businessMode.isBusinessMode && businessMode.currentBusinessName
-                          ? getInitials(businessMode.currentBusinessName)
-                          : getInitials(userName)}
-                      </AvatarFallback>
-                    )}
+                    {(() => {
+                      // ✅ If in business mode, find the current business and use its wallpaper
+                      if (businessMode.isBusinessMode && businessMode.currentBusinessUen) {
+                        const currentBusiness = businesses.find(b => b.uen === businessMode.currentBusinessUen);
+                        const businessImage = currentBusiness?.wallpaper;
+
+                        return businessImage ? (
+                          <AvatarImage
+                            key={businessMode.currentBusinessUen}
+                            src={businessImage}
+                            alt={businessMode.currentBusinessName || 'Business'}
+                            className="animate-in fade-in duration-300"
+                          />
+                        ) : (
+                          <AvatarFallback
+                            key={businessMode.currentBusinessUen}
+                            className="bg-[#FFA1A3] text-white transition-all duration-300 animate-in fade-in"
+                          >
+                            {getInitials(businessMode.currentBusinessName || 'B')}
+                          </AvatarFallback>
+                        );
+                      }
+
+                      // ✅ Otherwise use user avatar
+                      return avatarUrl ? (
+                        <AvatarImage
+                          key="user"
+                          src={avatarUrl}
+                          alt={userName}
+                          className="animate-in fade-in duration-300"
+                        />
+                      ) : (
+                        <AvatarFallback
+                          key="user"
+                          className={`${avatarBgColor} ${textColor} transition-all duration-300 animate-in fade-in`}
+                        >
+                          {getInitials(userName)}
+                        </AvatarFallback>
+                      );
+                    })()}
                   </Avatar>
                   <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 transition-colors duration-300 ${
                     businessMode.isBusinessMode ? 'bg-[#FFA1A3]' : 'bg-green-500'

@@ -740,7 +740,11 @@ export function AddBusinessDialog({ onSubmit, trigger }: AddBusinessDialogProps)
                 ) : (
                 <Button
                     type="button"
-                    onClick={handleNext}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleNext();
+                    }}
                     className="flex-1 bg-primary hover:bg-primary/90 text-white"
                     disabled={saving} // Disable while saving
                 >
