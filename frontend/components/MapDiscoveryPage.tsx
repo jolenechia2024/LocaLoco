@@ -32,7 +32,7 @@ export function MapDiscoveryPage() {
   const pageBg = isDarkMode ? '#3a3a3a' : '#f9fafb';
   const panelBg = isDarkMode ? '#2a2a2a' : '#ffffff';
   const railBg = isDarkMode ? '#3a3a3a' : '#f9fafb';
-  const borderTone = isDarkMode ? 'border-gray-700' : 'border-gray-200';
+  const borderTone = isDarkMode ? 'border-gray-600' : 'border-gray-300';
   const textMain = isDarkMode ? 'text-white' : 'text-black';
   const textMuted = isDarkMode ? 'text-gray-400' : 'text-gray-600';
   const inputText = isDarkMode ? 'text-white placeholder:text-gray-400' : 'text-black placeholder:text-gray-500';
@@ -45,15 +45,23 @@ export function MapDiscoveryPage() {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: 'AIzaSyCn-aVVBxUbCBYihIeKHePKcTq7O4KfMlY',
+    googleMapsApiKey: 'AIzaSyBEJP1GmEezTaIfMFZ-eT36PkiF3s9UgQg',
   });
 
+  // Get user location
   useEffect(() => {
     if ('geolocation' in navigator) {
+      console.log('📍 Getting user location...');
       navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        (err) => console.warn('Geolocation failed:', err)
+        (pos) => {
+          const location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          console.log('📍 User location obtained:', location);
+          setUserLocation(location);
+        },
+        (err) => console.warn('📍 Geolocation failed:', err)
       );
+    } else {
+      console.warn('📍 Geolocation not supported by browser');
     }
   }, []);
 
@@ -67,67 +75,114 @@ export function MapDiscoveryPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Geocode businesses' addresses
+  // --- Fetch businesses from backend ---
   useEffect(() => {
-    if (!isLoaded || !safeBusinesses.length) return;
-    const geocoder = new (window as any).google.maps.Geocoder();
+    if (!isLoaded) {
+      console.log('🗺️ Google Maps not loaded yet, waiting...');
+      return;
+    }
 
-    const geocodeAll = async () => {
-      const results: (Business & { lat?: number; lng?: number })[] = [];
+    console.log('🗺️ Google Maps loaded, fetching businesses...');
 
-      await Promise.all(
-        safeBusinesses.map(async (b) => {
-          const address = (b as any).address || '';
-          if (!address) return results.push(b as any);
+    const fetchBusinesses = async () => {
+      try {
+        console.log('📦 Fetching businesses from /api/businesses...');
+        const response = await fetch('/api/businesses');
+        const data: Business[] = await response.json();
 
-          const res: any = await new Promise((resolve) => {
-            geocoder.geocode({ address }, (geoResults: any, status: any) => {
-              if (status === 'OK' && geoResults[0]) {
-                const loc = geoResults[0].geometry.location;
-                resolve({ lat: loc.lat(), lng: loc.lng() });
-              } else {
-                resolve(null);
-              }
+        console.log('📦 Fetched businesses from DB:', data);
+
+        const geocoder = new (window as any).google.maps.Geocoder();
+
+        const results: (Business & { lat?: number; lng?: number })[] = [];
+
+        await Promise.all(
+          data.map(async (b) => {
+            const lat = b.latitude ? Number(b.latitude) : undefined;
+            const lng = b.longitude ? Number(b.longitude) : undefined;
+
+            if (lat != null && lng != null) {
+              console.log(`📌 Using DB coordinates for ${b.businessName}:`, { lat, lng });
+              results.push({ ...b, lat, lng });
+              return;
+            }
+
+            if (!b.address) {
+              console.log(`❌ No address for ${b.businessName}, skipping geocode`);
+              results.push(b);
+              return;
+            }
+
+            console.log(`🗺️ Geocoding address for ${b.businessName}: ${b.address}`);
+            const res: any = await new Promise((resolve) => {
+              geocoder.geocode({ address: b.address }, (geoResults: any, status: any) => {
+                if (status === 'OK' && geoResults[0]) {
+                  const loc = geoResults[0].geometry.location;
+                  resolve({ lat: loc.lat(), lng: loc.lng() });
+                } else {
+                  console.warn(`❌ Geocode failed for ${b.businessName}:`, status);
+                  resolve(null);
+                }
+              });
             });
-          });
 
-          if (res) results.push({ ...(b as any), lat: res.lat, lng: res.lng });
-          else results.push(b as any);
-        })
-      );
+            if (res) {
+              console.log(`✅ Geocoded ${b.businessName}:`, res);
+              results.push({ ...b, lat: res.lat, lng: res.lng });
+            } else {
+              console.log(`❌ No coordinates for ${b.businessName}`);
+              results.push(b);
+            }
+          })
+        );
 
-      setBusinessesWithCoords(results);
+        console.log('📊 Final businesses with coordinates:', results);
+        setBusinessesWithCoords(results);
+      } catch (err) {
+        console.error('❌ Failed to fetch businesses:', err);
+      }
     };
 
-    geocodeAll();
-  }, [isLoaded, safeBusinesses]);
+    fetchBusinesses();
+  }, [isLoaded]);
 
-  const filtered = (searchTerm
+  // Filter businesses based on search term for both cards and map pins
+  const filteredBusinesses = (searchTerm
     ? businessesWithCoords.filter((b) => {
         const q = searchTerm.toLowerCase();
+        const name = b.businessName?.toLowerCase() || '';
+        const category = b.businessCategory?.toLowerCase() || '';
+        const address = b.address?.toLowerCase() || '';
+        const description = b.description?.toLowerCase() || '';
+
         return (
-          b.name.toLowerCase().includes(q) ||
-          (b.category ?? '').toLowerCase().includes(q) ||
-          (b.address ?? '').toLowerCase().includes(q) ||
-          (b.description ?? '').toLowerCase().includes(q)
+          name.includes(q) ||
+          category.includes(q) ||
+          address.includes(q) ||
+          description.includes(q)
         );
       })
     : businessesWithCoords
   ).slice(0, 50);
 
-  // ✅ Compute nearest 5 businesses robustly
+  // Compute nearest 5 businesses robustly (only for non-search mode)
   const nearestUENs = new Set<string>();
-  if (userLocation && businessesWithCoords.length > 0) {
+  if (userLocation && businessesWithCoords.length > 0 && !searchTerm) {
     const withCoords = businessesWithCoords.filter((b) => b.lat !== undefined && b.lng !== undefined);
+    console.log(`📍 Calculating nearest businesses from ${withCoords.length} with coordinates`);
+    
     const distances = withCoords.map((b) => ({
-      uen: (b as any).uen ?? b.uen ?? b.name,
+      uen: b.uen,
       distance: haversineDistance(userLocation.lat, userLocation.lng, b.lat!, b.lng!),
     }));
     distances.sort((a, b) => a.distance - b.distance);
     distances.slice(0, 5).forEach((b) => nearestUENs.add(b.uen));
+    
+    console.log('📍 Nearest businesses:', Array.from(nearestUENs));
   }
 
   const handleBusinessClick = (business: Business) => {
+    console.log('👆 Business clicked:', business.businessName);
     setSelectedBusiness(business);
     navigate(`/business/${business.uen}`);
   };
@@ -138,7 +193,9 @@ export function MapDiscoveryPage() {
       navigate('/');
     }
   };
+
   const handleShowOnMap = (b: Business & { lat?: number; lng?: number }) => {
+    console.log('🗺️ Showing business on map:', b.businessName, b.lat, b.lng);
     setSelectedPin(b);
     if (b.lat && b.lng && mapRef.current) {
       mapRef.current.panTo({ lat: b.lat, lng: b.lng });
@@ -146,183 +203,238 @@ export function MapDiscoveryPage() {
     }
   };
 
-  if (loadError) return <div className="text-red-500">Map cannot load</div>;
-  if (!isLoaded) return <div>Loading map...</div>;
+  // Clear selected pin when search changes
+  useEffect(() => {
+    if (searchTerm) {
+      console.log('🔍 Search term changed, clearing selected pin');
+      setSelectedPin(null);
+    }
+  }, [searchTerm]);
+
+  if (loadError) {
+    console.error('❌ Map load error:', loadError);
+    return <div className="text-red-500">Map cannot load</div>;
+  }
+  
+  if (!isLoaded) {
+    console.log('⏳ Loading map...');
+    return <div>Loading map...</div>;
+  }
+
+  console.log('🎯 Rendering MapDiscoveryPage with:', {
+    businessesWithCoords: businessesWithCoords.length,
+    filteredBusinesses: filteredBusinesses.length,
+    searchTerm,
+    userLocation,
+    selectedPin: selectedPin?.businessName
+  });
 
   return (
     <div className="h-screen w-full flex flex-col" style={{ backgroundColor: pageBg }}>
-      {/* MAP SECTION */}
-      <div className="relative flex-1 overflow-hidden">
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          zoom={userLocation ? 16 : 14}
-          center={userLocation ?? defaultCenter}
-          onLoad={(map) => (mapRef.current = map)}
-        >
-          {/* LEGEND CARD INSIDE MAP */}
-          <div
-            key={isDarkMode ? 'dark' : 'light'} // forces re-render on theme change
-            className={`absolute z-10 p-3 rounded-lg shadow-lg`}
-            style={{ backgroundColor: panelBg, top: '55px', left: '10px' }}
+      {/* --- MAP SECTION --- */}
+      <div className="relative flex-1 flex justify-center items-center p-4">
+        <div className={`w-full h-full rounded-lg shadow-lg border ${borderTone}`} style={{ overflow: 'hidden' }}>
+          <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            zoom={userLocation ? 16 : 14}
+            center={userLocation ?? defaultCenter}
+            onLoad={(map) => {
+              console.log('🗺️ Google Map loaded');
+              mapRef.current = map;
+            }}
+            options={{
+              styles: undefined,
+              streetViewControl: false,
+              mapTypeControl: false,
+              fullscreenControl: true,
+              fullscreenControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_TOP,
+              },
+              zoomControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_TOP,
+              }
+            }}
           >
-            <div className="flex flex-col gap-2 text-sm">
-              <div className="flex items-center gap-2">
-                <img
-                  src="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-                  alt="User Location"
-                  className="w-4 h-4"
-                />
-                <span className={textMain}>Your location</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <img
-                  src="http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-                  alt="Nearest Business"
-                  className="w-4 h-4"
-                />
-                <span className={textMain}>Nearest businesses</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <img
-                  src="http://maps.google.com/mapfiles/ms/icons/pink-dot.png"
-                  alt="Selected Business"
-                  className="w-4 h-4"
-                />
-                <span className={textMain}>Selected business</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Center on User Button */}
-          {userLocation && (
+            {/* LEGEND CARD INSIDE MAP */}
             <div
-              style={{
-                position: 'absolute',
-                top: '55px', // below the fullscreen icon
-                right: '10px',
-                zIndex: 10,
+              key={isDarkMode ? 'dark' : 'light'}
+              className={`absolute z-10 p-3 rounded-lg shadow-lg`}
+              style={{ 
+                backgroundColor: panelBg, 
+                top: '55px', 
+                left: '10px'
               }}
             >
-              <button
-                onClick={() => {
-                  if (mapRef.current && userLocation) {
-                    mapRef.current.panTo(userLocation);
-                    mapRef.current.setZoom(16);
-                  }
-                }}
-                className="p-2 rounded-full bg-white shadow-lg hover:bg-gray-100"
-                title="Go to my location"
-              >
-                <img
-                  src="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-                  alt="My Location"
-                  className="w-6 h-6"
-                />
-              </button>
-            </div>
-          )}
-
-          {/* User marker (green) */}
-          {userLocation && (
-            <>
-              <Marker
-                position={userLocation}
-                icon={{ url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' }}
-                onClick={() => setShowUserInfo(true)}
-              />
-              {showUserInfo && (
-                <InfoWindow position={userLocation} onCloseClick={() => setShowUserInfo(false)}>
-                  {/* <div className="text-sm font-medium text-gray-800">You are here</div> */}
-                </InfoWindow>
-              )}
-            </>
-          )}
-
-          {/* Business pins */}
-          {businessesWithCoords.map((b) => {
-            if (b.lat === undefined || b.lng === undefined) return null;
-
-            const uen = (b as any).uen ?? b.uen ?? b.name;
-            const isSelected = selectedPin && ((selectedPin.uen ?? selectedPin.name) === uen);
-            const isNearest = nearestUENs.has(uen);
-
-            const baseColor = isNearest
-              ? 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-              : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
-            const iconUrl = isSelected ? 'http://maps.google.com/mapfiles/ms/icons/pink-dot.png' : baseColor;
-
-            return (
-              <Marker
-                key={String(uen)}
-                position={{ lat: b.lat, lng: b.lng }}
-                onClick={() => setSelectedPin(b)}
-                icon={{ url: iconUrl }}
-              />
-            );
-          })}
-        </GoogleMap>
-
-        {/* Selected-pin mini card */}
-        {selectedPin && (
-          <div className="absolute bottom-6 left-6 z-10 max-w-sm">
-            <Card className={`p-4 ${borderTone}`} style={{ backgroundColor: panelBg }}>
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-primary/10 rounded-md">
-                  <Store className="w-5 h-5 text-primary" />
+              <div className="flex flex-col gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <img
+                    src="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                    alt="User Location"
+                    className="w-4 h-4"
+                  />
+                  <span className={textMain}>Your location</span>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className={`text-lg font-semibold ${textMain}`}>{selectedPin.name}</h3>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className={`${borderTone} ${
-                        isDarkMode ? 'text-white hover:bg-neutral-800' : 'text-gray-900 hover:bg-gray-100'
-                      }`}
-                      onClick={() => setSelectedPin(null)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className={`mt-1 text-sm ${textMuted}`}>
-                    {selectedPin.category}
-                    {selectedPin.priceRange ? ` · ${selectedPin.priceRange}` : ''}
-                  </div>
-                  {selectedPin.address && (
-                    <div className={`mt-1 text-xs ${textMuted}`}>{selectedPin.address}</div>
-                  )}
-
-                  {userLocation && selectedPin.lat && selectedPin.lng && (
-                    <div className={`mt-1 text-xs ${textMuted}`}>
-                      {haversineDistance(
-                        userLocation.lat,
-                        userLocation.lng,
-                        selectedPin.lat,
-                        selectedPin.lng
-                      ).toFixed(2)} km away
-                    </div>
-                  )}
-
-                  <div className="mt-3">
-                    <Button
-                      onClick={() => handleBusinessClick(selectedPin)}
-                      className="bg-primary hover:bg-primary/90 text-white"
-                    >
-                      View details
-                    </Button>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <img
+                    src="http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    alt="Nearest Business"
+                    className="w-4 h-4"
+                  />
+                  <span className={textMain}>Nearest businesses</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <img
+                    src="http://maps.google.com/mapfiles/ms/icons/pink-dot.png"
+                    alt="Selected Business"
+                    className="w-4 h-4"
+                  />
+                  <span className={textMain}>Selected business</span>
                 </div>
               </div>
-            </Card>
-          </div>
-        )}
+            </div>
+
+            {/* Center on User Button */}
+            {userLocation && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '55px',
+                  right: '10px',
+                  zIndex: 10
+                }}
+              >
+                <button
+                  onClick={() => {
+                    console.log('📍 Centering on user location');
+                    if (mapRef.current && userLocation) {
+                      mapRef.current.panTo(userLocation);
+                      mapRef.current.setZoom(16);
+                    }
+                  }}
+                  className="p-2 rounded-full bg-white shadow-lg hover:bg-gray-100"
+                  title="Go to my location"
+                >
+                  <img
+                    src="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                    alt="My Location"
+                    className="w-6 h-6"
+                  />
+                </button>
+              </div>
+            )}
+
+            {/* User marker (green) */}
+            {userLocation && (
+              <>
+                <Marker
+                  position={userLocation}
+                  icon={{ url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' }}
+                  onClick={() => {
+                    console.log('📍 User marker clicked');
+                    setShowUserInfo(true);
+                  }}
+                />
+                {showUserInfo && (
+                  <InfoWindow position={userLocation} onCloseClick={() => setShowUserInfo(false)}>
+                    <div className="text-sm font-medium text-gray-800">You are here</div>
+                  </InfoWindow>
+                )}
+              </>
+            )}
+
+            {/* Business pins - ONLY SHOW FILTERED BUSINESSES */}
+            {filteredBusinesses.map((b) => {
+              if (b.lat === undefined || b.lng === undefined) {
+                console.log(`❌ No coordinates for ${b.businessName}, skipping marker`);
+                return null;
+              }
+
+              const isSelected = selectedPin && selectedPin.uen === b.uen;
+              const isNearest = nearestUENs.has(b.uen) && !searchTerm;
+
+              const baseColor = isNearest
+                ? 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
+              const iconUrl = isSelected ? 'http://maps.google.com/mapfiles/ms/icons/pink-dot.png' : baseColor;
+
+              console.log(`📌 Rendering marker for ${b.businessName}:`, { isSelected, isNearest, iconUrl });
+
+              return (
+                <Marker
+                  key={b.uen}
+                  position={{ lat: b.lat, lng: b.lng }}
+                  onClick={() => {
+                    console.log(`📌 Marker clicked: ${b.businessName}`);
+                    setSelectedPin(b);
+                  }}
+                  icon={{ url: iconUrl }}
+                />
+              );
+            })}
+          </GoogleMap>
+
+          {/* Selected-pin mini card */}
+          {selectedPin && (
+            <div className="absolute bottom-6 left-6 z-10 max-w-sm">
+              <Card className={`p-4 ${borderTone}`} style={{ backgroundColor: panelBg }}>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-primary/10 rounded-md">
+                    <Store className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className={`text-lg font-semibold ${textMain}`}>{selectedPin.businessName}</h3>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className={`${borderTone} ${
+                          isDarkMode ? 'text-white hover:bg-neutral-800' : 'text-gray-900 hover:bg-gray-100'
+                        }`}
+                        onClick={() => {
+                          console.log('❌ Closing selected pin card');
+                          setSelectedPin(null);
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className={`mt-1 text-sm ${textMuted}`}>
+                      {selectedPin.businessCategory}
+                      {selectedPin.priceRange ? ` · ${selectedPin.priceRange}` : ''}
+                    </div>
+                    {selectedPin.address && (
+                      <div className={`mt-1 text-xs ${textMuted}`}>{selectedPin.address}</div>
+                    )}
+
+                    {userLocation && selectedPin.lat && selectedPin.lng && (
+                      <div className={`mt-1 text-xs ${textMuted}`}>
+                        {haversineDistance(
+                          userLocation.lat,
+                          userLocation.lng,
+                          selectedPin.lat,
+                          selectedPin.lng
+                        ).toFixed(2)} km away
+                      </div>
+                    )}
+
+                    <div className="mt-3">
+                      <Button
+                        onClick={() => handleBusinessClick(selectedPin)}
+                        className="bg-primary hover:bg-primary/90 text-white"
+                      >
+                        View details
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* LOWER PANEL */}
-      <div
-        className={`shrink-0 border-t ${borderTone}`}
-        style={{ backgroundColor: railBg, height: '52vh' }}
-      >
+      <div className={`shrink-0 border-t ${borderTone}`} style={{ backgroundColor: railBg, height: '52vh' }}>
         <div className="max-w-none mx-auto h-full flex flex-col gap-3 px-4 pt-4 pb-4">
           <div>
             <BusinessSearchDropdown
@@ -333,7 +445,7 @@ export function MapDiscoveryPage() {
             />
             <div className={`mt-2 text-xs ${textMuted}`}>
               {searchTerm.trim()
-                ? `Found ${filtered.length} result${filtered.length !== 1 ? 's' : ''}`
+                ? `Found ${filteredBusinesses.length} result${filteredBusinesses.length !== 1 ? 's' : ''}`
                 : `${safeBusinesses.length} businesses nearby`}
             </div>
           </div>
@@ -341,7 +453,7 @@ export function MapDiscoveryPage() {
           {/* Cards */}
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((b, index) => (
+              {filteredBusinesses.map((b, index) => (
                 <Card key={b.uen || `business-${index}`} className={`p-4 hover:shadow ${borderTone}`} style={{ backgroundColor: panelBg }}>
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-primary/10 rounded-md">
@@ -349,8 +461,8 @@ export function MapDiscoveryPage() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <h3 className={`text-base font-semibold ${textMain}`}>{b.name}</h3>
-                        {b.category && <Badge variant="secondary">{b.category}</Badge>}
+                        <h3 className={`text-base font-semibold ${textMain}`}>{b.businessName}</h3>
+                        {b.businessCategory && <Badge variant="secondary">{b.businessCategory}</Badge>}
                       </div>
                       <div className={`mt-1 text-sm ${textMuted}`}>
                         {(b.priceRange ? `${b.priceRange} · ` : '') + (b.address ?? '')}
@@ -371,9 +483,9 @@ export function MapDiscoveryPage() {
                       </div>
                     </div>
                   </div>
-                </Card>
+                </Card> 
               ))}
-              {filtered.length === 0 && (
+              {filteredBusinesses.length === 0 && (
                 <div className={`text-sm py-8 text-center ${textMuted}`}>No results.</div>
               )}
             </div>
