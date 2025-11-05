@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AppSidebar } from '../AppSidebar';
 import { useAuth } from '../../hooks/useAuth';
@@ -12,7 +13,7 @@ export const MainLayout = () => {
   const navigate = useNavigate();
 
   const { user, stats, updateUser } = useUser(userId || null);
-  const isAuthenticated = !!userId; // Check if user is logged in
+  const isAuthenticated = !!userId;
 
   const getCurrentView = () => {
     const path = location.pathname;
@@ -24,10 +25,13 @@ export const MainLayout = () => {
     if (path === ROUTES.NOTIFICATIONS) return 'notifications';
     if (path === ROUTES.SETTINGS) return 'settings';
     if (path === ROUTES.VOUCHERS) return 'vouchers';
+    // 1. Add this line to highlight the icon on the announcements page
+    if (path === ROUTES.ANNOUNCEMENTS) return 'announcements'; 
     return 'list';
   };
 
-  const handleNavigate = (view: string) => {
+  // 2. Update the type to include 'announcements'
+  const handleNavigate = (view: 'map' | 'list' | 'forum' | 'profile' | 'filters' | 'bookmarks' | 'notifications' | 'settings' | 'vouchers' | 'announcements') => {
     const routeMap: Record<string, string> = {
       map: ROUTES.MAP,
       list: ROUTES.BUSINESSES,
@@ -38,16 +42,16 @@ export const MainLayout = () => {
       settings: ROUTES.SETTINGS,
       vouchers: ROUTES.VOUCHERS,
       filters: ROUTES.BUSINESSES,
+      // 3. Add this line to handle navigation when the icon is clicked
+      announcements: ROUTES.ANNOUNCEMENTS,
     };
     if (routeMap[view]) {
       navigate(routeMap[view]);
     }
   };
 
-  // ✅ Helper function to safely get user info (with guest fallback)
   const getUserInfo = () => {
     if (!user) {
-      // Guest user - return dummy data
       return {
         name: 'Guest',
         email: 'guest@localoco.com',
@@ -57,7 +61,6 @@ export const MainLayout = () => {
     }
 
     if ('businessName' in user) {
-      // It's a BusinessOwner
       return {
         name: user.businessName,
         email: user.businessEmail,
@@ -65,7 +68,6 @@ export const MainLayout = () => {
         isGuest: false,
       };
     } else {
-      // It's a regular User
       return {
         name: user.name,
         email: user.email,
@@ -87,7 +89,7 @@ export const MainLayout = () => {
         userEmail={userInfo.email}
         avatarUrl={userInfo.avatarUrl}
         onThemeToggle={toggleTheme}
-        isAuthenticated={isAuthenticated} // ✅ Pass auth status
+        isAuthenticated={isAuthenticated}
       />
       <div className="main-content md:ml-20 h-screen overflow-y-auto pb-20 md:pb-0">
         <Outlet context={{ user, stats, updateUser, isAuthenticated }} />

@@ -18,7 +18,8 @@ export const ROUTES = {
     VOUCHERS: '/vouchers',
     REVIEW: '/review/:id',
     ANNOUNCEMENTS: '/announcements', 
-    FORGOT_PASSWORD: '/forgot-password', 
+    FORGOT_PASSWORD: '/forgot-password',
+     
     
     // Error
     NOT_FOUND: '/404',

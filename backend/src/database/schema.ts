@@ -79,7 +79,9 @@ export const businessReviews = mysqlTable("business_reviews", {
 ]);
 
 export const businesses = mysqlTable("businesses", {
-	ownerId: varchar("owner_id", { length: 255 }).notNull().references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" } ),
+	ownerId: varchar("owner_id", { length: 255 })
+	.notNull()
+	.references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" } ),
 	uen: varchar({ length: 20 }).notNull(),
 	businessName: varchar("business_name", { length: 255 }).notNull(),
 	businessCategory: varchar("business_category", { length: 100 }),
