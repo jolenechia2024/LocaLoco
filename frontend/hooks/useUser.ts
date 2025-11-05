@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { User, UserStats } from '../types/user';
 import { BusinessOwner } from '../types/auth.store.types';
 
-const API_BASE_URL = 'http://localhost:3000'; 
+const API_BASE_URL = 'http://localhost:3000';
 
 export const useUser = (userId: string | null) => {
   const [user, setUser] = useState<User | BusinessOwner | null>(null);
@@ -16,110 +16,89 @@ export const useUser = (userId: string | null) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log('🔍 useUser - userId:', userId);
-
+  // The fetch logic is wrapped in useCallback to keep its reference stable
+  const fetchUserProfile = useCallback(async (signal?: AbortSignal) => {
     if (!userId) {
       setUser(null);
       setStats({ vouchersCount: 0, reviewsCount: 0, loyaltyPoints: 0 });
+      setVouchers([]);
       return;
     }
 
-    const fetchUserProfile = async (signal: AbortSignal) => {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        console.log('🌐 Fetching user profile for userId:', userId);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/profile/${userId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        signal: signal,
+      });
 
-        const response = await fetch(`${API_BASE_URL}/api/users/profile/${userId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          signal: signal, // Pass abort signal to fetch
-        });
-
-        console.log('📡 Response status:', response.status, response.ok);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ API Error:', errorText);
-          throw new Error(`Failed to fetch user profile: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log('✅ Raw API response:', data);
-
-        // ✅ Handle both response structures:
-        // 1. Direct user object: { id, name, email, ... }
-        // 2. Wrapped object: { profile: { id, name, email, ... }, vouchers: [...] }
-        const profileData = data.profile || data;
-
-        if (!profileData || !profileData.id) {
-          console.error('❌ API response invalid:', data);
-          throw new Error('Invalid API response: missing user id');
-        }
-
-        // ✅ Map API response to User type
-        const userData: User = {
-          id: profileData.id,
-          role: 'user',
-          name: profileData.name || 'User',
-          email: profileData.email || 'user@email.com',
-          avatarUrl: profileData.image || undefined,
-          memberSince: profileData.createdAt
-            ? profileData.createdAt.split('T')[0]
-            : new Date().toISOString().split('T')[0],
-          bio: profileData.bio || '',
-          location: profileData.location || 'Singapore',
-        };
-
-        console.log('✅ Mapped user data:', userData);
-        setUser(userData);
-
-        // ✅ Set vouchers from response
-        setVouchers(data.vouchers || []);
-
-        // ✅ Set stats from response (or defaults for new users)
-        setStats({
-          vouchersCount: data.vouchers?.length || 0,
-          reviewsCount: data.reviews?.length || 0,
-          loyaltyPoints: data.points || 0,
-        });
-
-      } catch (err) {
-        // Ignore abort errors (happens during logout/unmount)
-        if (err instanceof Error && err.name === 'AbortError') {
-          console.log('🛑 Fetch aborted (user logged out or component unmounted)');
-          return;
-        }
-
-        console.error('❌ Error fetching user profile:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        setUser(null); // Clear user on error instead of creating fallback
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user profile: ${response.statusText}`);
       }
-    };
 
-    // Add abort controller to cancel fetch on unmount/logout
+      const data = await response.json();
+      
+      const profileData = data.profile;
+      const statsData = data.stats;
+
+      if (!profileData || !profileData.id) {
+        throw new Error('Invalid API response: missing profile data');
+      }
+
+      const userData: User = {
+        id: profileData.id,
+        role: 'user', // This might need to come from the API
+        name: profileData.name || 'User',
+        email: profileData.email || 'user@email.com',
+        avatarUrl: profileData.image || undefined,
+        memberSince: profileData.createdAt ? profileData.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+        bio: profileData.bio || '',
+        location: profileData.location || 'Singapore',
+      };
+
+      setUser(userData);
+      
+      // Set stats directly from the API response
+      setStats({
+        vouchersCount: statsData?.vouchersCount || 0,
+        reviewsCount: statsData?.reviewsCount || 0,
+        loyaltyPoints: statsData?.loyaltyPoints || 0,
+      });
+      
+      setVouchers(data.vouchers || []);
+
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return; // Ignore abort errors silently
+      }
+      console.error('❌ Error fetching user profile:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  // This effect runs on mount and whenever fetchUserProfile changes
+  useEffect(() => {
     const controller = new AbortController();
     fetchUserProfile(controller.signal);
-
-    // Cleanup function to abort fetch if component unmounts or userId changes
     return () => {
       controller.abort();
     };
-  }, [userId]);
+  }, [fetchUserProfile]);
+
+  // The "mutate" function is an alias for our stable fetch function.
+  const mutate = fetchUserProfile;
 
   const updateUser = useCallback(
     async (updatedUser: User | BusinessOwner) => {
       console.log('🔄 updateUser called:', updatedUser);
 
       try {
-        // ✅ Determine user type
         const isBusinessOwner = 'businessName' in updatedUser;
         const userName = isBusinessOwner 
           ? (updatedUser as BusinessOwner).businessName 
@@ -145,7 +124,6 @@ export const useUser = (userId: string | null) => {
         const data = await response.json();
         console.log('✅ Profile updated:', data);
 
-        // ✅ Update local state
         setUser({ ...updatedUser });
         
       } catch (err) {
@@ -156,5 +134,6 @@ export const useUser = (userId: string | null) => {
     []
   );
 
-  return { user, stats, vouchers, updateUser, loading, error };
+  // ✅ FIX: The `mutate` function is now included in the return object.
+  return { user, stats, vouchers, updateUser, loading, error, mutate };
 };
