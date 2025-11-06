@@ -5,7 +5,7 @@ steps for usage:
 2. after installing dependencies, start your WAMP/MAMP server to get MySQL running. 
 3. run `npm run db:setup` to create all the needed tables
 4. after table insertion, copy and paste the dummy data in `database/dummy.sql` into your mysql workbench and run the insertions
-5. finally, run `npm run dev` to start both development servers
+5. finally, run `npm start` to start both development servers
 
 # 🏫 IS216 Web Application Development II
 
@@ -27,7 +27,6 @@ G10 Group 3
 | **Lin Hui** | Backend Developer — Business UEN verification, Google Safe Browsing link verification (API), referral code UI and backend |
 
 
-> Place all headshot thumbnails in the `/photos` folder (JPEG or PNG).
 
 ---
 
@@ -75,21 +74,19 @@ Explain the core features and the benefit each provides.
 | 🖥️ | **React.js + TypeScript** | Frontend framework for building a responsive, interactive UI with strong typing and reusable components. |
 | 🎨 | **Tailwind CSS** | Utility-first CSS framework for consistent, fast, and mobile-responsive styling. |
 | ⚙️ | **Node.js + TypeScript** | Backend runtime and language used to handle API logic, authentication, and integrations. (Migrated from PHP for better scalability and maintainability.) |
-| 🗄️ | **MySQL** | Relational database storing business listings, user accounts, bookmarks, and reviews. |
+| 🗄️ | **MySQL + Express.js** | Relational database storing business listings, user accounts, bookmarks, and reviews. |
 | ☁️ | **GitHub + Azure** | Used for version control, continuous integration, and cloud deployment of the application. |
 | 🗺️ | **Google Maps JavaScript API** | Powers live maps, markers, and location-based discovery. Also used for geocoding (address → latitude/longitude) and directions display. |
 | 📍 | **OneMap API (Singapore)** | Converts postal codes into formatted addresses, which are then passed to Google Maps API for coordinate generation and storage in the database. |
-| 🔗 | **Google Safe Browsing API** | Verifies URLs submitted by businesses to prevent unsafe or malicious links from being shared. |
+| 🔗 | **Better-Auth + Drizzle orm** | Secure authentication system for users & sessions, Type-safe ORM with automatic TS inference.  |
 
 
 
-> Add or remove technologies depending on your project stack (e.g., Express.js, Supabase, MongoDB Atlas, AWS S3).
 
 ---
 
 ## Use Case & User Journey
 
-Provide screenshots and captions showing how users interact with your app.
 
 1. **Landing Page**  
    <img src="screenshots/landing.png" width="600">  
@@ -129,7 +126,7 @@ Comprehensive steps to help other developers or evaluators run and test LocaLoco
 
 ### 1) Download the Project
 ```bash
-git clone https://github.com/<org-or-user>/LocaLoco.git
+git clone https://github.com/zek01svg/LocaLoco.git
 cd LocaLoco
 npm install
 cd backend
@@ -155,15 +152,13 @@ DATABASE_URL=mysql://root:your_mysql_password@localhost:3306/wad2_project
 BETTER_AUTH_SECRET=<insert>
 BETTER_AUTH_URL=http://localhost:3000
 
-# Google Maps API (Optional - for map features)
-VITE_GOOGLE_MAPS_API_KEY=<insert>
-# Azure Storage (Optional - for image uploads)
-AZURE_STORAGE_CONNECTION_STRING=<insert>
-AZURE_STORAGE_CONTAINER_NAME=y<insert>
+# for better-auth
+BETTER_AUTH_SECRET=IL2bYHh4ztTrsgiFcLBrE5t8iykNCVh7
+BETTER_AUTH_URL=http://localhost:3000
+
 ```
 
-> Never commit the `.env` file to your repository.  
-> Instead, include a `.env.example` file with placeholder values.
+
 
 ---
 
@@ -208,7 +203,6 @@ npm run dev
 
 #### Production Build
 ```bash
-npm run build
 npm start
 ```
 
@@ -228,10 +222,7 @@ npm start
 | **Map View** | Browse businesses on map | Markers display, clicking shows business details |
 | **Logout** | Click logout button | User logged out, redirected to welcome page |
 
-#### Test Accounts
-After running the database setup, you can use:
-- Email: `john2@gmail.com`
-- Password: asdasdasd
+
 
 ---
 
@@ -282,12 +273,4 @@ LocaLoco/
 Each member should contribute 2–3 sentences on their learning and project experience.
 
 > **Example Template:**  
-> - *Alice:* Learned to build reusable Vue components and manage state effectively.  
-> - *Ben:* Gained experience connecting frontend and backend APIs.  
-> - *Chloe:* Improved UI/UX design workflow and collaboration using Figma.  
-> - *David:* Understood how Firebase Authentication and Firestore integrate with modern SPAs.  
 > - *Pamika:* Understood how Gmaps API and OneMaps API works, exploration of Figma, and reinforced knowledge on how to retrieve, convert and store coordinates in the database.
-As a team, reflect on:
-- Key takeaways from working with real-world frameworks  
-- Challenges faced and how they were resolved  
-- Insights on teamwork, project management, and problem-solving
