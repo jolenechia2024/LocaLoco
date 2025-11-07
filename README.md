@@ -84,8 +84,8 @@ This project is built with a modern full-stack TypeScript ecosystem — ensuring
 
 Provide screenshots and captions showing how users interact with your app.
 
-1. **Landing Page**  
-   <img src="screenshots/landing.png" width="600">  
+1. **Map Page**  
+   <img src="screenshots/map.png" width="600">  
    - Displays the homepage with google maps navigation options.
 
 2. **Search Feature**  
@@ -98,11 +98,8 @@ Provide screenshots and captions showing how users interact with your app.
 4. **Forum**  
    <img src="screenshots/forum.png" width="600">  
    - Shows different users coming together to share their experiences about local businesses they have visited.
-5. **Notifications**
-<img src="screenshots/Notifications.png" width="600">  
-   - Shows user related activity, new revies, upcoming events and points updates.
-6. **Vouchers**
-<img src="screenshots/vouchers.png" width="600">  
+5. **Vouchers**
+   <img src="screenshots/vouchers.png" width="600">  
    - Shows user's points and list vouchers that the user can use their points to reedeem to use in stores. Shows users the vouchers they currently have, as well as expiry date.
 ---
 
@@ -188,12 +185,12 @@ npm start
 LocaLoco/
 ├── backend/
 │   ├── src/
-│   │   ├── controllers/      # API request handlers (handle logic for each route)
-│   │   ├── models/           # Database models (handles database directly)
-│   │   ├── routes/           # Defines and groups API endpoints
+│   │   ├── controllers/      # API request handlers
+│   │   ├── models/           # Database interaction models
+│   │   ├── routes/           # API endpoint definitions
 │   │   ├── database/         # DB connection setup & schema initialization
 │   │   ├── types/            # TypeScript interfaces & types shared across backend
-│   │   ├── lib/              # Utility functions, middleware, auth helpers, etc.
+│   │   ├── lib/              # Better-Auth and Azure Email Communication Services configuration
 │   │   ├── drizzle/          # Drizzle ORM migration script
 │   │   ├── app.ts            # Express app configuration 
 │   │   ├── loadEnv.ts        # Helper for loading environment variables safely
@@ -206,12 +203,12 @@ LocaLoco/
 │   ├── components/           # Reusable React UI components
 │   ├── constants/            # App-wide constants 
 │   ├── data/                 # Static data 
-│   ├── styles/               # Global styles, theme definitions, CSS modules
+│   ├── styles/               # Global and landing page styles
 │   ├── hooks/                # Custom React hooks
 │   ├── store/                # Zustand state management setup & slices
 │   ├── types/                # TypeScript types/interfaces used in frontend
-│   ├── utils/                # Utility/helper functions (e.g., formatters)
-│   ├── lib/                  # API client logic (e.g., Axios, Fetch wrappers)
+│   ├── utils/                # Utility/helper functions
+│   ├── lib/                  # Client Authentication
 │   ├── App.tsx               # Main React component
 │   ├── index.css             # Entry CSS (global styles)
 │   ├── index.html            # Entry point
