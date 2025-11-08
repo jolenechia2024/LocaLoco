@@ -9,8 +9,8 @@
 
 | Name | Role & Contributions |
 |------|------------------------|
-| **Suan Loong** | Frontend Developer: UI responsiveness, navigation bar, landing page, styling & animation, advanced search overlay |
-| **Jolene** | Frontend Developer: Routing, Business/User profile and components, explore page, bookmarks, annoucements, UX/UI polish |
+| **Suan Loong** | Frontend Developer: UI responsiveness, navigation bar, landing page, styling & animation, advanced search overlay|
+| **Jolene** | Frontend Developer: Routing, Business/User profile and components, explore page, bookmarks, annoucements, UX/UI polish, api integration |
 | **Pamika** | Frontend Developer: Google Maps & API + postal code -> address conversion |
 | **Lin Hui** | Frontend Developer: Referral code UI |
 | **Charles** | Backend Developer |
