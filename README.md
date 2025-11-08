@@ -9,8 +9,8 @@
 
 | Name | Role & Contributions |
 |------|------------------------|
-| **Suan Loong** | Frontend Developer: UI responsiveness, navigation bar, styling & animation, advanced search overlay |
-| **Jolene** | Frontend Developer: Business card & details components, explore page, bookmark UX, UI polish |
+| **Suan Loong** | Frontend Developer: UI responsiveness, navigation bar, landing page, styling & animation, advanced search overlay |
+| **Jolene** | Frontend Developer: Routing, Business/User profile and components, explore page, bookmarks, annoucements, UX/UI polish |
 | **Pamika** | Frontend Developer: Google Maps & API + postal code -> address conversion |
 | **Lin Hui** | Frontend Developer: Referral code UI |
 | **Charles** | Backend Developer |
@@ -18,7 +18,7 @@
 
 ## Business Problem
 
-> Small local businesses struggle to maintain an online presence, limiting visibility to customers. Local users also struggle to discover and trust nearby independent businesses because key information is scattered and inconsistent.
+> Small local businesses struggle to maintain an online presence, limiting visibility to customers. Local users also struggle to discover and trust nearby independent businesses because key information is scattered and inconsistent across the web.
 > Our web application provides a one-stop-for-all platform for users to support and explore different local businesses, and for local entrepreneurs to reach more customers and grow their presence.
 
 Github URL: https://github.com/jolenechia2024/LocaLoco.git<br>
@@ -29,7 +29,7 @@ Deployed application URL: https://localoco-wad-ii.azurewebsites.net
 ## Web Solution Overview
 
 ### 🎯 Intended Users
-- Users looking for nearby local/independent shops/small businesses to support
+- Users looking for nearby local independent shops/small businesses to support
 - Independent, local businesses that need discovery and have troubles reaching customers
 
 ### 💡 What Users Can Do & Benefits
