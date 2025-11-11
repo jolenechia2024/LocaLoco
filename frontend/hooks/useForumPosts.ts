@@ -22,7 +22,7 @@ export const useForumPosts = (userEmail?: string) => {
   const fetchForumPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`//forum-posts`);
+      const response = await fetch(`/api/forum-posts`);
       if (!response.ok) throw new Error('Failed to fetch forum posts');
 
       const rawData: BackendForumPost[] = await response.json();
