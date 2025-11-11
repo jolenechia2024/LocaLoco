@@ -17,7 +17,7 @@ const app: Application = express();
 // Middleware
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? 'https://localoco.azurewebsites.net'
+        ? 'https://localoco-wad-ii.azurewebsites.net'
         : 'http://localhost:3000', 
     credentials: true,
 }));
@@ -33,6 +33,7 @@ app.use(
       defaultSrc: ["'self'"],
       connectSrc: [
         "'self'",
+        "https://localoco-wad-ii.azurewebsites.net",
         "http://localhost:3000",
         "http://localhost:5000",
         "https://cdn.jsdelivr.net",
