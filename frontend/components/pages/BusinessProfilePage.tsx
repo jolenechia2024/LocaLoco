@@ -43,14 +43,24 @@ export function BusinessProfilePage({
     const userId = useAuthStore((state) => state.userId);
     const { user, loading, error, updateUser } = useUser(userId);
 
+
     const [businessOwner, setBusinessOwner] = useState<
         BusinessOwner | undefined
     >(propBusinessOwner || (user as BusinessOwner));
 
+    const DAYSOFWEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    
+
+
+    useEffect(() => {
+        setBusinessOwner(propBusinessOwner);
+    }, [propBusinessOwner]);
     // *** LOGGING ADDED HERE ***
     // This will log the businessOwner object whenever it changes.
     useEffect(() => {
+        
         if (businessOwner) {
+            
             console.log("--- INSPECT THIS BUSINESS DATA ---", businessOwner);
         }
     }, [businessOwner]);
@@ -131,6 +141,7 @@ export function BusinessProfilePage({
     };
 
     const bgColor = isDarkMode ? "#3a3a3a" : "#f9fafb";
+    
 
     return (
         <div
@@ -237,11 +248,11 @@ export function BusinessProfilePage({
                                     </div>
                                     <Badge
                                         variant="secondary"
-                                        className={
-                                            isDarkMode
-                                                ? "bg-[#3a3a3a] text-white"
-                                                : ""
-                                        }
+                                                        className={`${
+                                                            isDarkMode
+                                                                ? "bg-[#3a3a3a] text-white"
+                                                                : ""
+                                                        } justify-start py-2 px-3 h-auto`}
                                     >
                                         {businessOwner.priceTier}
                                     </Badge>
@@ -253,37 +264,50 @@ export function BusinessProfilePage({
                                             Operating Days
                                         </span>
                                     </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {businessOwner.open247 ? (
-                                            <Badge
-                                                variant="outline"
-                                                className={
-                                                    isDarkMode
-                                                        ? "border-white/20 text-white"
-                                                        : ""
-                                                }
-                                            >
-                                                Open 24/7
-                                            </Badge>
+                                    <div className="grid grid-cols-1 gap-2">
+                                    {businessOwner.open247 ? (
+                                        <Badge
+                                            variant="secondary"
+                                            className={`${
+                                                isDarkMode
+                                                    ? "bg-[#3a3a3a] text-white"
+                                                    : ""
+                                            } justify-start py-2 px-3 h-auto`}
+                                            style={{
+                                            justifyContent: "start",
+                                            whiteSpace: "normal",
+                                            wordBreak: "break-word",
+                                            textAlign: "left",
+                                            lineHeight: "1.4",
+                                            }}
+                                        >
+                                            Open 24/7
+                                        </Badge>
                                         ) : (
-                                            businessOwner.operatingDays &&
-                                            businessOwner.operatingDays.map(
-                                                (day) => (
-                                                    <Badge
-                                                        key={day}
-                                                        variant="outline"
-                                                        className={
-                                                            isDarkMode
-                                                                ? "border-white/20 text-white"
-                                                                : ""
-                                                        }
-                                                    >
-                                                        {day}
-                                                    </Badge>
-                                                ),
-                                            )
+                                            Object.keys(businessOwner.openingHours || {})
+                                            .sort((a, b) => DAYSOFWEEK.indexOf(a) - DAYSOFWEEK.indexOf(b))
+                                            .map((day) => (
+                                              <Badge
+                                                key={day}
+                                                variant="secondary"
+                                                className={`${
+                                                    isDarkMode
+                                                        ? "bg-[#3a3a3a] text-white"
+                                                        : ""
+                                                } justify-start py-2 px-3 h-auto`}
+                                                style={{
+                                                  justifyContent: "start",
+                                                  whiteSpace: "normal",
+                                                  wordBreak: "break-word",
+                                                  textAlign: "left",
+                                                  lineHeight: "1.4",
+                                                }}
+                                              >
+                                                {day}: {businessOwner.openingHours[day]?.open} - {businessOwner.openingHours[day]?.close}
+                                              </Badge>
+                                            ))
                                         )}
-                                    </div>
+                                        </div>
                                 </div>
 
                                 <Separator />
