@@ -1,10 +1,10 @@
 export interface ThemeState {
-  isDarkMode: boolean;
+    isDarkMode: boolean;
 }
 
 export interface ThemeActions {
-  toggleTheme: () => void;
-  setTheme: (isDark: boolean) => void;
+    toggleTheme: () => void;
+    setTheme: (isDark: boolean) => void;
 }
 
 export type ThemeStore = ThemeState & ThemeActions;

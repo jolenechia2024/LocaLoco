@@ -19,22 +19,22 @@ export default defineConfig({
             "figma:asset/741fd076b8949e5e9b1a34d8c97140b193011d0d.png":
                 path.resolve(
                     __dirname,
-                    "./src/assets/741fd076b8949e5e9b1a34d8c97140b193011d0d.png"
+                    "./src/assets/741fd076b8949e5e9b1a34d8c97140b193011d0d.png",
                 ),
             "figma:asset/66f2c84b79a62f5964a42b52a8283be1ee233c44.png":
                 path.resolve(
                     __dirname,
-                    "./src/assets/66f2c84b79a62f5964a42b52a8283be1ee233c44.png"
+                    "./src/assets/66f2c84b79a62f5964a42b52a8283be1ee233c44.png",
                 ),
             "figma:asset/64913a731b5709a0e787ca276b1e8b41ceafbc26.png":
                 path.resolve(
                     __dirname,
-                    "./src/assets/64913a731b5709a0e787ca276b1e8b41ceafbc26.png"
+                    "./src/assets/64913a731b5709a0e787ca276b1e8b41ceafbc26.png",
                 ),
             "figma:asset/59f9fbf862ba25c1bf01851020235d3621866be1.png":
                 path.resolve(
                     __dirname,
-                    "./src/assets/59f9fbf862ba25c1bf01851020235d3621866be1.png"
+                    "./src/assets/59f9fbf862ba25c1bf01851020235d3621866be1.png",
                 ),
             "embla-carousel-react@8.6.0": "embla-carousel-react",
             "cmdk@1.1.1": "cmdk",
@@ -78,10 +78,10 @@ export default defineConfig({
         outDir: "dist",
         rollupOptions: {
             input: {
-                main: './index.html',
-                landing: './landing.html'
-            }
-        }
+                main: "./index.html",
+                landing: "./landing.html",
+            },
+        },
     },
     server: {
         port: 5173,

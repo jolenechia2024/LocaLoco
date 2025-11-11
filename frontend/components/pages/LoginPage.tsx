@@ -36,7 +36,7 @@ export function LoginPage() {
     useEffect(() => {
         if (!isPending && session?.user && session?.session) {
             console.log(
-                "✅ Session detected on login page, redirecting to map"
+                "✅ Session detected on login page, redirecting to map",
             );
             const userId = session.user.id;
             const accessToken = session.session.token;
@@ -84,7 +84,7 @@ export function LoginPage() {
                 console.error("❌ Login error:", error);
                 setError(
                     error.message ||
-                        "Invalid email or password. Please try again."
+                        "Invalid email or password. Please try again.",
                 );
                 return;
             }
@@ -110,7 +110,7 @@ export function LoginPage() {
             if (error) {
                 console.error("Google login error:", error);
                 setError(
-                    error.message || "Google login failed. Please try again."
+                    error.message || "Google login failed. Please try again.",
                 );
                 return;
             }

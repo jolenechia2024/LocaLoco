@@ -1,4 +1,4 @@
 export interface Bookmark {
-    userId: string,
-    businessUen: string
+    userId: string;
+    businessUen: string;
 }

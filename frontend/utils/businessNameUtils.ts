@@ -6,13 +6,13 @@
  * - Trims the result
  */
 export function sanitizeBusinessName(input: string): string {
-  if (!input) return '';
+    if (!input) return "";
 
-  return input
-    .toLowerCase() // Convert to lowercase
-    .replace(/[^\w\s'-]/g, '') // Remove special chars except spaces, hyphens, apostrophes
-    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-    .trim(); // Remove leading/trailing spaces
+    return input
+        .toLowerCase() // Convert to lowercase
+        .replace(/[^\w\s'-]/g, "") // Remove special chars except spaces, hyphens, apostrophes
+        .replace(/\s+/g, " ") // Replace multiple spaces with single space
+        .trim(); // Remove leading/trailing spaces
 }
 
 /**
@@ -20,58 +20,60 @@ export function sanitizeBusinessName(input: string): string {
  * Uses fuzzy matching to handle slight variations
  */
 export function findBusinessByName(
-  businessName: string,
-  businesses: Array<{ uen: string; name: string }>
+    businessName: string,
+    businesses: Array<{ uen: string; name: string }>,
 ): string | null {
-  if (!businessName || !businesses.length) return null;
+    if (!businessName || !businesses.length) return null;
 
-  const sanitizedInput = sanitizeBusinessName(businessName);
+    const sanitizedInput = sanitizeBusinessName(businessName);
 
-  // Try exact match first
-  const exactMatch = businesses.find(
-    b => sanitizeBusinessName(b.name) === sanitizedInput
-  );
+    // Try exact match first
+    const exactMatch = businesses.find(
+        (b) => sanitizeBusinessName(b.name) === sanitizedInput,
+    );
 
-  if (exactMatch) return exactMatch.uen;
+    if (exactMatch) return exactMatch.uen;
 
-  // Try partial match (input is contained in business name)
-  const partialMatch = businesses.find(
-    b => sanitizeBusinessName(b.name).includes(sanitizedInput)
-  );
+    // Try partial match (input is contained in business name)
+    const partialMatch = businesses.find((b) =>
+        sanitizeBusinessName(b.name).includes(sanitizedInput),
+    );
 
-  if (partialMatch) return partialMatch.uen;
+    if (partialMatch) return partialMatch.uen;
 
-  // Try reverse partial match (business name is contained in input)
-  const reverseMatch = businesses.find(
-    b => sanitizedInput.includes(sanitizeBusinessName(b.name))
-  );
+    // Try reverse partial match (business name is contained in input)
+    const reverseMatch = businesses.find((b) =>
+        sanitizedInput.includes(sanitizeBusinessName(b.name)),
+    );
 
-  if (reverseMatch) return reverseMatch.uen;
+    if (reverseMatch) return reverseMatch.uen;
 
-  return null;
+    return null;
 }
 
 /**
  * Fetches a business UEN from the backend API by searching for the business name
  */
-export async function fetchBusinessUenByName(businessName: string): Promise<string | null> {
-  if (!businessName || !businessName.trim()) return null;
+export async function fetchBusinessUenByName(
+    businessName: string,
+): Promise<string | null> {
+    if (!businessName || !businessName.trim()) return null;
 
-  try {
-    const sanitizedName = sanitizeBusinessName(businessName);
-    const response = await fetch(
-     `/api/businesses/search?name=${encodeURIComponent(sanitizedName)}`
-    );
+    try {
+        const sanitizedName = sanitizeBusinessName(businessName);
+        const response = await fetch(
+            `/api/businesses/search?name=${encodeURIComponent(sanitizedName)}`,
+        );
 
-    if (!response.ok) {
-      console.warn('Business search failed:', response.statusText);
-      return null;
+        if (!response.ok) {
+            console.warn("Business search failed:", response.statusText);
+            return null;
+        }
+
+        const business = await response.json();
+        return business?.uen || null;
+    } catch (error) {
+        console.error("Error fetching business by name:", error);
+        return null;
     }
-
-    const business = await response.json();
-    return business?.uen || null;
-  } catch (error) {
-    console.error('Error fetching business by name:', error);
-    return null;
-  }
 }

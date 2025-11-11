@@ -1,7 +1,7 @@
-import * as React from 'react';
+import * as React from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { ROUTES } from "./constants/routes";
-import { useAuthStore } from './store/authStore'; // Assuming you have this for announcements
+import { useAuthStore } from "./store/authStore"; // Assuming you have this for announcements
 
 // Layout components
 import { MainLayout } from "./components/layout/MainLayout";
@@ -10,8 +10,8 @@ import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 // Auth pages
 import { LoginPage } from "./components/pages/LoginPage";
 import { SignupPage } from "./components/pages/SignupPage";
-import { ForgotPasswordPage } from './components/pages/ForgotPassword';
-import { ResetPasswordPage } from './components/pages/ResetPassword'; // Import ResetPasswordPage
+import { ForgotPasswordPage } from "./components/pages/ForgotPassword";
+import { ResetPasswordPage } from "./components/pages/ResetPassword"; // Import ResetPasswordPage
 
 // Main pages
 import { MapDiscoveryPage } from "./components/MapDiscoveryPage";
@@ -22,9 +22,9 @@ import { SettingsPage } from "./components/SettingsPage";
 import { NotificationsPage } from "./components/NotificationsPage";
 import { WriteReviewPage } from "./components/WriteReviewPage";
 import { ErrorPage } from "./components/pages/ErrorPage";
-import { VouchersPage } from './components/VouchersPage';
+import { VouchersPage } from "./components/VouchersPage";
 import ErrorBoundary from "./components/pages/ErrorBoundary";
-import { AnnouncementsPage } from './components/AnnouncementPage';
+import { AnnouncementsPage } from "./components/AnnouncementPage";
 import { BusinessListPage } from "./components/BusinessListPage";
 import { BusinessDetailPage } from "./components/BusinessDetailPage";
 import { BookmarksPage } from "./components/BookmarksPage";
@@ -33,19 +33,19 @@ import { BookmarksPage } from "./components/BookmarksPage";
 
 // Wrapper for the Forgot Password page
 const ForgotPasswordWrapper = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const handleEmailSent = () => {
-    // After the user requests a link, navigate them back to the login page.
-    navigate(ROUTES.LOGIN);
-  };
-  
-  return (
-    <ForgotPasswordPage 
-      onBack={() => navigate(ROUTES.LOGIN)}
-      onEmailSent={handleEmailSent}
-    />
-  );
+    const handleEmailSent = () => {
+        // After the user requests a link, navigate them back to the login page.
+        navigate(ROUTES.LOGIN);
+    };
+
+    return (
+        <ForgotPasswordPage
+            onBack={() => navigate(ROUTES.LOGIN)}
+            onEmailSent={handleEmailSent}
+        />
+    );
 };
 
 // Wrapper for the Reset Password page
@@ -67,25 +67,28 @@ const ResetPasswordWrapper = () => {
 
 // Wrapper for Announcements page to provide correct props
 const AnnouncementsWrapper = () => {
-  const navigate = useNavigate();
-  const currentBusinessUen = useAuthStore((state) => state.businessMode.currentBusinessUen);
-  const isBusinessMode = useAuthStore((state) => state.businessMode.isBusinessMode);
+    const navigate = useNavigate();
+    const currentBusinessUen = useAuthStore(
+        (state) => state.businessMode.currentBusinessUen,
+    );
+    const isBusinessMode = useAuthStore(
+        (state) => state.businessMode.isBusinessMode,
+    );
 
-  // If not in business mode or no UEN, redirect to home.
-  if (!isBusinessMode || !currentBusinessUen) {
-    return <Navigate to={ROUTES.HOME} replace />;
-  }
+    // If not in business mode or no UEN, redirect to home.
+    if (!isBusinessMode || !currentBusinessUen) {
+        return <Navigate to={ROUTES.HOME} replace />;
+    }
 
-  return (
-    <AnnouncementsPage
-      businessUen={currentBusinessUen}
-      onBack={() => navigate(-1)} // Navigates to the previous page
-    />
-  );
+    return (
+        <AnnouncementsPage
+            businessUen={currentBusinessUen}
+            onBack={() => navigate(-1)} // Navigates to the previous page
+        />
+    );
 };
 
 // --- END: WRAPPERS ---
-
 
 export const AppRoutes = () => {
     return (
@@ -94,10 +97,12 @@ export const AppRoutes = () => {
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
             {/* ✅ UPDATED: Use the ForgotPasswordWrapper */}
-            <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordWrapper />} />
+            <Route
+                path={ROUTES.FORGOT_PASSWORD}
+                element={<ForgotPasswordWrapper />}
+            />
             {/* ✅ ADDED: Add the route for the ResetPasswordPage */}
             <Route path="/password-reset" element={<ResetPasswordWrapper />} />
-
 
             {/* Public Routes with Layout - Guests can browse */}
             <Route element={<MainLayout />}>
@@ -112,7 +117,6 @@ export const AppRoutes = () => {
                     element={<BusinessDetailPage />}
                 />
             </Route>
-
 
             {/* Protected Routes with Layout - Auth Required */}
             <Route
@@ -144,9 +148,12 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.VOUCHERS} element={<VouchersPage />} />
                 <Route path={ROUTES.REVIEW} element={<WriteReviewPage />} />
                 {/* ✅ UPDATED: Use the AnnouncementsWrapper */}
-                <Route path={ROUTES.ANNOUNCEMENTS} element={<AnnouncementsWrapper />} />
+                <Route
+                    path={ROUTES.ANNOUNCEMENTS}
+                    element={<AnnouncementsWrapper />}
+                />
             </Route>
-            
+
             {/* Error Routes */}
             <Route path="/404" element={<ErrorPage />} />
             <Route path="*" element={<Navigate to="/404" replace />} />

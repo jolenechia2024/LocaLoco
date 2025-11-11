@@ -26,13 +26,11 @@ import { useThemeStore } from "../../store/themeStore";
 import { useUser } from "../../hooks/useUser";
 import { useAuthStore } from "../../store/authStore";
 
-
 interface BusinessProfilePageProps {
     businessOwner?: BusinessOwner;
     onBack?: () => void;
     onUpdateBusiness?: (updatedBusiness: BusinessOwner) => void;
 }
-
 
 export function BusinessProfilePage({
     businessOwner: propBusinessOwner,
@@ -45,8 +43,9 @@ export function BusinessProfilePage({
     const userId = useAuthStore((state) => state.userId);
     const { user, loading, error, updateUser } = useUser(userId);
 
-
-    const [businessOwner, setBusinessOwner] = useState<BusinessOwner | undefined>(propBusinessOwner || (user as BusinessOwner));
+    const [businessOwner, setBusinessOwner] = useState<
+        BusinessOwner | undefined
+    >(propBusinessOwner || (user as BusinessOwner));
 
     // *** LOGGING ADDED HERE ***
     // This will log the businessOwner object whenever it changes.
@@ -56,28 +55,36 @@ export function BusinessProfilePage({
         }
     }, [businessOwner]);
 
-
     if (loading) {
         return (
             <div
                 className="min-h-screen flex items-center justify-center"
                 style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
             >
-                <div className="text-center" style={{ color: isDarkMode ? "#ffffff" : "#000000" }}>
+                <div
+                    className="text-center"
+                    style={{ color: isDarkMode ? "#ffffff" : "#000000" }}
+                >
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4 mx-auto"></div>
                     <p>Loading business profile...</p>
                 </div>
             </div>
         );
     }
-    
+
     if (error) {
         return (
             <div
                 className="min-h-screen flex items-center justify-center"
                 style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
             >
-                <Card className="p-6" style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff', color: isDarkMode ? '#ffffff' : '#000000' }}>
+                <Card
+                    className="p-6"
+                    style={{
+                        backgroundColor: isDarkMode ? "#2a2a2a" : "#ffffff",
+                        color: isDarkMode ? "#ffffff" : "#000000",
+                    }}
+                >
                     <p className="mb-4 text-red-500">Error: {error}</p>
                     <Button onClick={() => navigate(-1)}>Go Back</Button>
                 </Card>
@@ -85,14 +92,19 @@ export function BusinessProfilePage({
         );
     }
 
-
     if (!businessOwner || !businessOwner.businessName) {
         return (
             <div
                 className="min-h-screen flex items-center justify-center"
                 style={{ backgroundColor: isDarkMode ? "#3a3a3a" : "#f9fafb" }}
             >
-                <Card className="p-6" style={{ backgroundColor: isDarkMode ? '#2a2a2a' : '#ffffff', color: isDarkMode ? '#ffffff' : '#000000' }}>
+                <Card
+                    className="p-6"
+                    style={{
+                        backgroundColor: isDarkMode ? "#2a2a2a" : "#ffffff",
+                        color: isDarkMode ? "#ffffff" : "#000000",
+                    }}
+                >
                     <p className="mb-4">Business data not found.</p>
                     <Button onClick={() => navigate(-1)}>Go Back</Button>
                 </Card>
@@ -100,16 +112,14 @@ export function BusinessProfilePage({
         );
     }
 
-
     const getInitials = (name: string) => {
-        if (!name) return ''; // Guard against undefined name
+        if (!name) return ""; // Guard against undefined name
         return name
             .split(" ")
             .map((n) => n[0])
             .join("")
             .toUpperCase();
     };
-
 
     const handleSave = (updatedBusiness: BusinessOwner) => {
         setBusinessOwner(updatedBusiness);
@@ -120,9 +130,7 @@ export function BusinessProfilePage({
         toast.success("Business profile updated successfully!");
     };
 
-
     const bgColor = isDarkMode ? "#3a3a3a" : "#f9fafb";
-
 
     return (
         <div
@@ -143,7 +151,7 @@ export function BusinessProfilePage({
                     }}
                 >
                     <div className="flex flex-col md:flex-row gap-6 items-start">
-                    <Avatar className="w-24 h-24 flex-shrink-0">
+                        <Avatar className="w-24 h-24 flex-shrink-0">
                             {businessOwner.wallpaper && (
                                 <AvatarImage
                                     src={businessOwner.wallpaper}
@@ -155,7 +163,6 @@ export function BusinessProfilePage({
                                 {getInitials(businessOwner.businessName)}
                             </AvatarFallback>
                         </Avatar>
-
 
                         <div className="flex-1 min-w-0">
                             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -196,7 +203,6 @@ export function BusinessProfilePage({
                                 </Button>
                             </div>
 
-
                             {businessOwner.description && (
                                 <>
                                     <Separator className="my-4" />
@@ -208,7 +214,6 @@ export function BusinessProfilePage({
                         </div>
                     </div>
                 </Card>
-
 
                 <div className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
@@ -231,15 +236,15 @@ export function BusinessProfilePage({
                                         </span>
                                     </div>
                                     <Badge
-                                      variant="secondary"
-                                      className={
-                                          isDarkMode
-                                              ? "bg-[#3a3a3a] text-white"
-                                              : ""
-                                      }
-                                  >
-                                      {businessOwner.priceTier}
-                                  </Badge>
+                                        variant="secondary"
+                                        className={
+                                            isDarkMode
+                                                ? "bg-[#3a3a3a] text-white"
+                                                : ""
+                                        }
+                                    >
+                                        {businessOwner.priceTier}
+                                    </Badge>
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -250,26 +255,38 @@ export function BusinessProfilePage({
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {businessOwner.open247 ? (
-                                            <Badge variant="outline" className={isDarkMode ? "border-white/20 text-white" : ""}>
+                                            <Badge
+                                                variant="outline"
+                                                className={
+                                                    isDarkMode
+                                                        ? "border-white/20 text-white"
+                                                        : ""
+                                                }
+                                            >
                                                 Open 24/7
                                             </Badge>
                                         ) : (
-                                            businessOwner.operatingDays && businessOwner.operatingDays.map((day) => (
-                                                <Badge
-                                                    key={day}
-                                                    variant="outline"
-                                                    className={isDarkMode ? "border-white/20 text-white" : ""}
-                                                >
-                                                    {day}
-                                                </Badge>
-                                            ))
+                                            businessOwner.operatingDays &&
+                                            businessOwner.operatingDays.map(
+                                                (day) => (
+                                                    <Badge
+                                                        key={day}
+                                                        variant="outline"
+                                                        className={
+                                                            isDarkMode
+                                                                ? "border-white/20 text-white"
+                                                                : ""
+                                                        }
+                                                    >
+                                                        {day}
+                                                    </Badge>
+                                                ),
+                                            )
                                         )}
                                     </div>
                                 </div>
 
-
                                 <Separator />
-
 
                                 <div>
                                     <h3 className="mb-3">Service Options</h3>
@@ -309,7 +326,6 @@ export function BusinessProfilePage({
                             </div>
                         </Card>
 
-
                         <Card
                             className="p-6"
                             style={{
@@ -340,7 +356,6 @@ export function BusinessProfilePage({
                                     </div>
                                 )}
 
-
                                 {businessOwner.socialMedia && (
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -360,9 +375,7 @@ export function BusinessProfilePage({
                                     </div>
                                 )}
 
-
                                 <Separator />
-
 
                                 <div>
                                     <div className="flex items-center gap-2 text-muted-foreground mb-3">
@@ -372,33 +385,35 @@ export function BusinessProfilePage({
                                         </span>
                                     </div>
                                     <div className="grid grid-cols-1 gap-2">
-                                        {businessOwner.paymentOptions && businessOwner.paymentOptions.map(
-                                            (payment) => (
-                                                <Badge
-                                                    key={payment}
-                                                    variant="secondary"
-                                                    className={`${
-                                                        isDarkMode
-                                                            ? "bg-[#3a3a3a] text-white"
-                                                            : ""
-                                                    } justify-start py-2 px-3 h-auto`}
-                                                    style={{
-                                                        whiteSpace: "normal",
-                                                        wordBreak: "break-word",
-                                                        textAlign: "left",
-                                                        lineHeight: "1.4",
-                                                    }}
-                                                >
-                                                    {payment}
-                                                </Badge>
-                                            )
-                                        )}
+                                        {businessOwner.paymentOptions &&
+                                            businessOwner.paymentOptions.map(
+                                                (payment) => (
+                                                    <Badge
+                                                        key={payment}
+                                                        variant="secondary"
+                                                        className={`${
+                                                            isDarkMode
+                                                                ? "bg-[#3a3a3a] text-white"
+                                                                : ""
+                                                        } justify-start py-2 px-3 h-auto`}
+                                                        style={{
+                                                            whiteSpace:
+                                                                "normal",
+                                                            wordBreak:
+                                                                "break-word",
+                                                            textAlign: "left",
+                                                            lineHeight: "1.4",
+                                                        }}
+                                                    >
+                                                        {payment}
+                                                    </Badge>
+                                                ),
+                                            )}
                                     </div>
                                 </div>
                             </div>
                         </Card>
                     </div>
-
 
                     {businessOwner.wallpaper && (
                         <Card
@@ -422,7 +437,6 @@ export function BusinessProfilePage({
                     )}
                 </div>
             </div>
-
 
             {businessOwner && (
                 <EditBusinessProfileDialog

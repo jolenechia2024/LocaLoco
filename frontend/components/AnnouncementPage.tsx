@@ -58,7 +58,7 @@ export function AnnouncementsPage({
         // The image URL is now managed separately
     });
     const [existingImageUrl, setExistingImageUrl] = useState<string | null>(
-        null
+        null,
     );
 
     const bgColor = isDarkMode ? "#1a1a1a" : "#ffffff";
@@ -71,12 +71,9 @@ export function AnnouncementsPage({
     const fetchAnnouncements = async () => {
         setLoading(true);
         try {
-            const response = axios.post(
-                "/api/announcements",
-                {
-                    uen: businessUen,
-                }
-            );
+            const response = axios.post("/api/announcements", {
+                uen: businessUen,
+            });
             const data = (await response).data;
             setAnnouncements(data || []);
         } catch (error) {
@@ -94,7 +91,7 @@ export function AnnouncementsPage({
 
         try {
             const sasResponse = await fetch(
-                `/api/url-generator?filename=${encodeURIComponent(file.name)}`
+                `/api/url-generator?filename=${encodeURIComponent(file.name)}`,
             );
             if (!sasResponse.ok) throw new Error("Failed to get upload URL");
             const sasData = await sasResponse.json();
@@ -366,7 +363,7 @@ export function AnnouncementsPage({
                                                 size="icon"
                                                 onClick={() =>
                                                     handleOpenEditDialog(
-                                                        announcement
+                                                        announcement,
                                                     )
                                                 }
                                                 className={
@@ -382,7 +379,7 @@ export function AnnouncementsPage({
                                                 size="icon"
                                                 onClick={() =>
                                                     handleOpenDeleteDialog(
-                                                        announcement
+                                                        announcement,
                                                     )
                                                 }
                                                 className="text-red-500 hover:bg-red-500/10"
@@ -483,7 +480,7 @@ export function AnnouncementsPage({
                                     accept="image/*"
                                     onChange={(e) =>
                                         setImageFile(
-                                            e.target.files?.[0] || null
+                                            e.target.files?.[0] || null,
                                         )
                                     }
                                     disabled={isSubmitting}
@@ -493,8 +490,8 @@ export function AnnouncementsPage({
                                     {imageFile
                                         ? imageFile.name
                                         : existingImageUrl
-                                        ? "Current image is set"
-                                        : "No file chosen"}
+                                          ? "Current image is set"
+                                          : "No file chosen"}
                                 </span>
                             </div>
                         </div>
@@ -521,8 +518,8 @@ export function AnnouncementsPage({
                             {isSubmitting
                                 ? "Saving..."
                                 : showCreateDialog
-                                ? "Create"
-                                : "Save Changes"}
+                                  ? "Create"
+                                  : "Save Changes"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
