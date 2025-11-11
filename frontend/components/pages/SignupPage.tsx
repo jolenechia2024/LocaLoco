@@ -26,7 +26,6 @@ import { toast } from "sonner";
 import { authClient } from "../../lib/authClient";
 import { useAuthStore } from "../../store/authStore";
 import { ReferralCodeDialog } from "../ReferralCodeDialog";
-import { url } from "../../constants/url";
 
 interface SignupPageProps {
     onSignup?: (data: any, role: UserRole) => void;
@@ -60,7 +59,7 @@ interface BusinessData {
     wallpaper: File | null;
     priceTier: string;
     open247: number;
-    openingHours: { [day: string]: { open: string; close: string } };
+    openingHours: { [day: string]: { open: string; close: string; isClosed?: boolean } };
     offersDelivery: number;
     offersPickup: number;
     paymentOptions: string[];
@@ -93,12 +92,12 @@ const createEmptyBusiness = (): BusinessData => ({
     priceTier: "",
     open247: 0,
     openingHours: DAYS_OF_WEEK.reduce(
-        (acc, day) => {
-            acc[day] = { open: "09:00", close: "17:00" };
-            return acc;
-        },
-        {} as { [day: string]: { open: string; close: string } },
-    ),
+    (acc, day) => {
+        acc[day] = { open: "09:00", close: "17:00", isClosed: false };
+        return acc;
+    },
+    {} as { [day: string]: { open: string; close: string; isClosed?: boolean } },
+),
     offersDelivery: 0,
     offersPickup: 0,
     paymentOptions: [],
@@ -400,112 +399,160 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
         }
     };
 
-    const validateStep = async (step: number): Promise<boolean> => {
-        if (step === 1) {
+const validateStep = async (step: number): Promise<boolean> => {
+    if (step === 1) {
+        if (
+            !formData.firstName ||
+            !formData.lastName ||
+            !formData.email ||
+            !formData.password
+        ) {
+            setError("Please fill in all required fields");
+            return false;
+        }
+        if (formData.password !== formData.confirmPassword) {
+            setError("Passwords do not match");
+            return false;
+        }
+        if (formData.password.length < 6) {
+            setError("Password must be at least 6 characters long");
+            return false;
+        }
+
+        // Check email uniqueness
+        try {
+            const response = await fetch(
+                `/api/check-email?email=${encodeURIComponent(formData.email)}`,
+            );
+            const data = await response.json();
+            if (!data.available) {
+                setError("This email is already registered");
+                return false;
+            }
+        } catch (err) {
+            console.error("Email check failed:", err);
+        }
+
+        return true;
+    }
+
+    if (!hasBusiness) return true;
+
+    switch (step) {
+        case 2:
             if (
-                !formData.firstName ||
-                !formData.lastName ||
-                !formData.email ||
-                !formData.password
+                !currentBusiness.uen ||
+                !currentBusiness.businessName ||
+                !currentBusiness.businessCategory ||
+                !currentBusiness.description ||
+                !currentBusiness.address
             ) {
                 setError("Please fill in all required fields");
                 return false;
             }
-            if (formData.password !== formData.confirmPassword) {
-                setError("Passwords do not match");
-                return false;
-            }
-            if (formData.password.length < 6) {
-                setError("Password must be at least 6 characters long");
-                return false;
+            if (postalCodeError) {
+                return false; // Don't proceed if there's a postal code error
             }
 
-            // Check email uniqueness
+            // Check UEN uniqueness
             try {
                 const response = await fetch(
-                    `${url}/api/check-email?email=${encodeURIComponent(formData.email)}`,
+                    `/api/check-uen?uen=${encodeURIComponent(currentBusiness.uen)}`,
                 );
                 const data = await response.json();
                 if (!data.available) {
-                    setError("This email is already registered");
+                    setError("This UEN is already registered");
                     return false;
                 }
             } catch (err) {
-                console.error("Email check failed:", err);
+                console.error("UEN check failed:", err);
             }
 
             return true;
+            
+        case 3:
+            if (
+                !currentBusiness.businessEmail ||
+                !currentBusiness.phoneNumber
+            ) {
+                setError("Please fill in all required contact fields");
+                return false;
+            }
+            if (!currentBusiness.businessEmail.includes("@")) {
+                setError("Please enter a valid business email");
+                return false;
+            }
+            if (!currentBusiness.wallpaper) {
+                setError("Please upload a business photo");
+                return false;
+            }
+
+            // Check business email uniqueness
+            try {
+                const response = await fetch(
+                    `/api/check-email?email=${encodeURIComponent(currentBusiness.businessEmail)}`,
+                );
+                const data = await response.json();
+                if (!data.available) {
+                    setError("This business email is already registered");
+                    return false;
+                }
+            } catch (err) {
+                console.error("Business email check failed:", err);
+            }
+
+            return true;
+            
+        case 4:
+    if (!currentBusiness.open247) {
+        const invalidHours = DAYS_OF_WEEK.some(day => {
+            const hours = currentBusiness.openingHours[day];
+            
+            // Skip validation if day is marked as closed
+            if (hours.isClosed) return false;
+            
+            if (!hours.open || !hours.close) {
+                return true;
+            }
+            return hours.open >= hours.close;
+        });
+        
+        // Check if at least one day is open
+        const allDaysClosed = DAYS_OF_WEEK.every(day => 
+            currentBusiness.openingHours[day].isClosed
+        );
+        
+        if (allDaysClosed) {
+            setError("Business must be open at least one day per week");
+            return false;
         }
-
-        if (!hasBusiness) return true;
-
-        switch (step) {
-            case 2:
-                if (
-                    !currentBusiness.uen ||
-                    !currentBusiness.businessName ||
-                    !currentBusiness.businessCategory ||
-                    !currentBusiness.description ||
-                    !currentBusiness.address
-                ) {
-                    setError("Please fill in all required fields");
-                    return false;
-                }
-                if (postalCodeError) {
-                    return false; // Don't proceed if there's a postal code error
-                }
-
-                // Check UEN uniqueness
-                try {
-                    const response = await fetch(
-                        `${url}/api/check-uen?uen=${encodeURIComponent(currentBusiness.uen)}`,
-                    );
-                    const data = await response.json();
-                    if (!data.available) {
-                        setError("This UEN is already registered");
-                        return false;
-                    }
-                } catch (err) {
-                    console.error("UEN check failed:", err);
-                }
-
-                return true;
-            case 3:
-                if (
-                    !currentBusiness.businessEmail ||
-                    !currentBusiness.phoneNumber
-                ) {
-                    setError("Please fill in all required contact fields");
-                    return false;
-                }
-                if (!currentBusiness.businessEmail.includes("@")) {
-                    setError("Please enter a valid business email");
-                    return false;
-                }
-                if (!currentBusiness.wallpaper) {
-                    setError("Please upload a business photo");
-                    return false;
-                }
-
-                // Check business email uniqueness
-                try {
-                    const response = await fetch(
-                        `${url}/api/check-email?email=${encodeURIComponent(currentBusiness.businessEmail)}`,
-                    );
-                    const data = await response.json();
-                    if (!data.available) {
-                        setError("This business email is already registered");
-                        return false;
-                    }
-                } catch (err) {
-                    console.error("Business email check failed:", err);
-                }
-
-                return true;
-            default:
-                return true;
+        
+        if (invalidHours) {
+            setError("Please set valid opening hours for all open days");
+            return false;
         }
-    };
+    }
+    return true;
+            
+        case 5:
+            // Validate price tier
+            if (!currentBusiness.priceTier) {
+                setError("Please select a price tier");
+                return false;
+            }
+            
+            // Validate payment options
+            if (currentBusiness.paymentOptions.length === 0) {
+                setError("Please select at least one payment option");
+                return false;
+            }
+            
+            return true;
+            
+        default:
+            return true;
+    }
+};
 
     const handleNext = async (e?: React.MouseEvent) => {
         if (e) {
@@ -653,7 +700,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
                 // Send all business registrations CONCURRENTLY
                 const results = await Promise.allSettled(
                     businessRegistrations.map((payload) =>
-                        fetch(`${url}/api/register-business`, {
+                        fetch(`/api/register-business`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(payload),
@@ -722,7 +769,7 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
             setIsLoading(true);
 
             // Call your referral API endpoint
-            const response = await fetch(`${url}/api/referrals/apply`, {
+            const response = await fetch(`/api/referrals/apply`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -1355,76 +1402,109 @@ export function SignupPage({ onSignup, onBack }: SignupPageProps = {}) {
                                     </div>
                                 </div>
                             ) : (
-                                <div
-                                    className="p-4 rounded-md max-h-80 overflow-y-auto border border-input"
-                                    style={{
-                                        backgroundColor: isDarkMode
-                                            ? "#3a3a3a"
-                                            : "#f3f3f5",
-                                    }}
-                                >
-                                    <div className="space-y-3">
-                                        {DAYS_OF_WEEK.map((day) => (
-                                            <div
-                                                key={day}
-                                                className="flex items-center gap-3"
-                                            >
+                            <div
+                                className="p-4 rounded-md max-h-80 overflow-y-auto border border-input"
+                                style={{
+                                    backgroundColor: isDarkMode
+                                        ? "#3a3a3a"
+                                        : "#f3f3f5",
+                                }}
+                            >
+                                <div className="space-y-3">
+                                    {DAYS_OF_WEEK.map((day) => (
+                                        <div key={day} className="space-y-2">
+                                            <div className="flex items-center gap-3">
+                                                <Checkbox
+                                                    id={`closed-${day}`}
+                                                    checked={!currentBusiness.openingHours[day].isClosed}
+                                                    onCheckedChange={(checked: boolean) => {
+                                                        setBusinesses((prev) =>
+                                                            prev.map((business, idx) =>
+                                                                idx === currentBusinessIndex
+                                                                    ? {
+                                                                        ...business,
+                                                                        openingHours: {
+                                                                            ...business.openingHours,
+                                                                            [day]: {
+                                                                                ...business.openingHours[day],
+                                                                                isClosed: !checked,
+                                                                            },
+                                                                        },
+                                                                    }
+                                                                    : business,
+                                                            ),
+                                                        );
+                                                    }}
+                                                    className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                                    style={{
+                                                        borderColor: isDarkMode ? "#ffffff" : "#000000",
+                                                        backgroundColor: !currentBusiness.openingHours[day].isClosed
+                                                            ? undefined
+                                                            : "transparent",
+                                                    }}
+                                                />
                                                 <span className="w-24 text-sm font-medium text-foreground">
                                                     {day}
                                                 </span>
-                                                <Input
-                                                    type="time"
-                                                    value={
-                                                        currentBusiness
-                                                            .openingHours[day]
-                                                            .open
-                                                    }
-                                                    onChange={(e) =>
-                                                        handleOpeningHoursChange(
-                                                            day,
-                                                            "open",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    disabled={isLoading}
-                                                    style={{
-                                                        backgroundColor:
-                                                            isDarkMode
-                                                                ? "#2a2a2a"
-                                                                : "#ffffff",
-                                                    }}
-                                                    className="flex-1"
-                                                />
-                                                <span className="text-muted-foreground text-sm">
-                                                    to
-                                                </span>
-                                                <Input
-                                                    type="time"
-                                                    value={
-                                                        currentBusiness
-                                                            .openingHours[day]
-                                                            .close
-                                                    }
-                                                    onChange={(e) =>
-                                                        handleOpeningHoursChange(
-                                                            day,
-                                                            "close",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    disabled={isLoading}
-                                                    style={{
-                                                        backgroundColor:
-                                                            isDarkMode
-                                                                ? "#2a2a2a"
-                                                                : "#ffffff",
-                                                    }}
-                                                    className="flex-1"
-                                                />
                                             </div>
-                                        ))}
-                                    </div>
+                                            
+                                            {!currentBusiness.openingHours[day].isClosed && (
+                                                <div className="flex items-center gap-3 ml-8">
+                                                    <Input
+                                                        type="time"
+                                                        value={
+                                                            currentBusiness
+                                                                .openingHours[day]
+                                                                .open
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleOpeningHoursChange(
+                                                                day,
+                                                                "open",
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        disabled={isLoading}
+                                                        style={{
+                                                            backgroundColor:
+                                                                isDarkMode
+                                                                    ? "#2a2a2a"
+                                                                    : "#ffffff",
+                                                        }}
+                                                        className="flex-1"
+                                                    />
+                                                    <span className="text-muted-foreground text-sm">
+                                                        to
+                                                    </span>
+                                                    <Input
+                                                        type="time"
+                                                        value={
+                                                            currentBusiness
+                                                                .openingHours[day]
+                                                                .close
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleOpeningHoursChange(
+                                                                day,
+                                                                "close",
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        disabled={isLoading}
+                                                        style={{
+                                                            backgroundColor:
+                                                                isDarkMode
+                                                                    ? "#2a2a2a"
+                                                                    : "#ffffff",
+                                                        }}
+                                                        className="flex-1"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
+                            </div>
                             )}
                         </>
                     )}
