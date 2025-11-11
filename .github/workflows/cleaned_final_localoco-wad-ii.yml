@@ -58,11 +58,6 @@ jobs:
 
       - name: Install root dependencies
         run: npm install
-
-      - name: Run Drizzle Migrations
-        run: cd backend && npx drizzle-kit migrate
-        env:
-          DATABASE_URL: ${{secrets.AZURE_PROD_DATABASE_URL}}
       
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
