@@ -8,7 +8,7 @@ type Props = {
 
 export default function ReferralPanel({
     userId,
-    appBaseUrl = "https://localoco.azurewebsites.net",
+    appBaseUrl = "https://localoco-wad-ii.azurewebsites.net",
 }: Props) {
     const [loading, setLoading] = React.useState(true);
     const [code, setCode] = React.useState("");

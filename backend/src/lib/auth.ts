@@ -57,7 +57,7 @@ const auth = betterAuth({
     trustedOrigins: [
         "http://localhost:3000", // for testing
         "http://localhost:5173", // for dev
-        "https://localoco.azurewebsites.net", // for staging and prod
+        "https://localoco-wad-ii.azurewebsites.net", // for staging and prod
     ],
     socialProviders: {
         google: {

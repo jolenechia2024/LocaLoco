@@ -383,7 +383,7 @@ export function ProfilePage({
                         >
                             <ReferralPanel
                                 userId={user.id}
-                                appBaseUrl="https://localoco.azurewebsites.net"
+                                appBaseUrl="https://localoco-wad-ii.azurewebsites.net"
                             />
                         </Card>
                     </div>
