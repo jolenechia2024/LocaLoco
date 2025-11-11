@@ -4,9 +4,6 @@ import { transformBackendToForumDiscussion } from '../utils/forumUtils';
 import { ForumDiscussion, ForumReply,BackendForumPost  } from '../types/forum';
 import { fetchBusinessUenByName } from '../utils/businessNameUtils';
 import { toast } from 'sonner';
-import { url } from '../constants/url';
-
-const API_BASE_URL = `${url}/api`;
 
 export const useForumPosts = (userEmail?: string) => {
   const discussions = useForumStore((state) => state.discussions);
@@ -25,7 +22,7 @@ export const useForumPosts = (userEmail?: string) => {
   const fetchForumPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/forum-posts`);
+      const response = await fetch(`//forum-posts`);
       if (!response.ok) throw new Error('Failed to fetch forum posts');
 
       const rawData: BackendForumPost[] = await response.json();
@@ -43,7 +40,7 @@ export const useForumPosts = (userEmail?: string) => {
   // Silent refresh (no loading state)
   const silentRefresh = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/forum-posts`);
+      const response = await fetch(`/api/forum-posts`);
       if (!response.ok) throw new Error('Failed to fetch forum posts');
 
       const rawData: BackendForumPost[] = await response.json();
@@ -84,7 +81,7 @@ export const useForumPosts = (userEmail?: string) => {
 
       console.log('Creating discussion with data:', postData);
 
-      const response = await fetch(`${API_BASE_URL}/submit-post`, {
+      const response = await fetch(`/api/submit-post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(postData),
@@ -135,7 +132,7 @@ export const useForumPosts = (userEmail?: string) => {
 
       console.log('Creating reply with data:', replyData);
 
-      const response = await fetch(`${API_BASE_URL}/submit-post-reply`, {
+      const response = await fetch(`/api/submit-post-reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(replyData),
@@ -167,7 +164,7 @@ export const useForumPosts = (userEmail?: string) => {
     likeDiscussionInStore(discussionId);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/forum-posts/likes`, {
+      const response = await fetch(`/api/forum-posts/likes`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -194,7 +191,7 @@ export const useForumPosts = (userEmail?: string) => {
     likeReplyInStore(discussionId, replyId);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/forum-replies/likes`, {
+      const response = await fetch(`/api/forum-replies/likes`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

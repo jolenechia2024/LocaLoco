@@ -111,7 +111,7 @@ export function VouchersPage({
     return icons[iconName] || Gift;
   };
 
-  const handleRedeemVoucher = (voucher: Voucher) => {
+  const handleRedeemVoucher = async (voucher: Voucher) => {
     // Use the points from the Zustand store for redemption logic for consistency
     if (zustandPoints < voucher.pointsCost) {
       toast.error('Not enough points', {
@@ -125,24 +125,61 @@ export function VouchersPage({
     expiryDate.setDate(expiryDate.getDate() + voucher.expiryDays);
     const code = `LL${voucher.id.toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-    const newRedeemedVoucher: RedeemedVoucher = {
-      id: `r${Date.now()}`,
-      voucherId: voucher.id,
-      voucher,
-      redemptionDate: redemptionDate.toISOString(),
-      expiryDate: expiryDate.toISOString(),
-      code,
-      isUsed: false,
-    };
-    
-    // ✅ **FIXED**: Update the redeemedVouchers state
-    setRedeemedVouchers([newRedeemedVoucher, ...redeemedVouchers]);
-    deductPoints(voucher.pointsCost); // Deduct points from Zustand store
-    setActiveTab('my-vouchers');
-    
-    toast.success('Voucher redeemed!', {
-      description: `${voucher.title} has been added to your vouchers.`,
-    });
+    try {
+      // ✅ Make API call to backend to persist the redemption
+      const response = await fetch('/api/user/redeem-voucher', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId: userId,
+          voucherId: voucher.id,
+          pointsCost: voucher.pointsCost,
+          code: code,
+          expiryDate: expiryDate.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to redeem voucher');
+      }
+
+      const result = await response.json();
+
+      // ✅ Only update local state after successful API call
+      const newRedeemedVoucher: RedeemedVoucher = {
+        id: `r${Date.now()}`,
+        voucherId: voucher.id,
+        voucher,
+        redemptionDate: redemptionDate.toISOString(),
+        expiryDate: expiryDate.toISOString(),
+        code,
+        isUsed: false,
+      };
+
+      setRedeemedVouchers([newRedeemedVoucher, ...redeemedVouchers]);
+
+      // ✅ Use the updated points from the backend response
+      if (result.newPoints !== undefined) {
+        setZustandPoints(result.newPoints);
+      } else {
+        // Fallback: deduct locally if backend doesn't return new points
+        deductPoints(voucher.pointsCost);
+      }
+
+      setActiveTab('my-vouchers');
+
+      toast.success('Voucher redeemed!', {
+        description: `${voucher.title} has been added to your vouchers.`,
+      });
+    } catch (error) {
+      console.error('Error redeeming voucher:', error);
+      toast.error('Failed to redeem voucher', {
+        description: 'Please try again later.',
+      });
+    }
   };
 
   const copyVoucherCode = async (code: string) => {

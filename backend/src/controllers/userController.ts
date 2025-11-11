@@ -220,6 +220,42 @@ class UserController {
             next(error);
         }
     }
+
+    // Redeem a voucher with loyalty points
+    static async redeemVoucher(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { userId, pointsCost } = req.body;
+
+            if (!userId || !pointsCost) {
+                res.status(400).json({ error: 'User ID and points cost are required' });
+                return;
+            }
+
+            if (typeof pointsCost !== 'number' || pointsCost <= 0) {
+                res.status(400).json({ error: 'Invalid points cost' });
+                return;
+            }
+
+            const newPoints = await UserModel.redeemVoucher(userId, pointsCost);
+
+            res.status(200).json({
+                success: true,
+                message: 'Voucher redeemed successfully',
+                newPoints: newPoints
+            });
+
+        } catch (error: any) {
+            console.error('Error redeeming voucher:', error);
+
+            if (error.message === 'User not found') {
+                res.status(404).json({ error: 'User not found' });
+            } else if (error.message === 'Insufficient points') {
+                res.status(400).json({ error: 'Insufficient points' });
+            } else {
+                res.status(500).json({ error: 'Failed to redeem voucher' });
+            }
+        }
+    }
 }
 
 export default UserController;

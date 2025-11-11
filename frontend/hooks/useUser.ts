@@ -2,10 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User, UserStats } from '../types/user';
 import { BusinessOwner } from '../types/auth.store.types';
-import { url } from '../constants/url';
 
-const API_BASE_URL = url; 
-console.log(API_BASE_URL);
+const API_BASE_URL = ''; 
 export const useUser = (userId: string | null) => {
   const [user, setUser] = useState<User | BusinessOwner | null>(null);
   const [stats, setStats] = useState<UserStats>({

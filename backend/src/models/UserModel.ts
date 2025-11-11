@@ -253,6 +253,52 @@ class UserModel {
             throw error;
         }
     }
+
+    /**
+     * Redeems a voucher by deducting points from the user's balance
+     *
+     * @param userId - The unique identifier of the user
+     * @param pointsCost - The number of points to deduct
+     * @returns The updated points balance
+     */
+    public static async redeemVoucher(userId: string, pointsCost: number): Promise<number> {
+        try {
+            // Get user email first
+            const userRecord = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+
+            if (!userRecord || userRecord.length === 0) {
+                throw new Error('User not found');
+            }
+
+            const userEmail = userRecord[0]!.email;
+
+            // Get current points
+            const currentPointsRecord = await db
+                .select()
+                .from(userPoints)
+                .where(eq(userPoints.userEmail, userEmail))
+                .limit(1);
+
+            const currentPoints = currentPointsRecord[0]?.points || 0;
+
+            // Check if user has enough points
+            if (currentPoints < pointsCost) {
+                throw new Error('Insufficient points');
+            }
+
+            // Deduct points
+            const newPoints = currentPoints - pointsCost;
+            await db
+                .update(userPoints)
+                .set({ points: newPoints })
+                .where(eq(userPoints.userEmail, userEmail));
+
+            return newPoints;
+        } catch (error) {
+            console.error('Error redeeming voucher:', error);
+            throw error;
+        }
+    }
 }
 
 export default UserModel

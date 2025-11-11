@@ -2,9 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Review } from '../types/business';
 import { SubmitReviewData } from '../types/review';
 import { BackendReview } from '../types/review';
-import { url } from '../constants/url';
 
-const API_BASE_URL = `${url}/api`;
 
 // Transform backend review to frontend Review type
 const transformBackendReview = (backendReview: BackendReview, businessId: string): Review => {
@@ -33,7 +31,7 @@ export const useReviews = (businessId?: string) => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/submit-review`, {
+      const response = await fetch(`/api/submit-review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reviewData),
@@ -58,7 +56,7 @@ export const useReviews = (businessId?: string) => {
 
   const getBusinessReviews = useCallback(async (businessUen: string): Promise<Review[]> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/reviews?uen=${businessUen}`);
+      const response = await fetch(`/api/reviews?uen=${businessUen}`);
       if (!response.ok) throw new Error('Failed to fetch reviews');
 
       const backendReviews: BackendReview[] = await response.json();

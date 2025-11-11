@@ -24,6 +24,9 @@ userRouter.get('/api/users/:userId/vouchers', UserController.getUserVouchers.bin
 // update the status of the user's voucher/s
 userRouter.post('/api/user/update-voucher', UserController.updateVoucherStatus.bind(UserController))
 
+// Redeem voucher with loyalty points
+userRouter.post('/api/user/redeem-voucher', UserController.redeemVoucher.bind(UserController));
+
 // Check email uniqueness
 userRouter.get('/api/check-email', UserController.checkEmailAvailability.bind(UserController));
 
