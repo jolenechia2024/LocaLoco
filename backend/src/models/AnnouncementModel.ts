@@ -5,15 +5,18 @@ import { eq } from "drizzle-orm";
 
 class AnnouncementModel {
     public static async newAnnouncement(
-        announcement: Omit<Announcement, "updatedAt" | "announcementId" | "updatedAt">,
+        announcement: Omit<Announcement, "updatedAt" | "announcementId" | "createdAt">,
     ): Promise<void> {
-        await db.insert(businessAnnouncements).values({
-            businessUen: announcement.businessUen,
-            title: announcement.title,
-            content: announcement.content,
-            imageUrl: announcement.imageUrl,
-            createdAt: announcement.createdAt,
-        });
+        try {
+            await db.insert(businessAnnouncements).values({
+                businessUen: announcement.businessUen,
+                title: announcement.title,
+                content: announcement.content,
+                imageUrl: announcement.imageUrl,
+            });
+        } catch (err: any) {
+            console.error(`Error adding new announcement: ${err}`);
+        }
     }
 
     public static async getAllAnnouncements() {
