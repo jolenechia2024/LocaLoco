@@ -99,14 +99,14 @@ class UserController {
     static async deleteProfile(
         req: Request,
         res: Response,
-        next: NextFunction,
+        next: NextFunction, 
     ): Promise<void> {
         try {
             const userId = req.body.userId;
 
             if (!userId) {
+                // Use return to stop execution after sending response
                 res.status(400).json({ error: "User ID is required" });
-                return;
             }
 
             await UserModel.deleteProfile(userId);
@@ -114,8 +114,10 @@ class UserController {
             res.status(200).json({
                 message: "Profile deleted successfully",
             });
-        } catch (error: any) {
+        } 
+        catch (error: any) {
             console.log(`Error deleting profile: ${error}`);
+            res.status(500).json({ error: "Failed to delete profile" });
         }
     }
 
