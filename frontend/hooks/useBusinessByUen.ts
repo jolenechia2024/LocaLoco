@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Business } from '../types/business';
-import { url } from '../constants/url';
 
 export const useBusinessByUen = (uen: string | null) => {
   const [business, setBusiness] = useState<Business | null>(null);
@@ -18,7 +17,7 @@ export const useBusinessByUen = (uen: string | null) => {
       setError(null);
 
       try {
-        const response = await fetch(`${url}/api/business?uen=${uen}`, {
+        const response = await fetch(`/api/business?uen=${uen}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

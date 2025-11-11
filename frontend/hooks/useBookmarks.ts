@@ -3,9 +3,7 @@ import { useMemo, useCallback, useEffect } from 'react';
 import { useBusinessStore } from '../store/businessStore';
 import { useAuthStore } from '../store/authStore';
 import { toast } from 'sonner';
-import { url } from '../constants/url';
 
-const API_BASE_URL = `${url}/api`;
 
 export const useBookmarks = () => {
   const store = useBusinessStore();
@@ -21,7 +19,7 @@ export const useBookmarks = () => {
 
       try {
         console.log('Fetching bookmarks for user:', userId);
-        const response = await fetch(`${API_BASE_URL}/user/bookmarks`, {
+        const response = await fetch(`/api/user/bookmarks`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId }),
@@ -87,10 +85,10 @@ export const useBookmarks = () => {
           clicked: !wasBookmarked, // true if adding, false if removing
         };
 
-        console.log('Sending bookmark request to:', `${API_BASE_URL}/update-bookmark`);
+        console.log('Sending bookmark request to:', `/api/update-bookmark`);
         console.log('Payload:', payload);
 
-        const response = await fetch(`${API_BASE_URL}/update-bookmark`, {
+        const response = await fetch(`/api/update-bookmark`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { useBusinessStore } from '../store/businessStore';
 import { checkBusinessOpenStatus, transformBackendToBusiness } from '../utils/businessUtils';
 import { Business, BackendBusiness } from '../types/business';
-import { url } from '../constants/url';
 
 export const useBusinesses = () => {
   const businesses = useBusinessStore((state) => state.businesses);
@@ -20,7 +19,7 @@ export const useBusinesses = () => {
     async function fetchData() {
       setLoading(true);
       try {
-        const response = await fetch(`${url}/api/businesses`);
+        const response = await fetch(`/api/businesses`);
         if (!response.ok) throw new Error('Failed to fetch businesses');
         const rawData: BackendBusiness[] = await response.json();
         const transformedBusinesses: Business[] = rawData.map(transformBackendToBusiness);

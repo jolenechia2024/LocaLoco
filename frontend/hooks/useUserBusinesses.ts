@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore, UserBusiness } from '../store/authStore';
-import { url } from '../constants/url';
 
 export const useUserBusinesses = () => {
   const [businesses, setBusinesses] = useState<UserBusiness[]>([]);
@@ -18,7 +17,7 @@ export const useUserBusinesses = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${url}/api/businesses/owned`, {
+      const response = await fetch(`/api/businesses/owned`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
