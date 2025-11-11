@@ -32,7 +32,6 @@ import {
     Truck,
     ShoppingBag,
 } from "lucide-react";
-import { url } from "../../constants/url";
 
 // --- OneMap API Functions (no changes) ---
 const getAuthToken = async (): Promise<string | null> => {
@@ -106,11 +105,14 @@ const DAYS_OF_WEEK = [
     "Saturday",
     "Sunday",
 ];
+
+
 const PAYMENT_OPTIONS = [
     { value: "cash", label: "Cash" },
     { value: "card", label: "Credit/Debit Card" },
     { value: "paynow", label: "PayNow" },
     { value: "digital_wallets", label: "Digital Wallets" },
+    
 ];
 const TOTAL_STEPS = 4;
 
@@ -245,6 +247,7 @@ export function EditBusinessProfileDialog({
                 ...prev,
                 operatingDays: newOperatingDays,
                 openingHours: updatedOpeningHours,
+                open247: false, // When selecting specific days, turn off 24/7
             }));
         }
     };
@@ -272,36 +275,39 @@ export function EditBusinessProfileDialog({
         }));
     };
 
-    const handleDefaultHoursChange = (
-        type: "open" | "close",
-        value: string,
-    ) => {
-        const newDefaultHours = { ...defaultHours, [type]: value };
-        setDefaultHours(newDefaultHours);
-        if (useSameHours) {
-            const newHours = DAYS_OF_WEEK.reduce(
-                (acc, day) => {
-                    acc[day] = newDefaultHours;
-                    return acc;
-                },
-                {} as { [key: string]: { open: string; close: string } },
-            );
-            setFormData((prev) => ({ ...prev, openingHours: newHours }));
-        }
+    const handleDefaultHoursChange = (type: 'open' | 'close', value: string) => {
+      const newDefaultHours = { ...defaultHours, [type]: value };
+      setDefaultHours(newDefaultHours);
+    
+      if (useSameHours) {
+        const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    
+        const newHours = allDays.reduce((acc, day) => {
+          acc[day] = newDefaultHours;
+          return acc;
+        }, {} as Record<string, { open: string; close: string }>);
+    
+        setFormData(prev => ({
+          ...prev,
+          openingHours: newHours,
+          operatingDays: allDays, // <--- Ensure all days set here
+        }));
+      }
     };
-
     const handleSameHoursToggle = (checked: boolean) => {
-        setUseSameHours(checked);
-        if (checked) {
-            const newHours = DAYS_OF_WEEK.reduce(
-                (acc, day) => {
-                    acc[day] = defaultHours;
-                    return acc;
-                },
-                {} as { [key: string]: { open: string; close: string } },
-            );
-            setFormData((prev) => ({ ...prev, openingHours: newHours }));
-        }
+      setUseSameHours(checked);
+      if (checked) {
+        const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        setFormData(prev => ({
+          ...prev,
+          operatingDays: allDays,
+          openingHours: allDays.reduce((acc, day) => {
+            acc[day] = defaultHours;
+            return acc;
+          }, {} as Record<string, { open: string; close: string }>),
+          open247: false, // When using same hours for specific days, turn off 24/7
+        }));
+      }
     };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,7 +324,7 @@ export function EditBusinessProfileDialog({
         setUploading(true);
         try {
             const urlResponse = await fetch(
-                `${url}/api/url-generator?filename=${encodeURIComponent(file.name)}`,
+                `/api/url-generator?filename=${encodeURIComponent(file.name)}`,
             );
             if (!urlResponse.ok) throw new Error("Failed to get upload URL");
             const { uploadUrl } = await urlResponse.json();
@@ -386,15 +392,14 @@ export function EditBusinessProfileDialog({
                 }
                 break;
             case 3:
-                if (
-                    !formData.priceTier ||
-                    (!formData.open247 &&
-                        (formData.operatingDays || []).length === 0)
-                ) {
-                    setError(
-                        'Please select a price tier and at least one operating day, or select "Open 24/7".',
-                    );
-                    return false;
+              if (
+                !formData.priceTier ||
+                (!formData.open247 && formData.operatingDays.length === 0)
+              ) {
+                setError(
+                  'Please select a price tier and at least one operating day, or select "Open 24/7".'
+                );
+                return false;
                 }
                 break;
             default:
@@ -422,70 +427,81 @@ export function EditBusinessProfileDialog({
         return mapping[tier] || tier;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!validateStep(TOTAL_STEPS)) return;
-        setSaving(true);
-        setError(null);
-        try {
-            const dataToSend = {
-                // Add the UEN to identify which business to update
-                ownerId: businessOwner.ownerId,
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateStep(TOTAL_STEPS)) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const dataToSend = {
+        // Add the UEN to identify which business to update
+        ownerId: businessOwner.ownerId, 
 
-                uen: businessOwner.uen,
+        uen: businessOwner.uen,
 
-                // Map frontend state fields to backend field names
-                businessName: formData.businessName,
-                businessCategory: formData.category,
-                description: formData.description,
-                address: formData.address,
-                email: formData.businessEmail,
-                phoneNumber: formData.phone,
-                websiteLink: formData.website || "",
-                socialMediaLink: formData.socialMedia || "",
-                wallpaper: formData.wallpaper || "",
+        // Map frontend state fields to backend field names
+        businessName: formData.businessName,
+        businessCategory: formData.category,
+        description: formData.description,
+        address: formData.address,
+        email: formData.businessEmail,
+        phoneNumber: formData.phone,
+        websiteLink: formData.website || '',
+        socialMediaLink: formData.socialMedia || '',
+        wallpaper: formData.wallpaper || '',
 
-                // Convert price tier from ('$', '$$') to ('low', 'medium')
-                priceTier: convertToBackendFormat(formData.priceTier),
+        // Convert price tier from ('$', '$$') to ('low', 'medium')
+        priceTier: convertToBackendFormat(formData.priceTier),
 
-                // Convert booleans to 1 or 0
-                offersDelivery: formData.offersDelivery ? 1 : 0,
-                offersPickup: formData.offersPickup ? 1 : 0,
-                open247: formData.open247 ? 1 : 0,
+        // Convert booleans to 1 or 0
+        offersDelivery: formData.offersDelivery ? 1 : 0,
+        offersPickup: formData.offersPickup ? 1 : 0,
+        open247: formData.open247 ? 1 : 0,
 
-                // Include other operational details
-                operatingDays: formData.operatingDays || [],
-                openingHours: formData.openingHours || {},
-                paymentOptions: formData.paymentOptions || [],
-            };
-
-            console.log(
-                "📦 Payload being sent to backend:",
-                JSON.stringify(dataToSend, null, 2),
-            );
-
-            const response = await fetch(`${url}/api/update-business`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(dataToSend),
-            });
-            if (!response.ok) {
-                throw new Error("Failed to update business profile");
-            }
-            const result = await response.json();
-            onSave(result.business);
-            onOpenChange(false);
-            toast.success("Business profile updated successfully!");
-        } catch (err) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError("An unknown error occurred.");
-            }
-        } finally {
-            setSaving(false);
-        }
+        // Include other operational details
+        operatingDays: formData.open247
+        ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        : formData.operatingDays,
+      openingHours: formData.open247
+        ? {
+            Monday: { open: '00:00', close: '23:59' },
+            Tuesday: { open: '00:00', close: '23:59' },
+            Wednesday: { open: '00:00', close: '23:59' },
+            Thursday: { open: '00:00', close: '23:59' },
+            Friday: { open: '00:00', close: '23:59' },
+            Saturday: { open: '00:00', close: '23:59' },
+            Sunday: { open: '00:00', close: '23:59' },
+          }
+        : formData.openingHours,
+      paymentOptions: formData.paymentOptions,
     };
+
+      console.log("📦 Payload being sent to backend:", JSON.stringify(dataToSend, null, 2));
+
+        const response = await fetch(`/api/update-business`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataToSend),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to update business profile');
+        }
+        const result = await response.json();
+        onSave(result.business);
+        onOpenChange(false);
+        toast.success("Business profile updated successfully!");
+      } catch (err) {
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError('An unknown error occurred.');
+        }
+    } finally {
+        setSaving(false);
+    }
+  };
+
 
     const renderStepIndicator = () => (
         <div style={{ flexShrink: 0 }}>
@@ -741,9 +757,19 @@ export function EditBusinessProfileDialog({
                                 <Checkbox
                                     id="open247"
                                     checked={formData.open247}
-                                    onCheckedChange={(checked: boolean) =>
-                                        handleChange("open247", checked)
-                                    }
+                                    onCheckedChange={(checked: boolean) => {
+                                        handleChange("open247", checked);
+                                        // When checking 24/7, clear operating days and hours
+                                        if (checked) {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                open247: true,
+                                                operatingDays: [],
+                                                openingHours: {},
+                                            }));
+                                            setUseSameHours(false);
+                                        }
+                                    }}
                                 />
                                 <label htmlFor="open247">Open 24/7</label>
                             </div>

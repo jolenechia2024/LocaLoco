@@ -545,6 +545,7 @@ class BusinessModel {
                     address: business.address,
                     latitude: business.latitude,
                     longitude: business.longitude,
+                    open247: business.open247 ? 1 : 0,
                     email: business.email,
                     phoneNumber: business.phoneNumber,
                     websiteLink: business.websiteLink || null,
