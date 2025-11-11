@@ -7,66 +7,46 @@ class AnnouncementModel {
     public static async newAnnouncement(
         announcement: Omit<Announcement, "updatedAt" | "announcementId">,
     ): Promise<void> {
-        try {
-            await db.insert(businessAnnouncements).values({
-                businessUen: announcement.businessUen,
-                title: announcement.title,
-                content: announcement.content,
-                imageUrl: announcement.imageUrl,
-                createdAt: announcement.createdAt,
-            });
-        } catch (err: any) {
-            console.error(`Error adding new announcement: ${err}`);
-        }
+        await db.insert(businessAnnouncements).values({
+            businessUen: announcement.businessUen,
+            title: announcement.title,
+            content: announcement.content,
+            imageUrl: announcement.imageUrl,
+            createdAt: announcement.createdAt,
+        });
     }
 
     public static async getAllAnnouncements() {
-        try {
-            const announcements = await db.select().from(businessAnnouncements);
-            return announcements;
-        } catch (err: any) {
-            console.error(`Error getting announcements: ${err}`);
-        }
+        const announcements = await db.select().from(businessAnnouncements);
+        return announcements;
     }
 
     public static async getAnnouncementsByUEN(businessUen: string) {
-        try {
-            const announcements = await db
-                .select()
-                .from(businessAnnouncements)
-                .where(eq(businessAnnouncements.businessUen, businessUen));
-            return announcements;
-        } catch (err: any) {
-            console.error(`Error getting announcements: ${err}`);
-        }
+        const announcements = await db
+            .select()
+            .from(businessAnnouncements)
+            .where(eq(businessAnnouncements.businessUen, businessUen));
+        return announcements;
     }
 
     public static async updateAnnouncement(
         announcementId: number,
         UpdatedAnnouncement: Omit<UpdatedAnnouncement, "updatedAt">,
     ) {
-        try {
-            await db
-                .update(businessAnnouncements)
-                .set(UpdatedAnnouncement)
-                .where(
-                    eq(businessAnnouncements.announcementId, announcementId),
-                );
-        } catch (err: any) {
-            console.error(`Error updating announcements: ${err}`);
-        }
+        await db
+            .update(businessAnnouncements)
+            .set(UpdatedAnnouncement)
+            .where(
+                eq(businessAnnouncements.announcementId, announcementId),
+            );
     }
 
     public static async deleteAnnouncement(announcementId: number) {
-        try {
-            await db
-                .delete(businessAnnouncements)
-                .where(
-                    eq(businessAnnouncements.announcementId, announcementId),
-                );
-        } catch (err: any) {
-            console.error(`Error deleting announcement: ${err}`);
-        }
+        await db
+            .delete(businessAnnouncements)
+            .where(
+                eq(businessAnnouncements.announcementId, announcementId),
+            );
     }
 }
 

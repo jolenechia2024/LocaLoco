@@ -127,7 +127,7 @@ export function AnnouncementsPage({
 
         try {
             let finalImageUrl =
-                "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800";
+                null;
 
             if (imageFile) {
                 finalImageUrl = await uploadImage(imageFile);
@@ -187,7 +187,7 @@ export function AnnouncementsPage({
                 finalImageUrl = await uploadImage(imageFile);
             }
 
-            const response = await axios.post("/api/update-announcement", {
+            await axios.post("/api/update-announcement", {
                 announcementId: selectedAnnouncement.announcementId,
                 title: formData.title,
                 content: formData.content,
