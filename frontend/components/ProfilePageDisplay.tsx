@@ -7,13 +7,14 @@ import { useAuthStore } from "../store/authStore";
 import { ProfilePage } from "./pages/ProfilePage";
 import { BusinessProfilePage } from "./pages/BusinessProfilePage";
 import { ROUTES } from "../constants/routes";
-import { Business, BusinessOwner } from "../types/business";
+import { Business } from "../types/business";
 import { useState, useEffect } from "react";
 import { useUserPointsStore } from "../store/userStore";
 import { toast } from "sonner";
 import { BusinessVerificationData } from "../types/auth.store.types";
 import { useBookmarks } from "../hooks/useBookmarks";
 import { url } from "../constants/url";
+import { BusinessOwner } from "../types/auth.store.types";
 
 const API_BASE_URL = url;
 
@@ -217,7 +218,7 @@ export function ProfilePageDisplay() {
         }
 
         const businessOwner: BusinessOwner = {
-            id: userId || "",
+            ownerId: userId || "", // ✅ Change 'id' to 'ownerId'
             role: "business_owner",
             businessName: business.businessName,
             address: business.address || "",
