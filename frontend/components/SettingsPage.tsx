@@ -1,30 +1,11 @@
 import React, { useState } from "react";
-import {
-    Settings,
-    User,
-    Bell,
-    Lock,
-    Globe,
-    Moon,
-    Sun,
-    ChevronRight,
-    Trash2,
-    LogOut,
-} from "lucide-react";
+import { Moon, Sun, Trash2, LogOut } from "lucide-react";
 import { Card } from "./ui/card";
 import { Switch } from "./ui/switch";
-import { Separator } from "./ui/separator";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth"; // This hook is correct
 import { useNavigate } from "react-router-dom";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "./ui/select";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -37,7 +18,7 @@ import {
 } from "./ui/alert-dialog";
 import { toast } from "sonner";
 import { useThemeStore } from "../store/themeStore";
-import { useAuthStore } from "../store/authStore";
+import { useAuthStore } from "../store/authStore"; // We need this for role, token, and UEN
 import { url } from "../constants/url";
 
 interface SettingsPageProps {
@@ -47,9 +28,18 @@ interface SettingsPageProps {
 export function SettingsPage({ onBack }: SettingsPageProps) {
     const isDarkMode = useThemeStore((state) => state.isDarkMode);
     const toggleTheme = useThemeStore((state) => state.toggleTheme);
-    const { logout, user } = useAuth(); // Assuming useAuth provides the user object
+    
+    // --- FIX: Destructure session and logout from useAuth ---
+    const { logout, session } = useAuth();
+    // The user object is inside the session
+    const user = session?.user; 
+    
     const navigate = useNavigate();
+    
+    // --- FIX: Get role, token, and business UEN from the auth store ---
     const role = useAuthStore((state) => state.role);
+    const token = useAuthStore((state) => state.accessToken);
+    const businessUen = useAuthStore((state) => state.businessMode.currentBusinessUen);
 
     const onThemeToggle = (checked: boolean) => {
         toggleTheme();
@@ -61,32 +51,11 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
         navigate("/login"); // Redirect to login
     };
 
-    const [notifications, setNotifications] = useState({
-        email: true,
-        push: true,
-        events: false,
-        reviews: true,
-    });
-
-    const [privacy, setPrivacy] = useState({
-        publicProfile: true,
-        showBookmarks: false,
-        showReviews: true,
-    });
-
-    const [language, setLanguage] = useState("english");
-    const [timezone, setTimezone] = useState("singapore");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     const bgColor = isDarkMode ? "#3a3a3a" : "#f9fafb";
     const cardBg = isDarkMode ? "#2a2a2a" : "#ffffff";
     const textColor = isDarkMode ? "#ffffff" : "#000000";
-
-    const handleClearCache = () => {
-        toast.success("Cache cleared successfully", {
-            description: "All cached data has been removed.",
-        });
-    };
 
     const handleDeleteAccount = async () => {
         try {
@@ -94,24 +63,45 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                 role === "business"
                     ? "/api/delete-business"
                     : "/api/user/delete-profile";
+
+            let payload;
+            // --- FIX: Use businessUen for business role, user.id for user role ---
+            if (role === "business") {
+                if (!businessUen) {
+                    toast.error("Business UEN not found. Cannot delete account.");
+                    return;
+                }
+                payload = { uen: businessUen };
+            } else {
+                if (!user?.id) {
+                    toast.error("User ID not found. Cannot delete account.");
+                    return;
+                }
+                payload = { userId: user.id };
+            }
+
+            // --- FIX: Add the 'url' prefix and Authorization header ---
             const response = await fetch(`${url}${endpoint}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    // You might need to include an authorization token here
+                    // Add Authorization header
+                    "Authorization": `Bearer ${token}` 
                 },
-                body: JSON.stringify({ userId: user?.id }), // Assuming you need to send the user ID
+                body: JSON.stringify(payload), // Send the correct payload
             });
 
             if (!response.ok) {
-                throw new Error("Failed to delete account");
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to delete account");
             }
 
             toast.success("Account deleted successfully");
             logout();
-            navigate("/login"); // Redirect to login
-        } catch (error) {
-            toast.error("Failed to delete account. Please try again.");
+            navigate("/login"); // redirect to login page
+        } catch (error: any) { // <-- Set type to any to access error.message
+            console.error("Delete account error:", error); // Log the error
+            toast.error(error.message || "Failed to delete account. Please try again.");
         } finally {
             setShowDeleteDialog(false);
         }
@@ -133,192 +123,6 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                 </div>
 
                 <div className="space-y-3">
-                    {/* Account Settings */}
-                    <Card
-                        className="p-3"
-                        style={{ backgroundColor: cardBg, color: textColor }}
-                    >
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="p-1.5 bg-primary rounded-lg">
-                                <User className="w-4 h-4 text-white" />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="space-y-1">
-                                <Label htmlFor="language" className="text-sm">
-                                    Language
-                                </Label>
-                                <Select
-                                    value={language}
-                                    onValueChange={setLanguage}
-                                >
-                                    <SelectTrigger
-                                        id="language"
-                                        className={`h-9 ${isDarkMode ? "bg-[#3a3a3a] border-white/20 text-white" : "bg-input-background"}`}
-                                    >
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent
-                                        style={{
-                                            backgroundColor: cardBg,
-                                            color: textColor,
-                                            borderColor: isDarkMode
-                                                ? "#404040"
-                                                : "#e5e7eb",
-                                        }}
-                                    >
-                                        <SelectItem
-                                            value="english"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            English
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="chinese"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            中文 (Chinese)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="malay"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            Bahasa Melayu (Malay)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="tamil"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            தமிழ் (Tamil)
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="timezone" className="text-sm">
-                                    Timezone
-                                </Label>
-                                <Select
-                                    value={timezone}
-                                    onValueChange={setTimezone}
-                                >
-                                    <SelectTrigger
-                                        id="timezone"
-                                        className={`h-9 ${isDarkMode ? "bg-[#3a3a3a] border-white/20 text-white" : "bg-input-background"}`}
-                                    >
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent
-                                        style={{
-                                            backgroundColor: cardBg,
-                                            color: textColor,
-                                            borderColor: isDarkMode
-                                                ? "#404040"
-                                                : "#e5e7eb",
-                                        }}
-                                    >
-                                        <SelectItem
-                                            value="singapore"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            Singapore (GMT+8)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="bangkok"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            Bangkok (GMT+7)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="jakarta"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            Jakarta (GMT+7)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="kuala-lumpur"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            Kuala Lumpur (GMT+8)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="manila"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            Manila (GMT+8)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="tokyo"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            Tokyo (GMT+9)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="sydney"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            Sydney (GMT+10)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="auckland"
-                                            className={
-                                                isDarkMode
-                                                    ? "text-white hover:bg-[#404040] focus:bg-[#404040]"
-                                                    : ""
-                                            }
-                                        >
-                                            Auckland (GMT+12)
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </Card>
-
                     <Card
                         className="p-3"
                         style={{ backgroundColor: cardBg, color: textColor }}
@@ -351,174 +155,6 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                         className="p-3"
                         style={{ backgroundColor: cardBg, color: textColor }}
                     >
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="p-1.5 bg-primary rounded-lg">
-                                <Bell className="w-4 h-4 text-white" />
-                            </div>
-                            <h2 className="text-lg">
-                                Notification Preferences
-                            </h2>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label className="text-sm">
-                                        Email Notifications
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Receive updates via email
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={notifications.email}
-                                    onCheckedChange={(checked) =>
-                                        setNotifications({
-                                            ...notifications,
-                                            email: checked,
-                                        })
-                                    }
-                                />
-                            </div>
-                            <Separator />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label className="text-sm">
-                                        Push Notifications
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Get notified about activity
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={notifications.push}
-                                    onCheckedChange={(checked) =>
-                                        setNotifications({
-                                            ...notifications,
-                                            push: checked,
-                                        })
-                                    }
-                                />
-                            </div>
-                            <Separator />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label className="text-sm">
-                                        Event Announcements
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Stay updated on local events
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={notifications.events}
-                                    onCheckedChange={(checked) =>
-                                        setNotifications({
-                                            ...notifications,
-                                            events: checked,
-                                        })
-                                    }
-                                />
-                            </div>
-                            <Separator />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label className="text-sm">
-                                        Review Responses
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Get notified when businesses respond
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={notifications.reviews}
-                                    onCheckedChange={(checked) =>
-                                        setNotifications({
-                                            ...notifications,
-                                            reviews: checked,
-                                        })
-                                    }
-                                />
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card
-                        className="p-3"
-                        style={{ backgroundColor: cardBg, color: textColor }}
-                    >
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="p-1.5 bg-primary rounded-lg">
-                                <Lock className="w-4 h-4 text-white" />
-                            </div>
-                            <h2 className="text-lg">Privacy & Security</h2>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label className="text-sm">
-                                        Public Profile
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Allow others to view your profile
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={privacy.publicProfile}
-                                    onCheckedChange={(checked) =>
-                                        setPrivacy({
-                                            ...privacy,
-                                            publicProfile: checked,
-                                        })
-                                    }
-                                />
-                            </div>
-                            <Separator />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label className="text-sm">
-                                        Show Bookmarks
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Display your bookmarks publicly
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={privacy.showBookmarks}
-                                    onCheckedChange={(checked) =>
-                                        setPrivacy({
-                                            ...privacy,
-                                            showBookmarks: checked,
-                                        })
-                                    }
-                                />
-                            </div>
-                            <Separator />
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label className="text-sm">
-                                        Show Reviews
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Make your reviews public
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={privacy.showReviews}
-                                    onCheckedChange={(checked) =>
-                                        setPrivacy({
-                                            ...privacy,
-                                            showReviews: checked,
-                                        })
-                                    }
-                                />
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card
-                        className="p-3"
-                        style={{ backgroundColor: cardBg, color: textColor }}
-                    >
                         <h3
                             className="text-lg mb-2"
                             style={{ color: textColor }}
@@ -533,25 +169,6 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                             >
                                 Sign Out
                                 <LogOut className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </Card>
-
-                    <Card
-                        className="p-3 border-destructive"
-                        style={{ backgroundColor: cardBg, color: textColor }}
-                    >
-                        <h3 className="text-destructive text-lg mb-2">
-                            Danger Zone
-                        </h3>
-                        <div className="space-y-2">
-                            <Button
-                                variant="outline"
-                                onClick={handleClearCache}
-                                className={`w-full justify-between h-9 ${isDarkMode ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-foreground"}`}
-                            >
-                                Clear Cache
-                                <ChevronRight className="w-4 h-4" />
                             </Button>
                             <Button
                                 variant="outline"
