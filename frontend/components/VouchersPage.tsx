@@ -552,7 +552,7 @@ export function VouchersPage({ initialTab = "available" }: VouchersPageProps) {
                     <AlertCircle className="w-4 h-4 text-[#FFA1A3]" />
                     <AlertDescription style={{ color: textColor }}>
                         These vouchers can be used at any participating local
-                        business in the LocalLoco network. Show your voucher
+                        business in the LocaLoco network. Show your voucher
                         code at checkout to redeem.
                     </AlertDescription>
                 </Alert>

@@ -49,7 +49,7 @@ export function ErrorPage() {
               <Store className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl" style={{ color: headerTextColor }}>LocalLoco</h1>
+              <h1 className="text-xl" style={{ color: headerTextColor }}>LocaLoco</h1>
               <p className="text-sm opacity-90" style={{ color: mutedTextColor }}>
                 Discover and support local businesses in your community
               </p>

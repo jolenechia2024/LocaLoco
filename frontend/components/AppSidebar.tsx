@@ -446,7 +446,7 @@ export function AppSidebar({
                                     <h1
                                         className={`${textColor} text-xl whitespace-nowrap`}
                                     >
-                                        LocalLoco
+                                        LocaLoco
                                     </h1>
                                     <p
                                         className={`${secondaryTextColor} text-xs whitespace-nowrap overflow-hidden text-ellipsis`}

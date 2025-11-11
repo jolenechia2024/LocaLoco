@@ -870,7 +870,7 @@ export function AddBusinessDialog({
                         Register Your Business
                     </DialogTitle>
                     <DialogDescription>
-                        Add your business to LocalLoco and start reaching more
+                        Add your business to LocaLoco and start reaching more
                         customers in your community.
                     </DialogDescription>
                 </DialogHeader>
