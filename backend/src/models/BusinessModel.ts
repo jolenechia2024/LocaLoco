@@ -23,6 +23,8 @@ class BusinessModel {
             const avgRating = ratings.length
             ? Math.round(ratings.reduce((sum, r) => sum + Number(r.rating), 0) / ratings.length)
             : 0;
+
+            const reviewCount = ratings.length
             
             if (!business.open247) {
                 const hourRows = await db.select().from(businessOpeningHours).where(eq(businessOpeningHours.uen, business.uen))
@@ -38,6 +40,7 @@ class BusinessModel {
                 businessCategory: business.businessCategory!, 
                 description: business.description!,
                 avgRating: avgRating,
+                reviewCount: reviewCount,
                 address: business.address!,
                 latitude: business.latitude,
                 longitude: business.longitude,
@@ -521,6 +524,7 @@ class BusinessModel {
             const avgRating = reviewsResult.length > 0
                 ? reviewsResult.reduce((sum, r) => sum + r.rating, 0) / reviewsResult.length
                 : 0;
+            const reviewCount = reviewsResult.length
 
             return {
                 ownerId: business.ownerId,
@@ -529,6 +533,7 @@ class BusinessModel {
                 businessCategory: business.businessCategory || '',
                 description: business.description || '',
                 avgRating,
+                reviewCount,
                 address: business.address || '',
                 latitude: business.latitude || null,
                 longitude: business.longitude || null,

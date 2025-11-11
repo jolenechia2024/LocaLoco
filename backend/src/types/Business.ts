@@ -77,6 +77,7 @@ export interface BusinessForBusinessList {
     businessName: string;
     businessCategory: string;
     description: string;
+    reviewCount: number;
     avgRating: number;
     address: string;
     latitude: string | null;
