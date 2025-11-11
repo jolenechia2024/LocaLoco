@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 class AnnouncementModel {
     public static async newAnnouncement(
-        announcement: Omit<Announcement, "updatedAt" | "announcementId">,
+        announcement: Omit<Announcement, "updatedAt" | "announcementId" | "updatedAt">,
     ): Promise<void> {
         try {
             await db.insert(businessAnnouncements).values({
@@ -13,7 +13,6 @@ class AnnouncementModel {
                 title: announcement.title,
                 content: announcement.content,
                 imageUrl: announcement.imageUrl,
-                createdAt: announcement.createdAt,
             });
         } catch (err: any) {
             console.error(`Error adding new announcement: ${err}`);

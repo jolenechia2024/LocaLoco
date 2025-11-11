@@ -32,7 +32,6 @@ class FeatureController {
             title: req.body.title,
             body: req.body.body,
             rating: req.body.rating,
-            createdAt: new Date().toISOString(),
             likeCount: 0,
         };
 

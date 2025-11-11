@@ -11,7 +11,7 @@ import { eq, desc } from "drizzle-orm";
 class ForumModel {
     // creates a new forum post
     public static async newForumPost(
-        post: Omit<ForumPost, "id" | "replies" | "businessName">,
+        post: Omit<ForumPost, "id" | "replies" | "businessName" | "createdAt">,
     ) {
         try {
             await db.insert(forumPosts).values({
@@ -19,7 +19,6 @@ class ForumModel {
                 businessUen: post.businessUen,
                 title: post.title,
                 body: post.body,
-                createdAt: post.createdAt,
                 likeCount: 0,
             } as typeof forumPosts.$inferInsert);
         } catch (err) {
