@@ -428,7 +428,43 @@ export function EditBusinessProfileDialog({
         setSaving(true);
         setError(null);
         try {
-            const response = await fetch("${url}/api/update-business", {
+            const dataToSend = {
+                // Add the UEN to identify which business to update
+                ownerId: businessOwner.ownerId,
+
+                uen: businessOwner.uen,
+
+                // Map frontend state fields to backend field names
+                businessName: formData.businessName,
+                businessCategory: formData.category,
+                description: formData.description,
+                address: formData.address,
+                email: formData.businessEmail,
+                phoneNumber: formData.phone,
+                websiteLink: formData.website || "",
+                socialMediaLink: formData.socialMedia || "",
+                wallpaper: formData.wallpaper || "",
+
+                // Convert price tier from ('$', '$$') to ('low', 'medium')
+                priceTier: convertToBackendFormat(formData.priceTier),
+
+                // Convert booleans to 1 or 0
+                offersDelivery: formData.offersDelivery ? 1 : 0,
+                offersPickup: formData.offersPickup ? 1 : 0,
+                open247: formData.open247 ? 1 : 0,
+
+                // Include other operational details
+                operatingDays: formData.operatingDays || [],
+                openingHours: formData.openingHours || {},
+                paymentOptions: formData.paymentOptions || [],
+            };
+
+            console.log(
+                "📦 Payload being sent to backend:",
+                JSON.stringify(dataToSend, null, 2),
+            );
+
+            const response = await fetch(`${url}/api/update-business`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(dataToSend),

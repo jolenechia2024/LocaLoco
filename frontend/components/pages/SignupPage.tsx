@@ -41,7 +41,7 @@ const DAYS_OF_WEEK = [
     "Saturday",
     "Sunday",
 ];
-const PAYMENT_OPTIONS = ["Cash", "Card", "Paynow", "Digital wallets"];
+const PAYMENT_OPTIONS = ["Cash", "Card", "PayNow", "Digital Wallets"];
 
 interface BusinessData {
     uen: string;
@@ -72,7 +72,7 @@ const convertToBackendFormat = (tier: string): string => {
         $$$: "high",
         $$$$: "high",
     };
-    return mapping[tier] || tier;
+    return mapping[tier] || "medium";
 };
 
 const createEmptyBusiness = (): BusinessData => ({

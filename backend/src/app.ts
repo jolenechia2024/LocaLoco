@@ -73,6 +73,7 @@ app.use(
                 "https://images.unsplash.com",
                 "https://example.com", // For dummy data images
                 "http://maps.google.com", // For Google Maps markers
+                "https://lh3.googleusercontent.com" // for google pics
             ],
             frameSrc: [
                 "'self'",

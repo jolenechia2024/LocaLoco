@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 class AnnouncementModel {
     public static async newAnnouncement(
-        announcement: Omit<Announcement, "updatedAt" | "announcementId">,
+        announcement: Omit<Announcement, "updatedAt" | "announcementId" | "updatedAt">,
     ): Promise<void> {
         await db.insert(businessAnnouncements).values({
             businessUen: announcement.businessUen,
